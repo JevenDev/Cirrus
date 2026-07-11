@@ -1,1 +1,3 @@
-{}
+{
+  "cirrus.config.clouds.renderDistanceChunks": "Cloud Render Distance (chunks)"
+}

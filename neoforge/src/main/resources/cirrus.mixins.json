@@ -2,7 +2,10 @@
   "required": true,
   "package": "com.jvn.cirrus.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": [],
+  "client": [
+    "GameRendererMixin",
+    "LevelRendererCloudMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },
