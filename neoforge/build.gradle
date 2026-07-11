@@ -1,64 +1,20 @@
 apply plugin: 'java-library'
-apply plugin: 'maven-publish'
-apply plugin: 'architectury-plugin'
 apply plugin: 'dev.architectury.loom'
-apply plugin: 'com.gradleup.shadow'
 
-architectury {
-    platformSetupLoomIde()
-    neoForge()
-}
-
-configurations {
-    common {
-        canBeResolved = true
-        canBeConsumed = false
-    }
-    shadowCommon {
-        canBeResolved = true
-        canBeConsumed = false
-    }
-    compileClasspath.extendsFrom common
-    runtimeClasspath.extendsFrom common
-    developmentNeoForge.extendsFrom common
-}
-
-sourceSets.main.resources {
-    srcDir project(':common').file('src/main/resources')
+loom {
+    neoForge { }
 }
 
 dependencies {
     neoForge "net.neoforged:neoforge:${rootProject.neo_version}"
-    modApi "dev.architectury:architectury-neoforge:${rootProject.architectury_version}"
-
-    if (rootProject.enable_toucanlib.toBoolean()) {
-        if (rootProject.useLocalToucanLib.toBoolean()) {
-            modImplementation "com.jvn.toucanlib:toucanlib-neoforge-${rootProject.minecraft_version}:${rootProject.toucanlib_version}"
-        } else {
-            modImplementation "curse.maven:toucanlib-${rootProject.toucanlib_curse_project_id}:${rootProject.toucanlib_neoforge_curse_file_id}"
-        }
-    }
-
-    common(project(path: ':common', configuration: 'namedElements')) {
-        transitive = false
-    }
-    shadowCommon(project(path: ':common', configuration: 'transformProductionNeoForge')) {
-        transitive = false
-    }
 }
 
 tasks.named('processResources', ProcessResources).configure {
-    def toucanlibRuntimeVersion = rootProject.useLocalToucanLib.toBoolean()
-            ? rootProject.toucanlib_version
-            : rootProject.toucanlib_neoforge_version
-
     var replaceProperties = [
             minecraft_version      : rootProject.minecraft_version,
             minecraft_version_range: rootProject.minecraft_version_range,
             neo_version            : rootProject.neo_version,
             loader_version_range   : rootProject.loader_version_range,
-            architectury_version   : rootProject.architectury_version,
-            toucanlib_version      : toucanlibRuntimeVersion,
             mod_id                 : rootProject.mod_id,
             mod_name               : rootProject.mod_name,
             mod_license            : rootProject.mod_license,
@@ -67,43 +23,10 @@ tasks.named('processResources', ProcessResources).configure {
             mod_description        : rootProject.mod_description,
             mod_display_url        : rootProject.mod_display_url,
             mod_issue_tracker      : rootProject.mod_issue_tracker,
-            neoforge_toucanlib_dependency: rootProject.enable_toucanlib.toBoolean()
-                    ? """[[dependencies."${rootProject.mod_id}"]]
-modId="toucanlib"
-type="required"
-versionRange="[${toucanlibRuntimeVersion},)"
-ordering="AFTER"
-side="BOTH"
-"""
-                    : '',
     ]
     inputs.properties replaceProperties
 
     filesMatching('META-INF/neoforge.mods.toml') {
         expand replaceProperties
-    }
-}
-
-tasks.named('shadowJar').configure {
-    archiveClassifier = 'dev-shadow'
-    configurations = [project.configurations.shadowCommon]
-    exclude 'fabric.mod.json'
-}
-
-tasks.named('remapJar').configure {
-    inputFile = tasks.named('shadowJar').flatMap { it.archiveFile }
-    dependsOn tasks.named('shadowJar')
-}
-
-tasks.named('sourcesJar', Jar).configure {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    def commonSources = project(':common').tasks.named('sourcesJar', Jar)
-    dependsOn commonSources
-    from commonSources.map { zipTree(it.archiveFile.get().asFile) }
-}
-
-components.java {
-    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
-        skip()
     }
 }

@@ -13,6 +13,10 @@ displayURL="${mod_display_url}"
 description='''
 ${mod_description}
 '''
+displayTest="IGNORE_ALL_VERSION"
+
+[[mixins]]
+config="cirrus.mixins.json"
 
 [[dependencies."${mod_id}"]]
 modId="neoforge"
@@ -22,17 +26,8 @@ ordering="NONE"
 side="BOTH"
 
 [[dependencies."${mod_id}"]]
-modId="architectury"
-type="required"
-versionRange="[${architectury_version},)"
-ordering="AFTER"
-side="BOTH"
-
-${neoforge_toucanlib_dependency}
-
-[[dependencies."${mod_id}"]]
 modId="minecraft"
 type="required"
 versionRange="${minecraft_version_range}"
 ordering="NONE"
-side="BOTH"
+side="CLIENT"
