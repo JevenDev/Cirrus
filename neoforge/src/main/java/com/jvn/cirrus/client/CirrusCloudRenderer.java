@@ -25,13 +25,13 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private static final float CLOUD_THICKNESS = 4.0F;
     private static final float UV_SCALE = 1.0F / 256.0F;
     private static final float EDGE_EPSILON = 1.0F / 1024.0F;
+    private static final int UPPER_PATTERN_OFFSET_X = 37;
+    private static final int UPPER_PATTERN_OFFSET_Z = 91;
+    private static final LayerDefinition LOWER_LAYER = new LayerDefinition(0, 0);
+    private static final LayerDefinition UPPER_LAYER = new LayerDefinition(UPPER_PATTERN_OFFSET_X, UPPER_PATTERN_OFFSET_Z);
 
-    private VertexBuffer cloudBuffer;
-    private ClientLevel cachedLevel;
-    private CloudStatus cachedMode;
-    private int cachedDistanceChunks = -1;
-    private int cachedAnchorX = Integer.MIN_VALUE;
-    private int cachedAnchorZ = Integer.MIN_VALUE;
+    private final LayerMesh lowerMesh = new LayerMesh();
+    private final LayerMesh upperMesh = new LayerMesh();
 
     public void render(
             ClientLevel level,
@@ -52,26 +52,38 @@ public final class CirrusCloudRenderer implements AutoCloseable {
 
         int distanceChunks = CirrusConfig.CLOUD_RENDER_DISTANCE.get();
         double wind = (ticks + partialTick) * 0.03;
-        double sampleX = (cameraX + wind) / WORLD_SCALE;
-        double sampleZ = cameraZ / WORLD_SCALE;
-        sampleX -= Mth.floor(sampleX / 2048.0) * 2048.0;
-        sampleZ -= Mth.floor(sampleZ / 2048.0) * 2048.0;
+        double baseSampleX = (cameraX + wind) / WORLD_SCALE;
+        double baseSampleZ = cameraZ / WORLD_SCALE;
+        baseSampleX -= Mth.floor(baseSampleX / 2048.0) * 2048.0;
+        baseSampleZ -= Mth.floor(baseSampleZ / 2048.0) * 2048.0;
 
-        int anchorX = Mth.floor(sampleX / TILE_SIZE) * TILE_SIZE;
-        int anchorZ = Mth.floor(sampleZ / TILE_SIZE) * TILE_SIZE;
-        ensureMesh(level, mode, distanceChunks, anchorX, anchorZ);
-        if (cloudBuffer == null) {
+        prepareLayer(lowerMesh, LOWER_LAYER, level, mode, distanceChunks, baseSampleX, baseSampleZ);
+        boolean upperEnabled = CirrusConfig.UPPER_LAYER_ENABLED.get();
+        if (upperEnabled) {
+            prepareLayer(upperMesh, UPPER_LAYER, level, mode, distanceChunks, baseSampleX, baseSampleZ);
+        } else {
+            upperMesh.invalidate();
+        }
+        if (lowerMesh.buffer == null && upperMesh.buffer == null) {
             return;
         }
 
         float oldFogStart = RenderSystem.getShaderFogStart();
         float oldFogEnd = RenderSystem.getShaderFogEnd();
         FogShape oldFogShape = RenderSystem.getShaderFogShape();
+        float[] oldFogColor = RenderSystem.getShaderFogColor();
+        float oldFogRed = oldFogColor[0];
+        float oldFogGreen = oldFogColor[1];
+        float oldFogBlue = oldFogColor[2];
+        float[] oldShaderColor = RenderSystem.getShaderColor();
+        float oldShaderRed = oldShaderColor[0];
+        float oldShaderGreen = oldShaderColor[1];
+        float oldShaderBlue = oldShaderColor[2];
+        float oldShaderAlpha = oldShaderColor[3];
         float distanceBlocks = distanceChunks * 16.0F;
         float fadeLength = Math.max(32.0F, distanceBlocks * 0.15F);
         Vec3 cloudColor = level.getCloudColor(partialTick);
 
-        poseStack.pushPose();
         try {
             FogRenderer.levelFogColor();
             RenderSystem.setShaderFogStart(Math.max(0.0F, distanceBlocks - fadeLength));
@@ -79,22 +91,113 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             RenderSystem.setShaderFogShape(FogShape.CYLINDER);
             RenderSystem.setShaderColor((float)cloudColor.x, (float)cloudColor.y, (float)cloudColor.z, 1.0F);
 
+            drawLayer(
+                    lowerMesh,
+                    LOWER_LAYER,
+                    poseStack,
+                    frustumMatrix,
+                    projectionMatrix,
+                    mode,
+                    cloudHeight - cameraY + 0.33,
+                    baseSampleX,
+                    baseSampleZ
+            );
+            if (upperEnabled) {
+                double upperHeight = cloudHeight
+                        + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
+                        - cameraY
+                        + 0.33;
+                drawLayer(
+                        upperMesh,
+                        UPPER_LAYER,
+                        poseStack,
+                        frustumMatrix,
+                        projectionMatrix,
+                        mode,
+                        upperHeight,
+                        baseSampleX,
+                        baseSampleZ
+                );
+            }
+        } finally {
+            VertexBuffer.unbind();
+            RenderSystem.setShaderColor(oldShaderRed, oldShaderGreen, oldShaderBlue, oldShaderAlpha);
+            RenderSystem.setShaderFogColor(oldFogRed, oldFogGreen, oldFogBlue);
+            RenderSystem.setShaderFogStart(oldFogStart);
+            RenderSystem.setShaderFogEnd(oldFogEnd);
+            RenderSystem.setShaderFogShape(oldFogShape);
+        }
+    }
+
+    private void prepareLayer(
+            LayerMesh mesh,
+            LayerDefinition definition,
+            ClientLevel level,
+            CloudStatus mode,
+            int distanceChunks,
+            double baseSampleX,
+            double baseSampleZ
+    ) {
+        double sampleX = wrapSample(baseSampleX + definition.patternOffsetX);
+        double sampleZ = wrapSample(baseSampleZ + definition.patternOffsetZ);
+        int anchorX = Mth.floor(sampleX / TILE_SIZE) * TILE_SIZE;
+        int anchorZ = Mth.floor(sampleZ / TILE_SIZE) * TILE_SIZE;
+        if (mesh.buffer != null
+                && mesh.cachedLevel == level
+                && mesh.cachedMode == mode
+                && mesh.cachedDistanceChunks == distanceChunks
+                && mesh.cachedAnchorX == anchorX
+                && mesh.cachedAnchorZ == anchorZ) {
+            return;
+        }
+
+        mesh.closeBuffer();
+        MeshData builtMesh = buildMesh(mode, distanceChunks, anchorX, anchorZ);
+        mesh.buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        mesh.buffer.bind();
+        mesh.buffer.upload(builtMesh);
+        VertexBuffer.unbind();
+        mesh.cachedLevel = level;
+        mesh.cachedMode = mode;
+        mesh.cachedDistanceChunks = distanceChunks;
+        mesh.cachedAnchorX = anchorX;
+        mesh.cachedAnchorZ = anchorZ;
+    }
+
+    private void drawLayer(
+            LayerMesh mesh,
+            LayerDefinition definition,
+            PoseStack poseStack,
+            Matrix4f frustumMatrix,
+            Matrix4f projectionMatrix,
+            CloudStatus mode,
+            double relativeHeight,
+            double baseSampleX,
+            double baseSampleZ
+    ) {
+        if (mesh.buffer == null) {
+            return;
+        }
+        double sampleX = wrapSample(baseSampleX + definition.patternOffsetX);
+        double sampleZ = wrapSample(baseSampleZ + definition.patternOffsetZ);
+        poseStack.pushPose();
+        try {
             poseStack.mulPose(frustumMatrix);
             poseStack.scale(WORLD_SCALE, 1.0F, WORLD_SCALE);
             poseStack.translate(
-                    -(sampleX - anchorX),
-                    cloudHeight - cameraY + 0.33,
-                    -(sampleZ - anchorZ)
+                    -(sampleX - mesh.cachedAnchorX),
+                    relativeHeight,
+                    -(sampleZ - mesh.cachedAnchorZ)
             );
 
-            cloudBuffer.bind();
+            mesh.buffer.bind();
             int firstPass = mode == CloudStatus.FANCY ? 0 : 1;
             for (int pass = firstPass; pass < 2; pass++) {
                 RenderType renderType = pass == 0 ? RenderType.cloudsDepthOnly() : RenderType.clouds();
                 renderType.setupRenderState();
                 try {
                     ShaderInstance shader = RenderSystem.getShader();
-                    cloudBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
+                    mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
                 } finally {
                     renderType.clearRenderState();
                 }
@@ -102,35 +205,12 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             VertexBuffer.unbind();
         } finally {
             VertexBuffer.unbind();
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            RenderSystem.setShaderFogStart(oldFogStart);
-            RenderSystem.setShaderFogEnd(oldFogEnd);
-            RenderSystem.setShaderFogShape(oldFogShape);
             poseStack.popPose();
         }
     }
 
-    private void ensureMesh(ClientLevel level, CloudStatus mode, int distanceChunks, int anchorX, int anchorZ) {
-        if (cloudBuffer != null
-                && cachedLevel == level
-                && cachedMode == mode
-                && cachedDistanceChunks == distanceChunks
-                && cachedAnchorX == anchorX
-                && cachedAnchorZ == anchorZ) {
-            return;
-        }
-
-        closeBuffer();
-        MeshData mesh = buildMesh(mode, distanceChunks, anchorX, anchorZ);
-        cloudBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
-        cloudBuffer.bind();
-        cloudBuffer.upload(mesh);
-        VertexBuffer.unbind();
-        cachedLevel = level;
-        cachedMode = mode;
-        cachedDistanceChunks = distanceChunks;
-        cachedAnchorX = anchorX;
-        cachedAnchorZ = anchorZ;
+    private static double wrapSample(double sample) {
+        return sample - Mth.floor(sample / 2048.0) * 2048.0;
     }
 
     private MeshData buildMesh(CloudStatus mode, int distanceChunks, int anchorX, int anchorZ) {
@@ -279,23 +359,40 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     }
 
     public void invalidate() {
-        closeBuffer();
-        cachedLevel = null;
-        cachedMode = null;
-        cachedDistanceChunks = -1;
-        cachedAnchorX = Integer.MIN_VALUE;
-        cachedAnchorZ = Integer.MIN_VALUE;
-    }
-
-    private void closeBuffer() {
-        if (cloudBuffer != null) {
-            cloudBuffer.close();
-            cloudBuffer = null;
-        }
+        lowerMesh.invalidate();
+        upperMesh.invalidate();
     }
 
     @Override
     public void close() {
         invalidate();
+    }
+
+    private record LayerDefinition(int patternOffsetX, int patternOffsetZ) {
+    }
+
+    private static final class LayerMesh {
+        private VertexBuffer buffer;
+        private ClientLevel cachedLevel;
+        private CloudStatus cachedMode;
+        private int cachedDistanceChunks = -1;
+        private int cachedAnchorX = Integer.MIN_VALUE;
+        private int cachedAnchorZ = Integer.MIN_VALUE;
+
+        private void invalidate() {
+            closeBuffer();
+            cachedLevel = null;
+            cachedMode = null;
+            cachedDistanceChunks = -1;
+            cachedAnchorX = Integer.MIN_VALUE;
+            cachedAnchorZ = Integer.MIN_VALUE;
+        }
+
+        private void closeBuffer() {
+            if (buffer != null) {
+                buffer.close();
+                buffer = null;
+            }
+        }
     }
 }

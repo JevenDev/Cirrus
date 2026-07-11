@@ -9,6 +9,11 @@ public final class CirrusSky {
     }
 
     public static float minimumFarPlane() {
-        return CirrusConfig.CLOUD_RENDER_DISTANCE.get() * 16.0F + CLOUD_CLIP_MARGIN;
+        float cloudDistance = CirrusConfig.CLOUD_RENDER_DISTANCE.get() * 16.0F;
+        float upperOffset = CirrusConfig.UPPER_LAYER_ENABLED.get()
+                ? CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get().floatValue()
+                : 0.0F;
+        float verticalAllowance = 256.0F + upperOffset;
+        return (float)Math.hypot(cloudDistance, verticalAllowance) + CLOUD_CLIP_MARGIN;
     }
 }

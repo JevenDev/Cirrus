@@ -1,3 +1,5 @@
 {
-  "cirrus.config.clouds.renderDistanceChunks": "Cloud Render Distance (chunks)"
+  "cirrus.config.clouds.renderDistanceChunks": "Cloud Render Distance (chunks)",
+  "cirrus.config.clouds.upperLayerEnabled": "Upper Cloud Layer",
+  "cirrus.config.clouds.upperLayerHeightOffset": "Upper Layer Height Offset (blocks)"
 }
