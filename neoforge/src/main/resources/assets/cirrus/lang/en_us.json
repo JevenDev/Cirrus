@@ -1,5 +1,15 @@
 {
+  "cirrus.config.title": "Cirrus Settings",
+  "cirrus.config.quality.fast": "Fast",
+  "cirrus.config.quality.fancy": "Fancy",
   "cirrus.config.clouds.renderDistanceChunks": "Cloud Render Distance (chunks)",
+  "cirrus.config.clouds.lowerLayerQuality": "Lower Layer Quality",
+  "cirrus.config.clouds.lowerLayerHeightOffset": "Lower Layer Height",
+  "cirrus.config.clouds.lowerLayerSpeed": "Lower Layer Speed",
+  "cirrus.config.clouds.lowerLayerOpacity": "Lower Layer Opacity",
   "cirrus.config.clouds.upperLayerEnabled": "Upper Cloud Layer",
-  "cirrus.config.clouds.upperLayerHeightOffset": "Upper Layer Height Offset (blocks)"
+  "cirrus.config.clouds.upperLayerQuality": "Upper Layer Quality",
+  "cirrus.config.clouds.upperLayerHeightOffset": "Upper Layer Height",
+  "cirrus.config.clouds.upperLayerSpeed": "Upper Layer Speed",
+  "cirrus.config.clouds.upperLayerOpacity": "Upper Layer Opacity"
 }

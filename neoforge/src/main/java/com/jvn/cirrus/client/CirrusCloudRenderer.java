@@ -27,8 +27,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private static final float EDGE_EPSILON = 1.0F / 1024.0F;
     private static final int UPPER_PATTERN_OFFSET_X = 37;
     private static final int UPPER_PATTERN_OFFSET_Z = 91;
-    private static final LayerDefinition LOWER_LAYER = new LayerDefinition(0, 0);
-    private static final LayerDefinition UPPER_LAYER = new LayerDefinition(UPPER_PATTERN_OFFSET_X, UPPER_PATTERN_OFFSET_Z);
+    private static final LayerDefinition LOWER_LAYER = new LayerDefinition(false, 0, 0);
+    private static final LayerDefinition UPPER_LAYER = new LayerDefinition(true, UPPER_PATTERN_OFFSET_X, UPPER_PATTERN_OFFSET_Z);
 
     private final LayerMesh lowerMesh = new LayerMesh();
     private final LayerMesh upperMesh = new LayerMesh();
@@ -43,24 +43,24 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             double cameraX,
             double cameraY,
             double cameraZ,
-            CloudStatus mode
+            CloudStatus globalMode
     ) {
         float cloudHeight = level.effects().getCloudHeight();
-        if (mode == CloudStatus.OFF || Float.isNaN(cloudHeight)) {
+        if (globalMode == CloudStatus.OFF || Float.isNaN(cloudHeight)) {
             return;
         }
 
         int distanceChunks = CirrusConfig.CLOUD_RENDER_DISTANCE.get();
-        double wind = (ticks + partialTick) * 0.03;
-        double baseSampleX = (cameraX + wind) / WORLD_SCALE;
-        double baseSampleZ = cameraZ / WORLD_SCALE;
-        baseSampleX -= Mth.floor(baseSampleX / 2048.0) * 2048.0;
-        baseSampleZ -= Mth.floor(baseSampleZ / 2048.0) * 2048.0;
+        double cameraSampleX = cameraX / WORLD_SCALE;
+        double cameraSampleZ = cameraZ / WORLD_SCALE;
+        double windSample = (ticks + partialTick) * 0.03 / WORLD_SCALE;
+        CloudStatus lowerMode = CirrusConfig.LOWER_LAYER_QUALITY.get().cloudStatus();
+        CloudStatus upperMode = CirrusConfig.UPPER_LAYER_QUALITY.get().cloudStatus();
 
-        prepareLayer(lowerMesh, LOWER_LAYER, level, mode, distanceChunks, baseSampleX, baseSampleZ);
+        prepareLayer(lowerMesh, LOWER_LAYER, level, lowerMode, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
         boolean upperEnabled = CirrusConfig.UPPER_LAYER_ENABLED.get();
         if (upperEnabled) {
-            prepareLayer(upperMesh, UPPER_LAYER, level, mode, distanceChunks, baseSampleX, baseSampleZ);
+            prepareLayer(upperMesh, UPPER_LAYER, level, upperMode, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
         } else {
             upperMesh.invalidate();
         }
@@ -97,13 +97,16 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     poseStack,
                     frustumMatrix,
                     projectionMatrix,
-                    mode,
-                    cloudHeight - cameraY + 0.33,
-                    baseSampleX,
-                    baseSampleZ
+                    lowerMode,
+                    cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
+                    cameraSampleX,
+                    cameraSampleZ,
+                    windSample,
+                    cloudColor
             );
             if (upperEnabled) {
                 double upperHeight = cloudHeight
+                        + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                         + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
                         - cameraY
                         + 0.33;
@@ -113,10 +116,12 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                         poseStack,
                         frustumMatrix,
                         projectionMatrix,
-                        mode,
+                        upperMode,
                         upperHeight,
-                        baseSampleX,
-                        baseSampleZ
+                        cameraSampleX,
+                        cameraSampleZ,
+                        windSample,
+                        cloudColor
                 );
             }
         } finally {
@@ -135,11 +140,12 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             ClientLevel level,
             CloudStatus mode,
             int distanceChunks,
-            double baseSampleX,
-            double baseSampleZ
+            double cameraSampleX,
+            double cameraSampleZ,
+            double windSample
     ) {
-        double sampleX = wrapSample(baseSampleX + definition.patternOffsetX);
-        double sampleZ = wrapSample(baseSampleZ + definition.patternOffsetZ);
+        double sampleX = sampleX(definition, cameraSampleX, windSample);
+        double sampleZ = sampleZ(definition, cameraSampleZ);
         int anchorX = Mth.floor(sampleX / TILE_SIZE) * TILE_SIZE;
         int anchorZ = Mth.floor(sampleZ / TILE_SIZE) * TILE_SIZE;
         if (mesh.buffer != null
@@ -172,16 +178,24 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             Matrix4f projectionMatrix,
             CloudStatus mode,
             double relativeHeight,
-            double baseSampleX,
-            double baseSampleZ
+            double cameraSampleX,
+            double cameraSampleZ,
+            double windSample,
+            Vec3 cloudColor
     ) {
         if (mesh.buffer == null) {
             return;
         }
-        double sampleX = wrapSample(baseSampleX + definition.patternOffsetX);
-        double sampleZ = wrapSample(baseSampleZ + definition.patternOffsetZ);
+        double sampleX = sampleX(definition, cameraSampleX, windSample);
+        double sampleZ = sampleZ(definition, cameraSampleZ);
         poseStack.pushPose();
         try {
+            RenderSystem.setShaderColor(
+                    (float)cloudColor.x,
+                    (float)cloudColor.y,
+                    (float)cloudColor.z,
+                    definition.opacity()
+            );
             poseStack.mulPose(frustumMatrix);
             poseStack.scale(WORLD_SCALE, 1.0F, WORLD_SCALE);
             poseStack.translate(
@@ -211,6 +225,14 @@ public final class CirrusCloudRenderer implements AutoCloseable {
 
     private static double wrapSample(double sample) {
         return sample - Mth.floor(sample / 2048.0) * 2048.0;
+    }
+
+    private static double sampleX(LayerDefinition definition, double cameraSampleX, double windSample) {
+        return wrapSample(cameraSampleX + windSample * definition.speed() + definition.patternOffsetX);
+    }
+
+    private static double sampleZ(LayerDefinition definition, double cameraSampleZ) {
+        return wrapSample(cameraSampleZ + definition.patternOffsetZ);
     }
 
     private MeshData buildMesh(CloudStatus mode, int distanceChunks, int anchorX, int anchorZ) {
@@ -354,7 +376,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     ) {
         builder.addVertex(x, y, z)
                 .setUv((sampleX + anchorX) * UV_SCALE, (sampleZ + anchorZ) * UV_SCALE)
-                .setColor(red, green, blue, 0.8F)
+                .setColor(red, green, blue, 1.0F)
                 .setNormal(normalX, normalY, normalZ);
     }
 
@@ -368,7 +390,14 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         invalidate();
     }
 
-    private record LayerDefinition(int patternOffsetX, int patternOffsetZ) {
+    private record LayerDefinition(boolean upper, int patternOffsetX, int patternOffsetZ) {
+        private double speed() {
+            return upper ? CirrusConfig.UPPER_LAYER_SPEED.get() : CirrusConfig.LOWER_LAYER_SPEED.get();
+        }
+
+        private float opacity() {
+            return (upper ? CirrusConfig.UPPER_LAYER_OPACITY.get() : CirrusConfig.LOWER_LAYER_OPACITY.get()).floatValue();
+        }
     }
 
     private static final class LayerMesh {
