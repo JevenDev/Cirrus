@@ -31,3 +31,10 @@ type="required"
 versionRange="${minecraft_version_range}"
 ordering="NONE"
 side="CLIENT"
+
+[[dependencies."${mod_id}"]]
+modId="yet_another_config_lib_v3"
+type="required"
+versionRange="[3.8.1,)"
+ordering="AFTER"
+side="CLIENT"

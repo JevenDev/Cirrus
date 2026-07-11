@@ -8,7 +8,7 @@ public final class CirrusClient {
     }
 
     public static void registerConfigScreen(ModContainer modContainer) {
-        IConfigScreenFactory factory = (container, parent) -> new CirrusConfigScreen(parent);
+        IConfigScreenFactory factory = (container, parent) -> CirrusConfigScreen.create(parent);
         modContainer.registerExtensionPoint(IConfigScreenFactory.class, factory);
     }
 }

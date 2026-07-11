@@ -7,6 +7,16 @@ loom {
 
 dependencies {
     neoForge "net.neoforged:neoforge:${rootProject.neo_version}"
+    modImplementation "dev.isxander:yet-another-config-lib:${rootProject.yacl_version}"
+
+    // Architectury Loom strips YACL's Jar-in-Jar metadata while remapping it.
+    // Re-declare the small runtime libraries so NeoForge exposes them to YACL's module.
+    include "org.quiltmc.parsers:json:0.2.1"
+    include "org.quiltmc.parsers:gson:0.2.1"
+    include "org.jetbrains:annotations:24.0.1"
+    forgeRuntimeLibrary "org.quiltmc.parsers:json:0.2.1"
+    forgeRuntimeLibrary "org.quiltmc.parsers:gson:0.2.1"
+    forgeRuntimeLibrary "org.jetbrains:annotations:24.0.1"
 }
 
 tasks.named('processResources', ProcessResources).configure {
