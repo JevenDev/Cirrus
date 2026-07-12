@@ -11,7 +11,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.client.CloudStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.FogRenderer;
@@ -26,9 +25,7 @@ import org.joml.Vector3f;
 public final class CirrusCloudRenderer implements AutoCloseable {
     private static final float WORLD_SCALE = 12.0F;
     private static final int TILE_SIZE = 8;
-    private static final float CLOUD_THICKNESS = 4.0F;
     private static final float UV_SCALE = 1.0F / 256.0F;
-    private static final float EDGE_EPSILON = 1.0F / 1024.0F;
     private static final float TWILIGHT_TRANSITION = (float)Math.toRadians(12.0);
     private static final int UPPER_PATTERN_OFFSET_X = 37;
     private static final int UPPER_PATTERN_OFFSET_Z = 91;
@@ -58,16 +55,14 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         double cameraSampleX = cameraX / WORLD_SCALE;
         double cameraSampleZ = cameraZ / WORLD_SCALE;
         double windSample = (ticks + partialTick) * 0.03 / WORLD_SCALE;
-        CloudStatus lowerMode = CloudStatus.FAST;
-        CloudStatus upperMode = CloudStatus.FAST;
         float celestialAngle = level.getSunAngle(partialTick);
         float sunWeight = celestialSunWeight(celestialAngle);
         Vector3f celestialViewDirection = celestialViewDirection(frustumMatrix, celestialAngle);
 
-        prepareLayer(lowerMesh, LOWER_LAYER, level, lowerMode, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
+        prepareLayer(lowerMesh, LOWER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
         boolean upperEnabled = CirrusConfig.UPPER_LAYER_ENABLED.get();
         if (upperEnabled) {
-            prepareLayer(upperMesh, UPPER_LAYER, level, upperMode, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
+            prepareLayer(upperMesh, UPPER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
         } else {
             upperMesh.invalidate();
         }
@@ -104,7 +99,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     poseStack,
                     frustumMatrix,
                     projectionMatrix,
-                    lowerMode,
                     cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
                     cameraSampleX,
                     cameraSampleZ,
@@ -126,7 +120,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                         poseStack,
                         frustumMatrix,
                         projectionMatrix,
-                        upperMode,
                         upperHeight,
                         cameraSampleX,
                         cameraSampleZ,
@@ -152,7 +145,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             LayerMesh mesh,
             LayerDefinition definition,
             ClientLevel level,
-            CloudStatus mode,
             int distanceChunks,
             double cameraSampleX,
             double cameraSampleZ,
@@ -164,7 +156,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         int anchorZ = Mth.floor(sampleZ / TILE_SIZE) * TILE_SIZE;
         if (mesh.buffer != null
                 && mesh.cachedLevel == level
-                && mesh.cachedMode == mode
                 && mesh.cachedDistanceChunks == distanceChunks
                 && mesh.cachedAnchorX == anchorX
                 && mesh.cachedAnchorZ == anchorZ) {
@@ -172,13 +163,12 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         }
 
         mesh.closeBuffer();
-        MeshData builtMesh = buildMesh(mode, distanceChunks, anchorX, anchorZ);
+        MeshData builtMesh = buildMesh(distanceChunks, anchorX, anchorZ);
         mesh.buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
         mesh.buffer.bind();
         mesh.buffer.upload(builtMesh);
         VertexBuffer.unbind();
         mesh.cachedLevel = level;
-        mesh.cachedMode = mode;
         mesh.cachedDistanceChunks = distanceChunks;
         mesh.cachedAnchorX = anchorX;
         mesh.cachedAnchorZ = anchorZ;
@@ -190,7 +180,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             PoseStack poseStack,
             Matrix4f frustumMatrix,
             Matrix4f projectionMatrix,
-            CloudStatus mode,
             double relativeHeight,
             double cameraSampleX,
             double cameraSampleZ,
@@ -222,17 +211,14 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             );
 
             mesh.buffer.bind();
-            int firstPass = mode == CloudStatus.FANCY ? 0 : 1;
-            for (int pass = firstPass; pass < 2; pass++) {
-                RenderType renderType = pass == 0 ? RenderType.cloudsDepthOnly() : RenderType.clouds();
-                renderType.setupRenderState();
-                try {
-                    ShaderInstance shader = RenderSystem.getShader();
-                    setCelestialLight(shader, celestialAngle, sunWeight, celestialViewDirection);
-                    mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
-                } finally {
-                    renderType.clearRenderState();
-                }
+            RenderType clouds = RenderType.clouds();
+            clouds.setupRenderState();
+            try {
+                ShaderInstance shader = RenderSystem.getShader();
+                setCelestialLight(shader, celestialAngle, sunWeight, celestialViewDirection);
+                mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
+            } finally {
+                clouds.clearRenderState();
             }
             if (Minecraft.useShaderTransparency()) {
                 RenderType depthOnly = RenderType.cloudsDepthOnly();
@@ -324,7 +310,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         }
     }
 
-    private MeshData buildMesh(CloudStatus mode, int distanceChunks, int anchorX, int anchorZ) {
+    private MeshData buildMesh(int distanceChunks, int anchorX, int anchorZ) {
         BufferBuilder builder = Tesselator.getInstance().begin(
                 VertexFormat.Mode.QUADS,
                 DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
@@ -343,130 +329,40 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 }
                 float x = tileX * TILE_SIZE;
                 float z = tileZ * TILE_SIZE;
-                if (mode == CloudStatus.FANCY) {
-                    addFancyTile(builder, x, z, tileX, tileZ, anchorX, anchorZ);
-                } else {
-                    addHorizontalFace(builder, x, z, 0.0F, 1.0F, 1.0F, 1.0F, anchorX, anchorZ, true);
-                }
+                addTile(builder, x, z, anchorX, anchorZ);
             }
         }
         return builder.buildOrThrow();
     }
 
-    private static void addFancyTile(
+    private static void addTile(
             BufferBuilder builder,
             float x,
             float z,
-            int tileX,
-            int tileZ,
             int anchorX,
             int anchorZ
-    ) {
-        addHorizontalFace(builder, x, z, 0.0F, 0.7F, 0.7F, 0.7F, anchorX, anchorZ, false);
-        addHorizontalFace(builder, x, z, CLOUD_THICKNESS - EDGE_EPSILON, 1.0F, 1.0F, 1.0F, anchorX, anchorZ, true);
-
-        if (tileX >= 0) {
-            addXFace(builder, x, z, -1.0F, 0.9F, anchorX, anchorZ);
-        }
-        if (tileX <= 0) {
-            addXFace(builder, x + TILE_SIZE - EDGE_EPSILON, z, 1.0F, 0.9F, anchorX, anchorZ);
-        }
-        if (tileZ >= 0) {
-            addZFace(builder, x, z, -1.0F, 0.8F, anchorX, anchorZ);
-        }
-        if (tileZ <= 0) {
-            addZFace(builder, x, z + TILE_SIZE - EDGE_EPSILON, 1.0F, 0.8F, anchorX, anchorZ);
-        }
-    }
-
-    private static void addHorizontalFace(
-            BufferBuilder builder,
-            float x,
-            float z,
-            float y,
-            float red,
-            float green,
-            float blue,
-            int anchorX,
-            int anchorZ,
-            boolean up
     ) {
         float x1 = x + TILE_SIZE;
         float z1 = z + TILE_SIZE;
-        float normalY = up ? 1.0F : -1.0F;
-        if (up) {
-            vertex(builder, x, y, z, x, z, red, green, blue, 0.0F, normalY, 0.0F, anchorX, anchorZ);
-            vertex(builder, x, y, z1, x, z1, red, green, blue, 0.0F, normalY, 0.0F, anchorX, anchorZ);
-            vertex(builder, x1, y, z1, x1, z1, red, green, blue, 0.0F, normalY, 0.0F, anchorX, anchorZ);
-            vertex(builder, x1, y, z, x1, z, red, green, blue, 0.0F, normalY, 0.0F, anchorX, anchorZ);
-        } else {
-            vertex(builder, x, y, z1, x, z1, red, green, blue, 0.0F, normalY, 0.0F, anchorX, anchorZ);
-            vertex(builder, x, y, z, x, z, red, green, blue, 0.0F, normalY, 0.0F, anchorX, anchorZ);
-            vertex(builder, x1, y, z, x1, z, red, green, blue, 0.0F, normalY, 0.0F, anchorX, anchorZ);
-            vertex(builder, x1, y, z1, x1, z1, red, green, blue, 0.0F, normalY, 0.0F, anchorX, anchorZ);
-        }
-    }
-
-    private static void addXFace(
-            BufferBuilder builder,
-            float x,
-            float z,
-            float normalX,
-            float shade,
-            int anchorX,
-            int anchorZ
-    ) {
-        for (int strip = 0; strip < TILE_SIZE; strip++) {
-            float z0 = z + strip;
-            float z1 = z0 + 1.0F;
-            float sampleZ = z0 + 0.5F;
-            vertex(builder, x, 0.0F, z1, x, sampleZ, shade, shade, shade, normalX, 0.0F, 0.0F, anchorX, anchorZ);
-            vertex(builder, x, CLOUD_THICKNESS, z1, x, sampleZ, shade, shade, shade, normalX, 0.0F, 0.0F, anchorX, anchorZ);
-            vertex(builder, x, CLOUD_THICKNESS, z0, x, sampleZ, shade, shade, shade, normalX, 0.0F, 0.0F, anchorX, anchorZ);
-            vertex(builder, x, 0.0F, z0, x, sampleZ, shade, shade, shade, normalX, 0.0F, 0.0F, anchorX, anchorZ);
-        }
-    }
-
-    private static void addZFace(
-            BufferBuilder builder,
-            float x,
-            float z,
-            float normalZ,
-            float shade,
-            int anchorX,
-            int anchorZ
-    ) {
-        for (int strip = 0; strip < TILE_SIZE; strip++) {
-            float x0 = x + strip;
-            float x1 = x0 + 1.0F;
-            float sampleX = x0 + 0.5F;
-            vertex(builder, x0, CLOUD_THICKNESS, z, sampleX, z, shade, shade, shade, 0.0F, 0.0F, normalZ, anchorX, anchorZ);
-            vertex(builder, x1, CLOUD_THICKNESS, z, sampleX, z, shade, shade, shade, 0.0F, 0.0F, normalZ, anchorX, anchorZ);
-            vertex(builder, x1, 0.0F, z, sampleX, z, shade, shade, shade, 0.0F, 0.0F, normalZ, anchorX, anchorZ);
-            vertex(builder, x0, 0.0F, z, sampleX, z, shade, shade, shade, 0.0F, 0.0F, normalZ, anchorX, anchorZ);
-        }
+        vertex(builder, x, z, x, z, anchorX, anchorZ);
+        vertex(builder, x, z1, x, z1, anchorX, anchorZ);
+        vertex(builder, x1, z1, x1, z1, anchorX, anchorZ);
+        vertex(builder, x1, z, x1, z, anchorX, anchorZ);
     }
 
     private static void vertex(
             BufferBuilder builder,
             float x,
-            float y,
             float z,
             float sampleX,
             float sampleZ,
-            float red,
-            float green,
-            float blue,
-            float normalX,
-            float normalY,
-            float normalZ,
             int anchorX,
             int anchorZ
     ) {
-        builder.addVertex(x, y, z)
+        builder.addVertex(x, 0.0F, z)
                 .setUv((sampleX + anchorX) * UV_SCALE, (sampleZ + anchorZ) * UV_SCALE)
-                .setColor(red, green, blue, 1.0F)
-                .setNormal(normalX, normalY, normalZ);
+                .setColor(1.0F, 1.0F, 1.0F, 1.0F)
+                .setNormal(0.0F, 1.0F, 0.0F);
     }
 
     public void invalidate() {
@@ -492,7 +388,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private static final class LayerMesh {
         private VertexBuffer buffer;
         private ClientLevel cachedLevel;
-        private CloudStatus cachedMode;
         private int cachedDistanceChunks = -1;
         private int cachedAnchorX = Integer.MIN_VALUE;
         private int cachedAnchorZ = Integer.MIN_VALUE;
@@ -500,7 +395,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         private void invalidate() {
             closeBuffer();
             cachedLevel = null;
-            cachedMode = null;
             cachedDistanceChunks = -1;
             cachedAnchorX = Integer.MIN_VALUE;
             cachedAnchorZ = Integer.MIN_VALUE;
