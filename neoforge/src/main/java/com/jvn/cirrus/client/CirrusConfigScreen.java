@@ -37,9 +37,7 @@ public final class CirrusConfigScreen {
                         .option(integerOption(
                                 "cirrus.config.clouds.renderDistanceChunks",
                                 CirrusConfig.CLOUD_RENDER_DISTANCE,
-                                2,
-                                128,
-                                1,
+                                CirrusConfig.CLOUD_RENDER_DISTANCE_SETTING,
                                 value -> Component.literal(value + " chunks")
                         ))
                         .build())
@@ -48,20 +46,20 @@ public final class CirrusConfigScreen {
                         .option(doubleOption(
                                 "cirrus.config.clouds.lowerLayerHeightOffset",
                                 CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET,
-                                -128.0,
-                                128.0,
-                                1.0,
+                                CirrusConfig.LOWER_LAYER_HEIGHT_SETTING,
                                 value -> Component.literal(String.format(Locale.ROOT, "%.0f blocks", value))
                         ))
                         .option(doubleOption(
                                 "cirrus.config.clouds.lowerLayerSpeed",
                                 CirrusConfig.LOWER_LAYER_SPEED,
-                                0.0,
-                                4.0,
-                                0.05,
+                                CirrusConfig.LOWER_LAYER_SPEED_SETTING,
                                 value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
                         ))
-                        .option(percentageOption("cirrus.config.clouds.lowerLayerOpacity", CirrusConfig.LOWER_LAYER_OPACITY, 0.05))
+                        .option(percentageOption(
+                                "cirrus.config.clouds.lowerLayerOpacity",
+                                CirrusConfig.LOWER_LAYER_OPACITY,
+                                CirrusConfig.LOWER_LAYER_OPACITY_SETTING
+                        ))
                         .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.upperLayer"))
@@ -69,20 +67,20 @@ public final class CirrusConfigScreen {
                         .option(doubleOption(
                                 "cirrus.config.clouds.upperLayerHeightOffset",
                                 CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET,
-                                16.0,
-                                256.0,
-                                1.0,
+                                CirrusConfig.UPPER_LAYER_HEIGHT_SETTING,
                                 value -> Component.literal(String.format(Locale.ROOT, "%.0f blocks", value))
                         ))
                         .option(doubleOption(
                                 "cirrus.config.clouds.upperLayerSpeed",
                                 CirrusConfig.UPPER_LAYER_SPEED,
-                                0.0,
-                                4.0,
-                                0.05,
+                                CirrusConfig.UPPER_LAYER_SPEED_SETTING,
                                 value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
                         ))
-                        .option(percentageOption("cirrus.config.clouds.upperLayerOpacity", CirrusConfig.UPPER_LAYER_OPACITY, 0.05))
+                        .option(percentageOption(
+                                "cirrus.config.clouds.upperLayerOpacity",
+                                CirrusConfig.UPPER_LAYER_OPACITY,
+                                CirrusConfig.UPPER_LAYER_OPACITY_SETTING
+                        ))
                         .build())
                 .build();
     }
@@ -99,9 +97,7 @@ public final class CirrusConfigScreen {
     private static Option<Integer> integerOption(
             String key,
             ModConfigSpec.IntValue value,
-            int minimum,
-            int maximum,
-            int step,
+            CirrusConfig.IntSetting setting,
             dev.isxander.yacl3.api.controller.ValueFormatter<Integer> formatter
     ) {
         return Option.<Integer>createBuilder()
@@ -109,8 +105,8 @@ public final class CirrusConfigScreen {
                 .description(description(key))
                 .binding(value.getDefault(), value::get, value::set)
                 .controller(option -> IntegerSliderControllerBuilder.create(option)
-                        .range(minimum, maximum)
-                        .step(step)
+                        .range(setting.minimum(), setting.maximum())
+                        .step(setting.step())
                         .formatValue(formatter))
                 .build();
     }
@@ -118,9 +114,7 @@ public final class CirrusConfigScreen {
     private static Option<Double> doubleOption(
             String key,
             ModConfigSpec.DoubleValue value,
-            double minimum,
-            double maximum,
-            double step,
+            CirrusConfig.DoubleSetting setting,
             dev.isxander.yacl3.api.controller.ValueFormatter<Double> formatter
     ) {
         return Option.<Double>createBuilder()
@@ -128,8 +122,8 @@ public final class CirrusConfigScreen {
                 .description(description(key))
                 .binding(value.getDefault(), value::get, value::set)
                 .controller(option -> DoubleSliderControllerBuilder.create(option)
-                        .range(minimum, maximum)
-                        .step(step)
+                        .range(setting.minimum(), setting.maximum())
+                        .step(setting.step())
                         .formatValue(formatter))
                 .build();
     }
@@ -137,14 +131,12 @@ public final class CirrusConfigScreen {
     private static Option<Double> percentageOption(
             String key,
             ModConfigSpec.DoubleValue value,
-            double minimum
+            CirrusConfig.DoubleSetting setting
     ) {
         return doubleOption(
                 key,
                 value,
-                minimum,
-                1.0,
-                0.05,
+                setting,
                 current -> Component.literal(String.format(Locale.ROOT, "%.0f%%", current * 100.0))
         );
     }
