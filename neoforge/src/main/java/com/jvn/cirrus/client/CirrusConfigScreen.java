@@ -1,14 +1,12 @@
 package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.config.CirrusConfig;
-import com.jvn.cirrus.config.CloudQuality;
 import dev.isxander.yacl3.api.ConfigCategory;
 import dev.isxander.yacl3.api.Option;
 import dev.isxander.yacl3.api.OptionDescription;
 import dev.isxander.yacl3.api.OptionGroup;
 import dev.isxander.yacl3.api.YetAnotherConfigLib;
 import dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder;
-import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import java.util.Locale;
@@ -46,7 +44,6 @@ public final class CirrusConfigScreen {
                         .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.lowerLayer"))
-                        .option(qualityOption("cirrus.config.clouds.lowerLayerQuality", CirrusConfig.LOWER_LAYER_QUALITY))
                         .option(doubleOption(
                                 "cirrus.config.clouds.lowerLayerHeightOffset",
                                 CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET,
@@ -68,7 +65,6 @@ public final class CirrusConfigScreen {
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.upperLayer"))
                         .option(booleanOption("cirrus.config.clouds.upperLayerEnabled", CirrusConfig.UPPER_LAYER_ENABLED))
-                        .option(qualityOption("cirrus.config.clouds.upperLayerQuality", CirrusConfig.UPPER_LAYER_QUALITY))
                         .option(doubleOption(
                                 "cirrus.config.clouds.upperLayerHeightOffset",
                                 CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET,
@@ -150,22 +146,6 @@ public final class CirrusConfigScreen {
                 0.05,
                 current -> Component.literal(String.format(Locale.ROOT, "%.0f%%", current * 100.0))
         );
-    }
-
-    private static Option<CloudQuality> qualityOption(
-            String key,
-            ModConfigSpec.EnumValue<CloudQuality> value
-    ) {
-        return Option.<CloudQuality>createBuilder()
-                .name(text(key))
-                .description(description(key))
-                .binding(value.getDefault(), value::get, value::set)
-                .controller(option -> EnumControllerBuilder.create(option)
-                        .enumClass(CloudQuality.class)
-                        .formatValue(quality -> text(
-                                "cirrus.config.quality." + quality.name().toLowerCase(Locale.ROOT)
-                        )))
-                .build();
     }
 
     private static OptionDescription description(String key) {

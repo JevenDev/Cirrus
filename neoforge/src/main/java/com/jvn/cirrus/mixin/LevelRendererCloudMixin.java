@@ -1,6 +1,7 @@
 package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.CirrusCloudRenderer;
+import com.jvn.cirrus.client.CirrusCloudMode;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CloudStatus;
@@ -39,7 +40,7 @@ public abstract class LevelRendererCloudMixin {
     ) {
         CloudStatus mode = Minecraft.getInstance().options.getCloudsType();
         if (mode != cirrus$lastCloudMode) {
-            if (mode == CloudStatus.OFF) {
+            if (mode != CirrusCloudMode.CIRRUS) {
                 cirrus$cloudRenderer.invalidate();
             }
             cirrus$lastCloudMode = mode;
@@ -57,6 +58,10 @@ public abstract class LevelRendererCloudMixin {
             double cameraZ,
             CallbackInfo ci
     ) {
+        if (Minecraft.getInstance().options.getCloudsType() != CirrusCloudMode.CIRRUS) {
+            CirrusCloudRenderer.disableShaderEffects();
+            return;
+        }
         ci.cancel();
         if (level != null) {
             cirrus$cloudRenderer.render(
@@ -68,8 +73,7 @@ public abstract class LevelRendererCloudMixin {
                     ticks,
                     cameraX,
                     cameraY,
-                    cameraZ,
-                    Minecraft.getInstance().options.getCloudsType()
+                    cameraZ
             );
         }
     }
