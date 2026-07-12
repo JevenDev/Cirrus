@@ -8,7 +8,11 @@ public final class CirrusSky {
     private CirrusSky() {
     }
 
-    public static float minimumFarPlane() {
+    public static float minimumFarPlane(boolean cirrusCloudsActive) {
+        if (!cirrusCloudsActive) {
+            return 0.0F;
+        }
+
         float cloudDistance = CirrusConfig.CLOUD_RENDER_DISTANCE.get() * 16.0F;
         float lowerOffset = Math.abs(CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get().floatValue());
         float upperOffset = CirrusConfig.UPPER_LAYER_ENABLED.get()
