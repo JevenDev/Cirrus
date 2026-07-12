@@ -33,6 +33,7 @@ public final class CirrusConfigScreen {
                 .tooltip(text("cirrus.config.category.clouds.description"))
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.cloudGeneral"))
+                        .option(booleanOption("cirrus.config.clouds.enabled", CirrusConfig.CUSTOM_CLOUDS_ENABLED))
                         .option(integerOption(
                                 "cirrus.config.clouds.renderDistanceChunks",
                                 CirrusConfig.CLOUD_RENDER_DISTANCE,

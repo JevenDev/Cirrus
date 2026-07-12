@@ -3,6 +3,7 @@ package com.jvn.cirrus.config;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class CirrusConfig {
+    public static final ModConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
     public static final ModConfigSpec.IntValue CLOUD_RENDER_DISTANCE;
     public static final ModConfigSpec.DoubleValue LOWER_LAYER_HEIGHT_OFFSET;
     public static final ModConfigSpec.DoubleValue LOWER_LAYER_SPEED;
@@ -16,6 +17,9 @@ public final class CirrusConfig {
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
         builder.comment("Cloud rendering").push("clouds");
+        CUSTOM_CLOUDS_ENABLED = builder
+                .comment("Replace vanilla clouds with Cirrus clouds. The vanilla Clouds: Off setting still hides clouds.")
+                .define("enabled", true);
         CLOUD_RENDER_DISTANCE = builder
                 .comment("Cloud render distance in chunks, independent of terrain render distance.")
                 .defineInRange("renderDistanceChunks", 64, 2, 128);

@@ -40,7 +40,7 @@ public abstract class LevelRendererCloudMixin {
     ) {
         CloudStatus mode = Minecraft.getInstance().options.getCloudsType();
         if (mode != cirrus$lastCloudMode) {
-            if (mode != CirrusCloudMode.CIRRUS) {
+            if (!CirrusCloudMode.isActive(mode)) {
                 cirrus$cloudRenderer.invalidate();
             }
             cirrus$lastCloudMode = mode;
@@ -58,7 +58,7 @@ public abstract class LevelRendererCloudMixin {
             double cameraZ,
             CallbackInfo ci
     ) {
-        if (Minecraft.getInstance().options.getCloudsType() != CirrusCloudMode.CIRRUS) {
+        if (!CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
             CirrusCloudRenderer.disableShaderEffects();
             return;
         }
