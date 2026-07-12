@@ -21,6 +21,12 @@ in vec3 viewDirection;
 
 out vec4 fragColor;
 
+const float COS_5_DEGREES = 0.9961947;
+const float COS_7_DEGREES = 0.9925462;
+const float COS_22_DEGREES = 0.9271839;
+const float COS_30_DEGREES = 0.8660254;
+const float COS_38_DEGREES = 0.7880108;
+
 void main() {
     vec4 cloudSample = texture(Sampler0, texCoord0);
     vec4 color = cloudSample * vertexColor * ColorModulator;
@@ -29,13 +35,13 @@ void main() {
     }
 
     if (CirrusEnabled > 0.5) {
-        vec2 texelSize = 1.0 / vec2(textureSize(Sampler0, 0));
-        vec2 positionInTexel = fract(texCoord0 / texelSize);
+        vec2 textureSizePixels = vec2(textureSize(Sampler0, 0));
+        vec2 positionInTexel = fract(texCoord0 * textureSizePixels);
 
-        float emptyLeft = 1.0 - step(0.1, texture(Sampler0, texCoord0 - vec2(texelSize.x, 0.0)).a);
-        float emptyRight = 1.0 - step(0.1, texture(Sampler0, texCoord0 + vec2(texelSize.x, 0.0)).a);
-        float emptyBottom = 1.0 - step(0.1, texture(Sampler0, texCoord0 - vec2(0.0, texelSize.y)).a);
-        float emptyTop = 1.0 - step(0.1, texture(Sampler0, texCoord0 + vec2(0.0, texelSize.y)).a);
+        float emptyLeft = 1.0 - step(0.1, textureOffset(Sampler0, texCoord0, ivec2(-1, 0)).a);
+        float emptyRight = 1.0 - step(0.1, textureOffset(Sampler0, texCoord0, ivec2(1, 0)).a);
+        float emptyBottom = 1.0 - step(0.1, textureOffset(Sampler0, texCoord0, ivec2(0, -1)).a);
+        float emptyTop = 1.0 - step(0.1, textureOffset(Sampler0, texCoord0, ivec2(0, 1)).a);
 
         float lightStrength = length(CirrusLightDirection);
         float horizonAmount = smoothstep(0.05, 1.0, lightStrength);
@@ -69,12 +75,12 @@ void main() {
 
         vec3 normalizedViewDirection = normalize(viewDirection);
         vec3 sunViewDirection = normalize(CirrusLightViewDirection);
-        float sunAngularDistance = acos(clamp(dot(normalizedViewDirection, sunViewDirection), -1.0, 1.0));
-        float moonAngularDistance = acos(clamp(dot(normalizedViewDirection, -sunViewDirection), -1.0, 1.0));
-        float sunProximity = 1.0 - smoothstep(radians(5.0), radians(38.0), sunAngularDistance);
-        float moonProximity = 1.0 - smoothstep(radians(5.0), radians(30.0), moonAngularDistance);
-        float sunOcclusion = 1.0 - smoothstep(radians(7.0), radians(30.0), sunAngularDistance);
-        float moonOcclusion = 1.0 - smoothstep(radians(5.0), radians(22.0), moonAngularDistance);
+        float sunAlignment = dot(normalizedViewDirection, sunViewDirection);
+        float moonAlignment = -sunAlignment;
+        float sunProximity = smoothstep(COS_38_DEGREES, COS_5_DEGREES, sunAlignment);
+        float moonProximity = smoothstep(COS_30_DEGREES, COS_5_DEGREES, moonAlignment);
+        float sunOcclusion = smoothstep(COS_30_DEGREES, COS_7_DEGREES, sunAlignment);
+        float moonOcclusion = smoothstep(COS_22_DEGREES, COS_5_DEGREES, moonAlignment);
         float moonWeight = 1.0 - CirrusSunWeight;
         float celestialOcclusion = max(sunOcclusion * CirrusSunWeight, moonOcclusion * moonWeight);
         color.a = mix(color.a, 1.0, celestialOcclusion);
