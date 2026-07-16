@@ -42,6 +42,18 @@ public final class CirrusConfigScreen {
                         ))
                         .build())
                 .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.cloudWeather"))
+                        .option(booleanOption(
+                                "cirrus.config.clouds.hideLightningCloudFlashes",
+                                CirrusConfig.HIDE_LIGHTNING_CLOUD_FLASHES
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.clouds.lightningCloudFlashOpacity",
+                                CirrusConfig.LIGHTNING_CLOUD_FLASH_OPACITY,
+                                CirrusConfig.LIGHTNING_CLOUD_FLASH_OPACITY_SETTING
+                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.lowerLayer"))
                         .option(doubleOption(
                                 "cirrus.config.clouds.lowerLayerHeightOffset",

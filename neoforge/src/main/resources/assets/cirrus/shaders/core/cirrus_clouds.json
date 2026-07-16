@@ -16,6 +16,12 @@
     { "name": "CirrusLightDirection", "type": "float", "count": 2, "values": [ 0.0, 0.0 ] },
     { "name": "CirrusLightColor", "type": "float", "count": 3, "values": [ 1.0, 0.82, 0.55 ] },
     { "name": "CirrusSunWeight", "type": "float", "count": 1, "values": [ 1.0 ] },
-    { "name": "CirrusLightViewDirection", "type": "float", "count": 3, "values": [ 0.0, 1.0, 0.0 ] }
+    { "name": "CirrusLightViewDirection", "type": "float", "count": 3, "values": [ 0.0, 1.0, 0.0 ] },
+    { "name": "CirrusRainLevel", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "CirrusThunderLevel", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "CirrusLightningFlash", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "CirrusLightningViewPosition", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
+    { "name": "CirrusWorldUpViewDirection", "type": "float", "count": 3, "values": [ 0.0, 1.0, 0.0 ] },
+    { "name": "CirrusLightningRadius", "type": "float", "count": 1, "values": [ 640.0 ] }
   ]
 }
