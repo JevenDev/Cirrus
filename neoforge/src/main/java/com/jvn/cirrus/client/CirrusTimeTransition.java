@@ -24,8 +24,6 @@ public final class CirrusTimeTransition {
     private static double transitionDelta;
     private static long transitionStartNanos;
     private static double transitionDurationTicks;
-    private static double cloudTimeOffset;
-    private static double transitionStartCloudOffset;
     private static boolean transitionActive;
     private static boolean rendering;
 
@@ -73,10 +71,6 @@ public final class CirrusTimeTransition {
         return visualDayTime;
     }
 
-    public static double cloudTime(double vanillaCloudTime) {
-        return vanillaCloudTime + cloudTimeOffset;
-    }
-
     private static void reset(ClientLevel level, long actualDayTime, long gameTime) {
         trackedLevel = level;
         lastActualDayTime = actualDayTime;
@@ -87,8 +81,6 @@ public final class CirrusTimeTransition {
         transitionTargetDayTime = actualDayTime;
         transitionDelta = 0.0;
         transitionDurationTicks = 0.0;
-        cloudTimeOffset = 0.0;
-        transitionStartCloudOffset = 0.0;
         transitionActive = false;
     }
 
@@ -111,7 +103,6 @@ public final class CirrusTimeTransition {
         }
         transitionDurationTicks = durationTicks(Math.abs(transitionDelta));
         transitionStartNanos = now;
-        transitionStartCloudOffset = cloudTimeOffset;
         transitionActive = true;
     }
 
@@ -130,9 +121,6 @@ public final class CirrusTimeTransition {
         displayedDayTime = transitionStartDayTime
                 + transitionDelta * easedProgress
                 + naturalTimePassed;
-        cloudTimeOffset = transitionStartCloudOffset
-                + Math.abs(transitionDelta) * easedProgress;
-
         if (progress >= 1.0) {
             displayedDayTime = actualDayTime;
             transitionActive = false;

@@ -67,7 +67,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         int distanceChunks = CirrusConfig.CLOUD_RENDER_DISTANCE.get();
         double cameraSampleX = cameraX / WORLD_SCALE;
         double cameraSampleZ = cameraZ / WORLD_SCALE;
-        double cloudTime = CirrusTimeTransition.cloudTime(ticks + partialTick);
+        double cloudTime = ticks + partialTick;
         double windSample = cloudTime * 0.03 / WORLD_SCALE;
         float celestialAngle = level.getSunAngle(partialTick);
         float sunWeight = celestialSunWeight(celestialAngle);
