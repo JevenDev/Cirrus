@@ -15,10 +15,14 @@ public final class CirrusSky {
 
         float cloudDistance = CirrusConfig.CLOUD_RENDER_DISTANCE.get() * 16.0F;
         float lowerOffset = Math.abs(CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get().floatValue());
-        float upperOffset = CirrusConfig.UPPER_LAYER_ENABLED.get()
+        boolean topEnabled = CirrusConfig.TOP_LAYER_ENABLED.get();
+        float upperOffset = CirrusConfig.UPPER_LAYER_ENABLED.get() || topEnabled
                 ? CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get().floatValue()
                 : 0.0F;
-        float verticalAllowance = 256.0F + lowerOffset + upperOffset;
+        float topOffset = topEnabled
+                ? CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get().floatValue()
+                : 0.0F;
+        float verticalAllowance = 256.0F + lowerOffset + upperOffset + topOffset;
         return (float)Math.hypot(cloudDistance, verticalAllowance) + CLOUD_CLIP_MARGIN;
     }
 }

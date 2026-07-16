@@ -14,7 +14,6 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.FogRenderer;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.util.Mth;
@@ -29,11 +28,23 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private static final float TWILIGHT_TRANSITION = (float)Math.toRadians(12.0);
     private static final int UPPER_PATTERN_OFFSET_X = 37;
     private static final int UPPER_PATTERN_OFFSET_Z = 91;
-    private static final LayerDefinition LOWER_LAYER = new LayerDefinition(false, 0, 0);
-    private static final LayerDefinition UPPER_LAYER = new LayerDefinition(true, UPPER_PATTERN_OFFSET_X, UPPER_PATTERN_OFFSET_Z);
+    private static final int TOP_PATTERN_OFFSET_X = 113;
+    private static final int TOP_PATTERN_OFFSET_Z = 173;
+    private static final LayerDefinition LOWER_LAYER = new LayerDefinition(LayerKind.LOWER, 0, 0);
+    private static final LayerDefinition UPPER_LAYER = new LayerDefinition(
+            LayerKind.UPPER,
+            UPPER_PATTERN_OFFSET_X,
+            UPPER_PATTERN_OFFSET_Z
+    );
+    private static final LayerDefinition TOP_LAYER = new LayerDefinition(
+            LayerKind.TOP,
+            TOP_PATTERN_OFFSET_X,
+            TOP_PATTERN_OFFSET_Z
+    );
 
     private final LayerMesh lowerMesh = new LayerMesh();
     private final LayerMesh upperMesh = new LayerMesh();
+    private final LayerMesh topMesh = new LayerMesh();
 
     public void render(
             ClientLevel level,
@@ -54,7 +65,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         int distanceChunks = CirrusConfig.CLOUD_RENDER_DISTANCE.get();
         double cameraSampleX = cameraX / WORLD_SCALE;
         double cameraSampleZ = cameraZ / WORLD_SCALE;
-        double windSample = (ticks + partialTick) * 0.03 / WORLD_SCALE;
+        double cloudTime = CirrusTimeTransition.cloudTime(ticks + partialTick);
+        double windSample = cloudTime * 0.03 / WORLD_SCALE;
         float celestialAngle = level.getSunAngle(partialTick);
         float sunWeight = celestialSunWeight(celestialAngle);
         Vector3f celestialViewDirection = celestialViewDirection(frustumMatrix, celestialAngle);
@@ -66,7 +78,13 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         } else {
             upperMesh.invalidate();
         }
-        if (lowerMesh.buffer == null && upperMesh.buffer == null) {
+        boolean topEnabled = CirrusConfig.TOP_LAYER_ENABLED.get();
+        if (topEnabled) {
+            prepareLayer(topMesh, TOP_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
+        } else {
+            topMesh.invalidate();
+        }
+        if (lowerMesh.buffer == null && upperMesh.buffer == null && topMesh.buffer == null) {
             return;
         }
 
@@ -130,8 +148,30 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                         celestialViewDirection
                 );
             }
+            if (topEnabled) {
+                double topHeight = cloudHeight
+                        + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
+                        + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
+                        + CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get()
+                        - cameraY
+                        + 0.33;
+                drawLayer(
+                        topMesh,
+                        TOP_LAYER,
+                        poseStack,
+                        frustumMatrix,
+                        projectionMatrix,
+                        topHeight,
+                        cameraSampleX,
+                        cameraSampleZ,
+                        windSample,
+                        cloudColor,
+                        celestialAngle,
+                        sunWeight,
+                        celestialViewDirection
+                );
+            }
         } finally {
-            disableShaderEffects();
             VertexBuffer.unbind();
             RenderSystem.setShaderColor(oldShaderRed, oldShaderGreen, oldShaderBlue, oldShaderAlpha);
             RenderSystem.setShaderFogColor(oldFogRed, oldFogGreen, oldFogBlue);
@@ -214,7 +254,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             RenderType clouds = RenderType.clouds();
             clouds.setupRenderState();
             try {
-                ShaderInstance shader = RenderSystem.getShader();
+                ShaderInstance shader = CirrusShaders.clouds();
                 setCelestialLight(shader, celestialAngle, sunWeight, celestialViewDirection);
                 mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
             } finally {
@@ -225,7 +265,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 depthOnly.setupRenderState();
                 try {
                     Minecraft.getInstance().getMainRenderTarget().bindWrite(false);
-                    ShaderInstance shader = RenderSystem.getShader();
+                    ShaderInstance shader = CirrusShaders.clouds();
                     setCelestialLight(shader, celestialAngle, sunWeight, celestialViewDirection);
                     mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
                 } finally {
@@ -299,17 +339,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         }
     }
 
-    public static void disableShaderEffects() {
-        ShaderInstance shader = GameRenderer.getRendertypeCloudsShader();
-        if (shader == null) {
-            return;
-        }
-        Uniform enabled = shader.getUniform("CirrusEnabled");
-        if (enabled != null) {
-            enabled.set(0.0F);
-        }
-    }
-
     private MeshData buildMesh(int distanceChunks, int anchorX, int anchorZ) {
         BufferBuilder builder = Tesselator.getInstance().begin(
                 VertexFormat.Mode.QUADS,
@@ -368,6 +397,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     public void invalidate() {
         lowerMesh.invalidate();
         upperMesh.invalidate();
+        topMesh.invalidate();
     }
 
     @Override
@@ -375,14 +405,28 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         invalidate();
     }
 
-    private record LayerDefinition(boolean upper, int patternOffsetX, int patternOffsetZ) {
+    private record LayerDefinition(LayerKind kind, int patternOffsetX, int patternOffsetZ) {
         private double speed() {
-            return upper ? CirrusConfig.UPPER_LAYER_SPEED.get() : CirrusConfig.LOWER_LAYER_SPEED.get();
+            return switch (kind) {
+                case LOWER -> CirrusConfig.LOWER_LAYER_SPEED.get();
+                case UPPER -> CirrusConfig.UPPER_LAYER_SPEED.get();
+                case TOP -> CirrusConfig.TOP_LAYER_SPEED.get();
+            };
         }
 
         private float opacity() {
-            return (upper ? CirrusConfig.UPPER_LAYER_OPACITY.get() : CirrusConfig.LOWER_LAYER_OPACITY.get()).floatValue();
+            return switch (kind) {
+                case LOWER -> CirrusConfig.LOWER_LAYER_OPACITY.get().floatValue();
+                case UPPER -> CirrusConfig.UPPER_LAYER_OPACITY.get().floatValue();
+                case TOP -> CirrusConfig.TOP_LAYER_OPACITY.get().floatValue();
+            };
         }
+    }
+
+    private enum LayerKind {
+        LOWER,
+        UPPER,
+        TOP
     }
 
     private static final class LayerMesh {

@@ -1,6 +1,6 @@
 {
-  "vertex": "rendertype_clouds",
-  "fragment": "rendertype_clouds",
+  "vertex": "cirrus:cirrus_clouds",
+  "fragment": "cirrus:cirrus_clouds",
   "samplers": [
     { "name": "Sampler0" }
   ],

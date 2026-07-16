@@ -10,6 +10,9 @@ public final class CirrusConfig {
     public static final DoubleSetting UPPER_LAYER_HEIGHT_SETTING = new DoubleSetting(64.0, 16.0, 256.0, 1.0);
     public static final DoubleSetting UPPER_LAYER_SPEED_SETTING = new DoubleSetting(0.55, 0.0, 4.0, 0.05);
     public static final DoubleSetting UPPER_LAYER_OPACITY_SETTING = new DoubleSetting(0.50, 0.05, 1.0, 0.05);
+    public static final DoubleSetting TOP_LAYER_HEIGHT_SETTING = new DoubleSetting(64.0, 16.0, 256.0, 1.0);
+    public static final DoubleSetting TOP_LAYER_SPEED_SETTING = new DoubleSetting(0.30, 0.0, 4.0, 0.05);
+    public static final DoubleSetting TOP_LAYER_OPACITY_SETTING = new DoubleSetting(0.15, 0.05, 1.0, 0.05);
 
     public static final ModConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
     public static final ModConfigSpec.IntValue CLOUD_RENDER_DISTANCE;
@@ -20,6 +23,10 @@ public final class CirrusConfig {
     public static final ModConfigSpec.DoubleValue UPPER_LAYER_HEIGHT_OFFSET;
     public static final ModConfigSpec.DoubleValue UPPER_LAYER_SPEED;
     public static final ModConfigSpec.DoubleValue UPPER_LAYER_OPACITY;
+    public static final ModConfigSpec.BooleanValue TOP_LAYER_ENABLED;
+    public static final ModConfigSpec.DoubleValue TOP_LAYER_HEIGHT_OFFSET;
+    public static final ModConfigSpec.DoubleValue TOP_LAYER_SPEED;
+    public static final ModConfigSpec.DoubleValue TOP_LAYER_OPACITY;
     public static final ModConfigSpec SPEC;
 
     static {
@@ -65,6 +72,24 @@ public final class CirrusConfig {
                 builder,
                 "upperLayerOpacity",
                 "Upper cloud layer opacity."
+        );
+        TOP_LAYER_ENABLED = builder
+                .comment("Render a third, independently sampled cloud layer above the upper cloud layer.")
+                .define("topLayerEnabled", true);
+        TOP_LAYER_HEIGHT_OFFSET = TOP_LAYER_HEIGHT_SETTING.define(
+                builder,
+                "topLayerHeightOffset",
+                "Top cloud layer height above the upper cloud layer, in blocks."
+        );
+        TOP_LAYER_SPEED = TOP_LAYER_SPEED_SETTING.define(
+                builder,
+                "topLayerSpeed",
+                "Top cloud layer speed multiplier. Defaults slower than the upper layer."
+        );
+        TOP_LAYER_OPACITY = TOP_LAYER_OPACITY_SETTING.define(
+                builder,
+                "topLayerOpacity",
+                "Top cloud layer opacity. Defaults more transparent than the other layers."
         );
         builder.pop();
         SPEC = builder.build();

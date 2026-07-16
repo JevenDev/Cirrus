@@ -3,6 +3,7 @@
   "package": "com.jvn.cirrus.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "ClientLevelDataMixin",
     "GameRendererMixin",
     "LevelRendererCloudMixin"
   ],

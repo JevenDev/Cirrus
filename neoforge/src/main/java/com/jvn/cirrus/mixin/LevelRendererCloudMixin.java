@@ -59,7 +59,6 @@ public abstract class LevelRendererCloudMixin {
             CallbackInfo ci
     ) {
         if (!CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
-            CirrusCloudRenderer.disableShaderEffects();
             return;
         }
         ci.cancel();

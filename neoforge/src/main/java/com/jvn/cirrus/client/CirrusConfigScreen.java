@@ -82,6 +82,27 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.UPPER_LAYER_OPACITY_SETTING
                         ))
                         .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.topLayer"))
+                        .option(booleanOption("cirrus.config.clouds.topLayerEnabled", CirrusConfig.TOP_LAYER_ENABLED))
+                        .option(doubleOption(
+                                "cirrus.config.clouds.topLayerHeightOffset",
+                                CirrusConfig.TOP_LAYER_HEIGHT_OFFSET,
+                                CirrusConfig.TOP_LAYER_HEIGHT_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.0f blocks", value))
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.clouds.topLayerSpeed",
+                                CirrusConfig.TOP_LAYER_SPEED,
+                                CirrusConfig.TOP_LAYER_SPEED_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.clouds.topLayerOpacity",
+                                CirrusConfig.TOP_LAYER_OPACITY,
+                                CirrusConfig.TOP_LAYER_OPACITY_SETTING
+                        ))
+                        .build())
                 .build();
     }
 
