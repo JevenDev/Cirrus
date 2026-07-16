@@ -2,6 +2,8 @@ package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.CirrusCloudRenderer;
 import com.jvn.cirrus.client.CirrusCloudMode;
+import com.jvn.cirrus.client.CirrusShaders;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CloudStatus;
@@ -26,6 +28,7 @@ public abstract class LevelRendererCloudMixin {
     @Shadow private int ticks;
     @Unique private final CirrusCloudRenderer cirrus$cloudRenderer = new CirrusCloudRenderer();
     @Unique private CloudStatus cirrus$lastCloudMode;
+    @Unique private boolean cirrus$celestialMaskActive;
 
     @Inject(method = "renderLevel", at = @At("HEAD"))
     private void cirrus$noticeCloudModeChange(
@@ -74,6 +77,58 @@ public abstract class LevelRendererCloudMixin {
                     cameraY,
                     cameraZ
             );
+        }
+    }
+
+    @Inject(
+            method = "renderSky",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V",
+                    ordinal = 1,
+                    shift = At.Shift.AFTER
+            )
+    )
+    private void cirrus$maskMoonHaloBehindClouds(
+            Matrix4f frustumMatrix,
+            Matrix4f projectionMatrix,
+            float partialTick,
+            Camera camera,
+            boolean isFoggy,
+            Runnable skyFogSetup,
+            CallbackInfo ci
+    ) {
+        if (level == null || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
+            return;
+        }
+        cirrus$cloudRenderer.renderCelestialMask(
+                level,
+                frustumMatrix,
+                projectionMatrix,
+                partialTick,
+                ticks,
+                camera.getPosition().x,
+                camera.getPosition().y,
+                camera.getPosition().z
+        );
+        RenderSystem.setShader(CirrusShaders::moonOcclusion);
+        cirrus$celestialMaskActive = true;
+    }
+
+    @Inject(method = "renderSky", at = @At("TAIL"))
+    private void cirrus$clearCelestialCloudMask(
+            Matrix4f frustumMatrix,
+            Matrix4f projectionMatrix,
+            float partialTick,
+            Camera camera,
+            boolean isFoggy,
+            Runnable skyFogSetup,
+            CallbackInfo ci
+    ) {
+        if (cirrus$celestialMaskActive) {
+            RenderSystem.depthMask(true);
+            RenderSystem.clear(256, Minecraft.ON_OSX);
+            cirrus$celestialMaskActive = false;
         }
     }
 

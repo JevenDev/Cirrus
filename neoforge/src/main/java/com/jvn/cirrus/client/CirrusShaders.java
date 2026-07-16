@@ -15,8 +15,14 @@ import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 public final class CirrusShaders {
     private static final ResourceLocation CLOUDS_LOCATION =
             ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_clouds");
+    private static final ResourceLocation CLOUD_MASK_LOCATION =
+            ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_cloud_mask");
+    private static final ResourceLocation MOON_OCCLUSION_LOCATION =
+            ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_moon_occlusion");
 
     private static ShaderInstance clouds;
+    private static ShaderInstance cloudMask;
+    private static ShaderInstance moonOcclusion;
 
     private CirrusShaders() {
     }
@@ -31,9 +37,33 @@ public final class CirrusShaders {
                 ),
                 shader -> clouds = shader
         );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        CLOUD_MASK_LOCATION,
+                        DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
+                ),
+                shader -> cloudMask = shader
+        );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        MOON_OCCLUSION_LOCATION,
+                        DefaultVertexFormat.POSITION_TEX
+                ),
+                shader -> moonOcclusion = shader
+        );
     }
 
     public static ShaderInstance clouds() {
         return Objects.requireNonNull(clouds, "Cirrus cloud shader has not finished loading");
+    }
+
+    public static ShaderInstance cloudMask() {
+        return Objects.requireNonNull(cloudMask, "Cirrus cloud mask shader has not finished loading");
+    }
+
+    public static ShaderInstance moonOcclusion() {
+        return Objects.requireNonNull(moonOcclusion, "Cirrus moon occlusion shader has not finished loading");
     }
 }

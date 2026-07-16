@@ -29,7 +29,6 @@ out vec4 fragColor;
 
 const float COS_5_DEGREES = 0.9961947;
 const float COS_7_DEGREES = 0.9925462;
-const float COS_22_DEGREES = 0.9271839;
 const float COS_30_DEGREES = 0.8660254;
 const float COS_38_DEGREES = 0.7880108;
 
@@ -53,14 +52,14 @@ void main() {
 
         float lightStrength = length(CirrusLightDirection);
         float horizonAmount = smoothstep(0.05, 1.0, lightStrength);
-        float fadeWidth = mix(0.14, 0.52, horizonAmount);
+        float fadeWidth = mix(0.32, 0.62, horizonAmount);
         float fadeLeft = emptyLeft * (1.0 - smoothstep(0.0, fadeWidth, positionInTexel.x));
         float fadeRight = emptyRight * (1.0 - smoothstep(0.0, fadeWidth, 1.0 - positionInTexel.x));
         float fadeBottom = emptyBottom * (1.0 - smoothstep(0.0, fadeWidth, positionInTexel.y));
         float fadeTop = emptyTop * (1.0 - smoothstep(0.0, fadeWidth, 1.0 - positionInTexel.y));
 
         vec2 lightAxis = lightStrength > 0.001 ? normalize(CirrusLightDirection) : vec2(0.0);
-        float sunDirectionalEdge = max(
+        float sunEdgeFade = max(
             max(
                 fadeLeft * max(0.0, dot(vec2(-1.0, 0.0), lightAxis)),
                 fadeRight * max(0.0, dot(vec2(1.0, 0.0), lightAxis))
@@ -70,35 +69,20 @@ void main() {
                 fadeTop * max(0.0, dot(vec2(0.0, 1.0), lightAxis))
             )
         );
-        float moonDirectionalEdge = max(
-            max(
-                fadeLeft * max(0.0, dot(vec2(-1.0, 0.0), -lightAxis)),
-                fadeRight * max(0.0, dot(vec2(1.0, 0.0), -lightAxis))
-            ),
-            max(
-                fadeBottom * max(0.0, dot(vec2(0.0, -1.0), -lightAxis)),
-                fadeTop * max(0.0, dot(vec2(0.0, 1.0), -lightAxis))
-            )
-        );
 
         vec3 normalizedViewDirection = normalize(viewDirection);
         vec3 sunViewDirection = normalize(CirrusLightViewDirection);
         float sunAlignment = dot(normalizedViewDirection, sunViewDirection);
-        float moonAlignment = -sunAlignment;
         float sunProximity = smoothstep(COS_38_DEGREES, COS_5_DEGREES, sunAlignment);
-        float moonProximity = smoothstep(COS_30_DEGREES, COS_5_DEGREES, moonAlignment);
-        float sunOcclusion = smoothstep(COS_30_DEGREES, COS_7_DEGREES, sunAlignment);
-        float moonOcclusion = smoothstep(COS_22_DEGREES, COS_5_DEGREES, moonAlignment);
-        float moonWeight = 1.0 - CirrusSunWeight;
-        float celestialOcclusion = max(sunOcclusion * CirrusSunWeight, moonOcclusion * moonWeight);
-        color.a = mix(color.a, 1.0, celestialOcclusion);
 
-        float sunHighlight = sunDirectionalEdge * horizonAmount * CirrusSunWeight * sunProximity * 0.74;
-        float moonHighlight = moonDirectionalEdge * horizonAmount * moonWeight * moonProximity * 0.12;
-        vec3 sunEdgeColor = mix(CirrusLightColor, vec3(1.0), 0.70);
-        vec3 moonEdgeColor = vec3(0.82, 0.89, 1.0);
+        float sunOcclusion = smoothstep(COS_30_DEGREES, COS_7_DEGREES, sunAlignment);
+        color.a = mix(color.a, 1.0, sunOcclusion * CirrusSunWeight);
+
+        // Keep the pixel silhouette untouched. Only the lighting fades inward from
+        // square exposed edges, with a restrained lift instead of an opaque halo.
+        float sunHighlight = sunEdgeFade * horizonAmount * CirrusSunWeight * sunProximity * 0.20;
+        vec3 sunEdgeColor = mix(color.rgb, CirrusLightColor, 0.35);
         color.rgb = mix(color.rgb, sunEdgeColor, sunHighlight);
-        color.rgb = mix(color.rgb, moonEdgeColor, moonHighlight);
     }
 
     color.rgb *= mix(1.0, 0.92, rainLevel);

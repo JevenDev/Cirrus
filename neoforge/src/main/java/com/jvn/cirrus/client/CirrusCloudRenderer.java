@@ -16,6 +16,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LightningBolt;
@@ -28,6 +29,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private static final int TILE_SIZE = 8;
     private static final float UV_SCALE = 1.0F / 256.0F;
     private static final float TWILIGHT_TRANSITION = (float)Math.toRadians(12.0);
+    private static final ResourceLocation CLOUDS_LOCATION =
+            ResourceLocation.withDefaultNamespace("textures/environment/clouds.png");
     private static final int UPPER_PATTERN_OFFSET_X = 37;
     private static final int UPPER_PATTERN_OFFSET_Z = 91;
     private static final int TOP_PATTERN_OFFSET_X = 113;
@@ -47,6 +50,90 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private final LayerMesh lowerMesh = new LayerMesh();
     private final LayerMesh upperMesh = new LayerMesh();
     private final LayerMesh topMesh = new LayerMesh();
+
+    public void renderCelestialMask(
+            ClientLevel level,
+            Matrix4f frustumMatrix,
+            Matrix4f projectionMatrix,
+            float partialTick,
+            int ticks,
+            double cameraX,
+            double cameraY,
+            double cameraZ
+    ) {
+        float cloudHeight = level.effects().getCloudHeight();
+        if (Float.isNaN(cloudHeight)) {
+            return;
+        }
+
+        int distanceChunks = CirrusConfig.CLOUD_RENDER_DISTANCE.get();
+        double cameraSampleX = cameraX / WORLD_SCALE;
+        double cameraSampleZ = cameraZ / WORLD_SCALE;
+        double windSample = (ticks + partialTick) * 0.03 / WORLD_SCALE;
+        prepareLayer(lowerMesh, LOWER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
+        boolean upperEnabled = CirrusConfig.UPPER_LAYER_ENABLED.get();
+        boolean topEnabled = CirrusConfig.TOP_LAYER_ENABLED.get();
+        if (upperEnabled) {
+            prepareLayer(upperMesh, UPPER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
+        }
+        if (topEnabled) {
+            prepareLayer(topMesh, TOP_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
+        }
+
+        int oldTexture = RenderSystem.getShaderTexture(0);
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthMask(true);
+        RenderSystem.colorMask(false, false, false, false);
+        RenderSystem.disableBlend();
+        RenderSystem.setShaderTexture(0, CLOUDS_LOCATION);
+        try {
+            drawMaskLayer(lowerMesh, LOWER_LAYER, frustumMatrix, projectionMatrix,
+                    cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
+                    cameraSampleX, cameraSampleZ, windSample);
+            if (upperEnabled) {
+                drawMaskLayer(upperMesh, UPPER_LAYER, frustumMatrix, projectionMatrix,
+                        cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
+                                + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
+                        cameraSampleX, cameraSampleZ, windSample);
+            }
+            if (topEnabled) {
+                drawMaskLayer(topMesh, TOP_LAYER, frustumMatrix, projectionMatrix,
+                        cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
+                                + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
+                                + CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
+                        cameraSampleX, cameraSampleZ, windSample);
+            }
+        } finally {
+            VertexBuffer.unbind();
+            RenderSystem.setShaderTexture(0, oldTexture);
+            RenderSystem.colorMask(true, true, true, true);
+            RenderSystem.depthMask(false);
+            RenderSystem.enableBlend();
+        }
+    }
+
+    private static void drawMaskLayer(
+            LayerMesh mesh,
+            LayerDefinition definition,
+            Matrix4f frustumMatrix,
+            Matrix4f projectionMatrix,
+            double relativeHeight,
+            double cameraSampleX,
+            double cameraSampleZ,
+            double windSample
+    ) {
+        if (mesh.buffer == null) {
+            return;
+        }
+        double sampleX = sampleX(definition, cameraSampleX, windSample);
+        double sampleZ = sampleZ(definition, cameraSampleZ);
+        PoseStack poseStack = new PoseStack();
+        poseStack.mulPose(frustumMatrix);
+        poseStack.scale(WORLD_SCALE, 1.0F, WORLD_SCALE);
+        poseStack.translate(-(sampleX - mesh.cachedAnchorX), relativeHeight, -(sampleZ - mesh.cachedAnchorZ));
+        mesh.buffer.bind();
+        mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, CirrusShaders.cloudMask());
+    }
 
     public void render(
             ClientLevel level,
