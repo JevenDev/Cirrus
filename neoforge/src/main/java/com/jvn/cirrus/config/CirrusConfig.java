@@ -7,13 +7,13 @@ public final class CirrusConfig {
     public static final DoubleSetting LIGHTNING_CLOUD_FLASH_OPACITY_SETTING =
             new DoubleSetting(0.75, 0.0, 1.0, 0.05);
     public static final DoubleSetting LOWER_LAYER_HEIGHT_SETTING = new DoubleSetting(0.0, -128.0, 128.0, 1.0);
-    public static final DoubleSetting LOWER_LAYER_SPEED_SETTING = new DoubleSetting(1.0, 0.0, 4.0, 0.05);
+    public static final DoubleSetting LOWER_LAYER_SPEED_SETTING = new DoubleSetting(2.0, 0.0, 4.0, 0.05);
     public static final DoubleSetting LOWER_LAYER_OPACITY_SETTING = new DoubleSetting(0.25, 0.05, 1.0, 0.05);
     public static final DoubleSetting UPPER_LAYER_HEIGHT_SETTING = new DoubleSetting(64.0, 16.0, 256.0, 1.0);
-    public static final DoubleSetting UPPER_LAYER_SPEED_SETTING = new DoubleSetting(0.55, 0.0, 4.0, 0.05);
+    public static final DoubleSetting UPPER_LAYER_SPEED_SETTING = new DoubleSetting(1.0, 0.0, 4.0, 0.05);
     public static final DoubleSetting UPPER_LAYER_OPACITY_SETTING = new DoubleSetting(0.50, 0.05, 1.0, 0.05);
     public static final DoubleSetting TOP_LAYER_HEIGHT_SETTING = new DoubleSetting(64.0, 16.0, 256.0, 1.0);
-    public static final DoubleSetting TOP_LAYER_SPEED_SETTING = new DoubleSetting(0.30, 0.0, 4.0, 0.05);
+    public static final DoubleSetting TOP_LAYER_SPEED_SETTING = new DoubleSetting(0.50, 0.0, 4.0, 0.05);
     public static final DoubleSetting TOP_LAYER_OPACITY_SETTING = new DoubleSetting(0.15, 0.05, 1.0, 0.05);
 
     public static final ModConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
