@@ -14,7 +14,7 @@
 
 </div>
 
-Cirrus overhauls Minecraft's clouds, sky, and atmosphere while keeping the familiar vanilla look. It replaces the single vanilla cloud sheet with layered, independently moving clouds, adds weather-aware lighting, and fixes several visual issues around fog, the horizon, and the void.
+Cirrus overhauls Minecraft's clouds while keeping the familiar vanilla look. It replaces the single vanilla cloud sheet with layered, independently moving clouds and adds weather-aware lighting and celestial occlusion.
 
 > **Client-side:** Cirrus is client-side only, and can be used on multiplayer servers without a server-side installation.
 
@@ -29,16 +29,14 @@ Cirrus overhauls Minecraft's clouds, sky, and atmosphere while keeping the famil
 | Extended cloud distance | Separates cloud render distance from terrain render distance so clouds can remain visible far beyond nearby chunks |
 | Weather-aware shading | Darkens clouds during rain and thunder, then illuminates nearby clouds when lightning strikes |
 | Celestial occlusion | Allows clouds to naturally pass in front of the moon |
-| Improved fog | Offers a corrected normal-air fog cutoff, adjustable fog distance, optional fog removal, and smoother horizon blending |
-| Sky and void fixes | Prevents skybox clipping at low render distances, corrects void darkness, and can hide the sky below the world |
-| Customization | Provides an in-game config for cloud layers, weather effects, fog, twilight glow, sky geometry, and void behavior |
+| Customization | Provides an in-game config for cloud layers, weather effects, movement, height, and opacity |
 
 ![compatibility](https://cdn.modrinth.com/data/cached_images/1252c11050b7daf8b8621712b58dd1005e7ba982.png)
 
 ## Compatibility
 
 - [YetAnotherConfigLib](https://modrinth.com/mod/yacl) is required for the in-game configuration screen.
-- Shader packs or other mods that replace Minecraft's cloud, sky, or fog rendering may override Cirrus features or cause visual conflicts.
+- Shader packs or other mods that replace Minecraft's cloud rendering may override Cirrus features or cause visual conflicts.
 
 ![credits & license](https://cdn.modrinth.com/data/cached_images/5fd3ad80e342e6985dd6ebda1f7afd9c48749fce.png)
 
