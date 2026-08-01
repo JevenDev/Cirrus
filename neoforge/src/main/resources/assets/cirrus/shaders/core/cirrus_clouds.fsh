@@ -83,6 +83,38 @@ void main() {
         float sunHighlight = sunEdgeFade * horizonAmount * CirrusSunWeight * sunProximity * 0.20;
         vec3 sunEdgeColor = mix(color.rgb, CirrusLightColor, 0.35);
         color.rgb = mix(color.rgb, sunEdgeColor, sunHighlight);
+
+        // Recolor the whole cloudscape as the sun crosses the horizon
+        vec3 worldUpViewDirection = normalize(CirrusWorldUpViewDirection);
+        float viewHeight = abs(dot(normalizedViewDirection, worldUpViewDirection));
+        float horizonBand = 1.0 - smoothstep(0.12, 0.72, viewHeight);
+        float twilightAmount = smoothstep(0.82, 0.995, horizonAmount);
+        float clearSkyAmount = 1.0 - clamp(rainLevel * 0.65 + thunderLevel * 0.55, 0.0, 0.88);
+
+        float sunward = smoothstep(-0.30, 0.92, sunAlignment);
+        float sunCore = smoothstep(0.55, 0.992, sunAlignment);
+        vec3 farTwilightTint = vec3(0.84, 0.70, 1.04);
+        vec3 nearTwilightTint = vec3(1.26, 0.70, 0.42);
+        vec3 twilightTint = mix(farTwilightTint, nearTwilightTint, sunward);
+        twilightTint = mix(twilightTint, vec3(1.34, 0.82, 0.48), sunCore);
+        float twilightStrength = twilightAmount
+            * clearSkyAmount
+            * mix(0.24, 0.82, sunward)
+            * mix(0.72, 1.0, horizonBand);
+        color.rgb = mix(color.rgb, color.rgb * twilightTint, twilightStrength);
+
+        // Noon keeps a restrained warm-facing side, while moonlit clouds cool
+        // toward blue. Both effects use sky position instead of a flat global tint.
+        float daylightAmount = CirrusSunWeight * (1.0 - twilightAmount);
+        float daySunward = smoothstep(0.10, 0.96, sunAlignment);
+        float daylightStrength = daylightAmount * daySunward * clearSkyAmount * 0.18;
+        color.rgb = mix(color.rgb, color.rgb * vec3(1.05, 1.015, 0.94), daylightStrength);
+
+        float moonAlignment = dot(normalizedViewDirection, -sunViewDirection);
+        float moonward = smoothstep(0.05, 0.96, moonAlignment);
+        float nightAmount = (1.0 - CirrusSunWeight) * (1.0 - twilightAmount * 0.72);
+        float nightStrength = nightAmount * clearSkyAmount * mix(0.20, 0.36, moonward);
+        color.rgb = mix(color.rgb, color.rgb * vec3(0.72, 0.84, 1.12), nightStrength);
     }
 
     color.rgb *= mix(1.0, 0.92, rainLevel);
