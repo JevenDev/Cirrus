@@ -124,6 +124,57 @@ public final class CirrusConfigScreen {
                 .name(text("cirrus.config.category.sky"))
                 .tooltip(text("cirrus.config.category.sky.description"))
                 .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.stars"))
+                        .option(booleanOption(
+                                "cirrus.config.sky.customStarsEnabled",
+                                CirrusConfig.CUSTOM_STARS_ENABLED
+                        ))
+                        .option(integerOption(
+                                "cirrus.config.sky.starDensity",
+                                CirrusConfig.STAR_DENSITY,
+                                CirrusConfig.STAR_DENSITY_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%,d stars", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.starMinimumOpacity",
+                                CirrusConfig.STAR_MIN_OPACITY,
+                                CirrusConfig.STAR_MIN_OPACITY_SETTING
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.starMaximumOpacity",
+                                CirrusConfig.STAR_MAX_OPACITY,
+                                CirrusConfig.STAR_MAX_OPACITY_SETTING
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.starMinimumSize",
+                                CirrusConfig.STAR_MIN_SIZE,
+                                CirrusConfig.STAR_MIN_SIZE_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.starMaximumSize",
+                                CirrusConfig.STAR_MAX_SIZE,
+                                CirrusConfig.STAR_MAX_SIZE_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.starTwinkleStrength",
+                                CirrusConfig.STAR_TWINKLE_STRENGTH,
+                                CirrusConfig.STAR_TWINKLE_STRENGTH_SETTING
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.starTwinkleSpeed",
+                                CirrusConfig.STAR_TWINKLE_SPEED,
+                                CirrusConfig.STAR_TWINKLE_SPEED_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.starColorVariation",
+                                CirrusConfig.STAR_COLOR_VARIATION,
+                                CirrusConfig.STAR_COLOR_VARIATION_SETTING
+                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.aurora"))
                         .option(booleanOption("cirrus.config.sky.auroraEnabled", CirrusConfig.AURORA_ENABLED))
                         .option(booleanOption(

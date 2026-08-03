@@ -15,6 +15,14 @@ public final class CirrusConfig {
     public static final DoubleSetting TOP_LAYER_HEIGHT_SETTING = new DoubleSetting(64.0, 16.0, 256.0, 1.0);
     public static final DoubleSetting TOP_LAYER_SPEED_SETTING = new DoubleSetting(0.50, 0.0, 4.0, 0.05);
     public static final DoubleSetting TOP_LAYER_OPACITY_SETTING = new DoubleSetting(0.15, 0.05, 1.0, 0.05);
+    public static final IntSetting STAR_DENSITY_SETTING = new IntSetting(2000, 250, 8000, 250);
+    public static final DoubleSetting STAR_MIN_OPACITY_SETTING = new DoubleSetting(0.25, 0.0, 1.0, 0.05);
+    public static final DoubleSetting STAR_MAX_OPACITY_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
+    public static final DoubleSetting STAR_MIN_SIZE_SETTING = new DoubleSetting(0.55, 0.25, 4.0, 0.05);
+    public static final DoubleSetting STAR_MAX_SIZE_SETTING = new DoubleSetting(2.0, 0.25, 4.0, 0.05);
+    public static final DoubleSetting STAR_TWINKLE_STRENGTH_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
+    public static final DoubleSetting STAR_TWINKLE_SPEED_SETTING = new DoubleSetting(1.0, 0.0, 3.0, 0.05);
+    public static final DoubleSetting STAR_COLOR_VARIATION_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
     public static final DoubleSetting AURORA_OPACITY_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
     public static final DoubleSetting AURORA_ANIMATION_SPEED_SETTING = new DoubleSetting(5.0, 0.0, 5.0, 0.05);
     public static final DoubleSetting AURORA_MOVEMENT_SETTING = new DoubleSetting(2.0, 0.0, 2.0, 0.05);
@@ -37,6 +45,15 @@ public final class CirrusConfig {
     public static final ModConfigSpec.DoubleValue TOP_LAYER_HEIGHT_OFFSET;
     public static final ModConfigSpec.DoubleValue TOP_LAYER_SPEED;
     public static final ModConfigSpec.DoubleValue TOP_LAYER_OPACITY;
+    public static final ModConfigSpec.BooleanValue CUSTOM_STARS_ENABLED;
+    public static final ModConfigSpec.IntValue STAR_DENSITY;
+    public static final ModConfigSpec.DoubleValue STAR_MIN_OPACITY;
+    public static final ModConfigSpec.DoubleValue STAR_MAX_OPACITY;
+    public static final ModConfigSpec.DoubleValue STAR_MIN_SIZE;
+    public static final ModConfigSpec.DoubleValue STAR_MAX_SIZE;
+    public static final ModConfigSpec.DoubleValue STAR_TWINKLE_STRENGTH;
+    public static final ModConfigSpec.DoubleValue STAR_TWINKLE_SPEED;
+    public static final ModConfigSpec.DoubleValue STAR_COLOR_VARIATION;
     public static final ModConfigSpec.BooleanValue AURORA_ENABLED;
     public static final ModConfigSpec.BooleanValue AURORA_COLD_BIOMES_ONLY;
     public static final ModConfigSpec.DoubleValue AURORA_OPACITY;
@@ -120,6 +137,49 @@ public final class CirrusConfig {
         builder.pop();
 
         builder.comment("Sky rendering").push("sky");
+        CUSTOM_STARS_ENABLED = builder
+                .comment("Replace vanilla stars with Cirrus' shader-driven star field.")
+                .define("customStarsEnabled", true);
+        STAR_DENSITY = STAR_DENSITY_SETTING.define(
+                builder,
+                "starDensity",
+                "Maximum number of stars distributed across the complete celestial sphere."
+        );
+        STAR_MIN_OPACITY = STAR_MIN_OPACITY_SETTING.define(
+                builder,
+                "starMinimumOpacity",
+                "Opacity of the dimmest stars."
+        );
+        STAR_MAX_OPACITY = STAR_MAX_OPACITY_SETTING.define(
+                builder,
+                "starMaximumOpacity",
+                "Opacity of the brightest stars."
+        );
+        STAR_MIN_SIZE = STAR_MIN_SIZE_SETTING.define(
+                builder,
+                "starMinimumSize",
+                "Size multiplier used by the smallest stars."
+        );
+        STAR_MAX_SIZE = STAR_MAX_SIZE_SETTING.define(
+                builder,
+                "starMaximumSize",
+                "Size multiplier used by the largest stars."
+        );
+        STAR_TWINKLE_STRENGTH = STAR_TWINKLE_STRENGTH_SETTING.define(
+                builder,
+                "starTwinkleStrength",
+                "Amount that individual stars gently vary in brightness."
+        );
+        STAR_TWINKLE_SPEED = STAR_TWINKLE_SPEED_SETTING.define(
+                builder,
+                "starTwinkleSpeed",
+                "Speed of the star twinkle animation. Zero freezes the animation."
+        );
+        STAR_COLOR_VARIATION = STAR_COLOR_VARIATION_SETTING.define(
+                builder,
+                "starColorVariation",
+                "Strength of subtle warm and cool color differences between stars."
+        );
         AURORA_ENABLED = builder
                 .comment("Render animated northern lights at night. Biome restrictions are configured separately.")
                 .define("auroraEnabled", true);
