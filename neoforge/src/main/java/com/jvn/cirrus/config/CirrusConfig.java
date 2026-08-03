@@ -23,6 +23,8 @@ public final class CirrusConfig {
     public static final DoubleSetting STAR_TWINKLE_STRENGTH_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
     public static final DoubleSetting STAR_TWINKLE_SPEED_SETTING = new DoubleSetting(1.0, 0.0, 3.0, 0.05);
     public static final DoubleSetting STAR_COLOR_VARIATION_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
+    public static final DoubleSetting NIGHT_SKY_COLOR_OPACITY_SETTING = new DoubleSetting(0.55, 0.0, 1.0, 0.05);
+    public static final DoubleSetting MILKY_WAY_OPACITY_SETTING = new DoubleSetting(0.65, 0.0, 1.0, 0.05);
     public static final DoubleSetting AURORA_OPACITY_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
     public static final DoubleSetting AURORA_ANIMATION_SPEED_SETTING = new DoubleSetting(5.0, 0.0, 5.0, 0.05);
     public static final DoubleSetting AURORA_MOVEMENT_SETTING = new DoubleSetting(2.0, 0.0, 2.0, 0.05);
@@ -54,7 +56,13 @@ public final class CirrusConfig {
     public static final ModConfigSpec.DoubleValue STAR_TWINKLE_STRENGTH;
     public static final ModConfigSpec.DoubleValue STAR_TWINKLE_SPEED;
     public static final ModConfigSpec.DoubleValue STAR_COLOR_VARIATION;
+    public static final ModConfigSpec.BooleanValue NIGHT_SKY_COLORS_ENABLED;
+    public static final ModConfigSpec.DoubleValue NIGHT_SKY_COLOR_OPACITY;
+    public static final ModConfigSpec.BooleanValue MILKY_WAY_ENABLED;
+    public static final ModConfigSpec.BooleanValue MILKY_WAY_PIXELATION_ENABLED;
+    public static final ModConfigSpec.DoubleValue MILKY_WAY_OPACITY;
     public static final ModConfigSpec.BooleanValue AURORA_ENABLED;
+    public static final ModConfigSpec.BooleanValue AURORA_PIXELATION_ENABLED;
     public static final ModConfigSpec.BooleanValue AURORA_COLD_BIOMES_ONLY;
     public static final ModConfigSpec.DoubleValue AURORA_OPACITY;
     public static final ModConfigSpec.DoubleValue AURORA_ANIMATION_SPEED;
@@ -180,9 +188,31 @@ public final class CirrusConfig {
                 "starColorVariation",
                 "Strength of subtle warm and cool color differences between stars."
         );
+        NIGHT_SKY_COLORS_ENABLED = builder
+                .comment("Tint the night sky with a restrained indigo, mauve, and gold palette.")
+                .define("nightSkyColorsEnabled", true);
+        NIGHT_SKY_COLOR_OPACITY = NIGHT_SKY_COLOR_OPACITY_SETTING.define(
+                builder,
+                "nightSkyColorOpacity",
+                "Strength of the custom night-sky color palette."
+        );
+        MILKY_WAY_ENABLED = builder
+                .comment("Render a shader-driven Milky Way behind clouds and northern lights.")
+                .define("milkyWayEnabled", true);
+        MILKY_WAY_PIXELATION_ENABLED = builder
+                .comment("Render the Milky Way through a sky-fixed pixel grid.")
+                .define("milkyWayPixelationEnabled", true);
+        MILKY_WAY_OPACITY = MILKY_WAY_OPACITY_SETTING.define(
+                builder,
+                "milkyWayOpacity",
+                "Maximum opacity of the Milky Way's galactic haze."
+        );
         AURORA_ENABLED = builder
                 .comment("Render animated northern lights at night. Biome restrictions are configured separately.")
                 .define("auroraEnabled", true);
+        AURORA_PIXELATION_ENABLED = builder
+                .comment("Render northern lights through a sky-fixed pixel grid.")
+                .define("auroraPixelationEnabled", true);
         AURORA_COLD_BIOMES_ONLY = builder
                 .comment("Only render northern lights while the camera is in or near a freezing biome.")
                 .define("auroraColdBiomesOnly", true);

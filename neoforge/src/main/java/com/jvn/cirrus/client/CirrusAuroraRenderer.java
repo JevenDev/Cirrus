@@ -94,6 +94,10 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
         if (intensityUniform != null) {
             intensityUniform.set(intensity);
         }
+        Uniform pixelationUniform = shader.getUniform("CirrusAuroraPixelation");
+        if (pixelationUniform != null) {
+            pixelationUniform.set(CirrusConfig.AURORA_PIXELATION_ENABLED.get() ? 1.0F : 0.0F);
+        }
 
         Uniform variantUniform = shader.getUniform("CirrusAuroraVariant");
         if (variantUniform != null) {

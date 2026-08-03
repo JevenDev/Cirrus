@@ -2,6 +2,7 @@
 
 uniform float CirrusAuroraTime;
 uniform float CirrusAuroraIntensity;
+uniform float CirrusAuroraPixelation;
 uniform vec4 CirrusAuroraVariant;
 uniform vec4 CirrusAuroraSettings;
 
@@ -10,6 +11,44 @@ in vec3 worldDirection;
 out vec4 fragColor;
 
 const float HALF_PI = 1.57079632679;
+const float CIRRUS_AURORA_PIXELS_PER_FACE = 320.0;
+
+float pixelateCubeCoordinate(float value) {
+    float normalized = clamp(value * 0.5 + 0.5, 0.0, 1.0);
+    float cell = min(
+        floor(normalized * CIRRUS_AURORA_PIXELS_PER_FACE),
+        CIRRUS_AURORA_PIXELS_PER_FACE - 1.0
+    );
+    return (
+        (cell + 0.5) / CIRRUS_AURORA_PIXELS_PER_FACE
+    ) * 2.0 - 1.0;
+}
+
+vec3 pixelateDirection(vec3 direction) {
+    vec3 absoluteDirection = abs(direction);
+    vec3 pixelDirection;
+    if (absoluteDirection.x >= absoluteDirection.y
+            && absoluteDirection.x >= absoluteDirection.z) {
+        pixelDirection = vec3(
+            sign(direction.x),
+            pixelateCubeCoordinate(direction.y / absoluteDirection.x),
+            pixelateCubeCoordinate(direction.z / absoluteDirection.x)
+        );
+    } else if (absoluteDirection.y >= absoluteDirection.z) {
+        pixelDirection = vec3(
+            pixelateCubeCoordinate(direction.x / absoluteDirection.y),
+            sign(direction.y),
+            pixelateCubeCoordinate(direction.z / absoluteDirection.y)
+        );
+    } else {
+        pixelDirection = vec3(
+            pixelateCubeCoordinate(direction.x / absoluteDirection.z),
+            pixelateCubeCoordinate(direction.y / absoluteDirection.z),
+            sign(direction.z)
+        );
+    }
+    return normalize(pixelDirection);
+}
 
 float randomValue(vec2 position) {
     return fract(sin(dot(position, vec2(127.1, 311.7))) * 43758.5453123);
@@ -73,8 +112,13 @@ float harmonicWave(
 }
 
 void main() {
-    vec3 direction = normalize(worldDirection);
-    float horizonFade = smoothstep(0.015, 0.16, direction.y);
+    vec3 smoothDirection = normalize(worldDirection);
+    vec3 direction = mix(
+        smoothDirection,
+        pixelateDirection(smoothDirection),
+        clamp(CirrusAuroraPixelation, 0.0, 1.0)
+    );
+    float horizonFade = smoothstep(0.015, 0.16, smoothDirection.y);
     if (horizonFade <= 0.0 || CirrusAuroraIntensity <= 0.0) {
         discard;
     }

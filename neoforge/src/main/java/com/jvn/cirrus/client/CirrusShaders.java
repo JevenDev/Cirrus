@@ -21,6 +21,8 @@ public final class CirrusShaders {
             ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_moon_occlusion");
     private static final ResourceLocation AURORA_LOCATION =
             ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_aurora");
+    private static final ResourceLocation MILKY_WAY_LOCATION =
+            ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_milky_way");
     private static final ResourceLocation STARS_LOCATION =
             ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_stars");
 
@@ -28,6 +30,7 @@ public final class CirrusShaders {
     private static ShaderInstance cloudMask;
     private static ShaderInstance moonOcclusion;
     private static ShaderInstance aurora;
+    private static ShaderInstance milkyWay;
     private static ShaderInstance stars;
 
     private CirrusShaders() {
@@ -70,6 +73,14 @@ public final class CirrusShaders {
         event.registerShader(
                 new ShaderInstance(
                         event.getResourceProvider(),
+                        MILKY_WAY_LOCATION,
+                        DefaultVertexFormat.POSITION
+                ),
+                shader -> milkyWay = shader
+        );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
                         STARS_LOCATION,
                         DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
                 ),
@@ -91,6 +102,10 @@ public final class CirrusShaders {
 
     public static ShaderInstance aurora() {
         return Objects.requireNonNull(aurora, "Cirrus aurora shader has not finished loading");
+    }
+
+    public static ShaderInstance milkyWay() {
+        return Objects.requireNonNull(milkyWay, "Cirrus Milky Way shader has not finished loading");
     }
 
     public static ShaderInstance stars() {

@@ -175,8 +175,40 @@ public final class CirrusConfigScreen {
                         ))
                         .build())
                 .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.skyColors"))
+                        .option(booleanOption(
+                                "cirrus.config.sky.nightSkyColorsEnabled",
+                                CirrusConfig.NIGHT_SKY_COLORS_ENABLED
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.nightSkyColorOpacity",
+                                CirrusConfig.NIGHT_SKY_COLOR_OPACITY,
+                                CirrusConfig.NIGHT_SKY_COLOR_OPACITY_SETTING
+                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.milkyWay"))
+                        .option(booleanOption(
+                                "cirrus.config.sky.milkyWayEnabled",
+                                CirrusConfig.MILKY_WAY_ENABLED
+                        ))
+                        .option(booleanOption(
+                                "cirrus.config.sky.milkyWayPixelationEnabled",
+                                CirrusConfig.MILKY_WAY_PIXELATION_ENABLED
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.milkyWayOpacity",
+                                CirrusConfig.MILKY_WAY_OPACITY,
+                                CirrusConfig.MILKY_WAY_OPACITY_SETTING
+                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.aurora"))
                         .option(booleanOption("cirrus.config.sky.auroraEnabled", CirrusConfig.AURORA_ENABLED))
+                        .option(booleanOption(
+                                "cirrus.config.sky.auroraPixelationEnabled",
+                                CirrusConfig.AURORA_PIXELATION_ENABLED
+                        ))
                         .option(booleanOption(
                                 "cirrus.config.sky.auroraColdBiomesOnly",
                                 CirrusConfig.AURORA_COLD_BIOMES_ONLY

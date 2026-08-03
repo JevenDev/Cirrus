@@ -3,6 +3,7 @@ package com.jvn.cirrus.mixin;
 import com.jvn.cirrus.client.CirrusAuroraRenderer;
 import com.jvn.cirrus.client.CirrusCloudRenderer;
 import com.jvn.cirrus.client.CirrusCloudMode;
+import com.jvn.cirrus.client.CirrusMilkyWayRenderer;
 import com.jvn.cirrus.client.CirrusShaders;
 import com.jvn.cirrus.client.CirrusStarRenderer;
 import com.jvn.cirrus.config.CirrusConfig;
@@ -33,6 +34,7 @@ public abstract class LevelRendererCloudMixin {
     @Shadow private int ticks;
     @Unique private final CirrusCloudRenderer cirrus$cloudRenderer = new CirrusCloudRenderer();
     @Unique private final CirrusAuroraRenderer cirrus$auroraRenderer = new CirrusAuroraRenderer();
+    @Unique private final CirrusMilkyWayRenderer cirrus$milkyWayRenderer = new CirrusMilkyWayRenderer();
     @Unique private final CirrusStarRenderer cirrus$starRenderer = new CirrusStarRenderer();
     @Unique private CloudStatus cirrus$lastCloudMode;
     @Unique private boolean cirrus$celestialMaskActive;
@@ -108,6 +110,7 @@ public abstract class LevelRendererCloudMixin {
             CallbackInfo ci
     ) {
         if (level != null) {
+            cirrus$milkyWayRenderer.render(level, frustumMatrix, projectionMatrix, partialTick);
             cirrus$auroraRenderer.render(level, frustumMatrix, projectionMatrix, partialTick, ticks, camera);
         }
     }
@@ -215,6 +218,7 @@ public abstract class LevelRendererCloudMixin {
     private void cirrus$releaseCloudsOnShutdown(CallbackInfo ci) {
         cirrus$cloudRenderer.close();
         cirrus$auroraRenderer.close();
+        cirrus$milkyWayRenderer.close();
         cirrus$starRenderer.close();
     }
 }
