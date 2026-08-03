@@ -1,5 +1,6 @@
 package com.jvn.cirrus.mixin;
 
+import com.jvn.cirrus.client.CirrusAuroraRenderer;
 import com.jvn.cirrus.client.CirrusCloudRenderer;
 import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusShaders;
@@ -27,6 +28,7 @@ public abstract class LevelRendererCloudMixin {
     @Shadow private ClientLevel level;
     @Shadow private int ticks;
     @Unique private final CirrusCloudRenderer cirrus$cloudRenderer = new CirrusCloudRenderer();
+    @Unique private final CirrusAuroraRenderer cirrus$auroraRenderer = new CirrusAuroraRenderer();
     @Unique private CloudStatus cirrus$lastCloudMode;
     @Unique private boolean cirrus$celestialMaskActive;
 
@@ -77,6 +79,31 @@ public abstract class LevelRendererCloudMixin {
                     cameraY,
                     cameraZ
             );
+        }
+    }
+
+    @Inject(
+            method = "renderSky",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lcom/mojang/blaze3d/systems/RenderSystem;blendFuncSeparate(" +
+                            "Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;" +
+                            "Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;" +
+                            "Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;" +
+                            "Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;)V"
+            )
+    )
+    private void cirrus$renderAurora(
+            Matrix4f frustumMatrix,
+            Matrix4f projectionMatrix,
+            float partialTick,
+            Camera camera,
+            boolean isFoggy,
+            Runnable skyFogSetup,
+            CallbackInfo ci
+    ) {
+        if (level != null) {
+            cirrus$auroraRenderer.render(level, frustumMatrix, projectionMatrix, partialTick, ticks, camera);
         }
     }
 
@@ -135,6 +162,7 @@ public abstract class LevelRendererCloudMixin {
     @Inject(method = "setLevel", at = @At("HEAD"))
     private void cirrus$releaseCloudsOnWorldChange(ClientLevel newLevel, CallbackInfo ci) {
         cirrus$cloudRenderer.invalidate();
+        cirrus$auroraRenderer.invalidate();
     }
 
     @Inject(method = "onResourceManagerReload", at = @At("HEAD"))
@@ -145,5 +173,6 @@ public abstract class LevelRendererCloudMixin {
     @Inject(method = "close", at = @At("HEAD"))
     private void cirrus$releaseCloudsOnShutdown(CallbackInfo ci) {
         cirrus$cloudRenderer.close();
+        cirrus$auroraRenderer.close();
     }
 }

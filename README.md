@@ -29,6 +29,7 @@ Cirrus overhauls Minecraft's clouds while keeping the familiar vanilla look. It 
 | Extended cloud distance | Separates cloud render distance from terrain render distance so clouds can remain visible far beyond nearby chunks |
 | Weather-aware shading | Darkens clouds during rain and thunder, then illuminates nearby clouds when lightning strikes |
 | Celestial occlusion | Allows clouds to naturally pass in front of the moon |
+| Northern lights | Adds animated, shader-driven auroras to night skies, restricted to cold biomes by default |
 | Customization | Provides an in-game config for cloud layers, weather effects, movement, height, and opacity |
 
 ![compatibility](https://cdn.modrinth.com/data/cached_images/1252c11050b7daf8b8621712b58dd1005e7ba982.png)

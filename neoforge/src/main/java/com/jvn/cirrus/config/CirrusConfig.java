@@ -15,6 +15,12 @@ public final class CirrusConfig {
     public static final DoubleSetting TOP_LAYER_HEIGHT_SETTING = new DoubleSetting(64.0, 16.0, 256.0, 1.0);
     public static final DoubleSetting TOP_LAYER_SPEED_SETTING = new DoubleSetting(0.50, 0.0, 4.0, 0.05);
     public static final DoubleSetting TOP_LAYER_OPACITY_SETTING = new DoubleSetting(0.15, 0.05, 1.0, 0.05);
+    public static final DoubleSetting AURORA_OPACITY_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
+    public static final DoubleSetting AURORA_ANIMATION_SPEED_SETTING = new DoubleSetting(5.0, 0.0, 5.0, 0.05);
+    public static final DoubleSetting AURORA_MOVEMENT_SETTING = new DoubleSetting(2.0, 0.0, 2.0, 0.05);
+    public static final DoubleSetting AURORA_RIBBON_WIDTH_SETTING = new DoubleSetting(1.0, 0.5, 2.0, 0.05);
+    public static final DoubleSetting AURORA_HEIGHT_SETTING = new DoubleSetting(-10.0, -20.0, 30.0, 1.0);
+    public static final DoubleSetting AURORA_NIGHTLY_VARIATION_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
 
     public static final ModConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
     public static final ModConfigSpec.IntValue CLOUD_RENDER_DISTANCE;
@@ -31,6 +37,14 @@ public final class CirrusConfig {
     public static final ModConfigSpec.DoubleValue TOP_LAYER_HEIGHT_OFFSET;
     public static final ModConfigSpec.DoubleValue TOP_LAYER_SPEED;
     public static final ModConfigSpec.DoubleValue TOP_LAYER_OPACITY;
+    public static final ModConfigSpec.BooleanValue AURORA_ENABLED;
+    public static final ModConfigSpec.BooleanValue AURORA_COLD_BIOMES_ONLY;
+    public static final ModConfigSpec.DoubleValue AURORA_OPACITY;
+    public static final ModConfigSpec.DoubleValue AURORA_ANIMATION_SPEED;
+    public static final ModConfigSpec.DoubleValue AURORA_MOVEMENT;
+    public static final ModConfigSpec.DoubleValue AURORA_RIBBON_WIDTH;
+    public static final ModConfigSpec.DoubleValue AURORA_HEIGHT_DEGREES;
+    public static final ModConfigSpec.DoubleValue AURORA_NIGHTLY_VARIATION;
     public static final ModConfigSpec SPEC;
 
     static {
@@ -102,6 +116,45 @@ public final class CirrusConfig {
                 builder,
                 "topLayerOpacity",
                 "Top cloud layer opacity. Defaults more transparent than the other layers."
+        );
+        builder.pop();
+
+        builder.comment("Sky rendering").push("sky");
+        AURORA_ENABLED = builder
+                .comment("Render animated northern lights at night. Biome restrictions are configured separately.")
+                .define("auroraEnabled", true);
+        AURORA_COLD_BIOMES_ONLY = builder
+                .comment("Only render northern lights while the camera is in or near a freezing biome.")
+                .define("auroraColdBiomesOnly", true);
+        AURORA_OPACITY = AURORA_OPACITY_SETTING.define(
+                builder,
+                "auroraOpacity",
+                "Maximum opacity of the northern lights."
+        );
+        AURORA_ANIMATION_SPEED = AURORA_ANIMATION_SPEED_SETTING.define(
+                builder,
+                "auroraAnimationSpeed",
+                "Animation speed multiplier. Zero freezes the aurora in place."
+        );
+        AURORA_MOVEMENT = AURORA_MOVEMENT_SETTING.define(
+                builder,
+                "auroraMovement",
+                "Amount of drifting, waving, and breathing in the aurora."
+        );
+        AURORA_RIBBON_WIDTH = AURORA_RIBBON_WIDTH_SETTING.define(
+                builder,
+                "auroraRibbonWidth",
+                "Width multiplier for the aurora ribbons."
+        );
+        AURORA_HEIGHT_DEGREES = AURORA_HEIGHT_SETTING.define(
+                builder,
+                "auroraHeightDegrees",
+                "Vertical offset of the aurora in degrees."
+        );
+        AURORA_NIGHTLY_VARIATION = AURORA_NIGHTLY_VARIATION_SETTING.define(
+                builder,
+                "auroraNightlyVariation",
+                "How strongly the aurora layout changes from one night to the next."
         );
         builder.pop();
         SPEC = builder.build();

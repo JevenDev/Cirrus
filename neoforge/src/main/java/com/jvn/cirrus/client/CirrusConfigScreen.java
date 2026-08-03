@@ -22,6 +22,7 @@ public final class CirrusConfigScreen {
         return YetAnotherConfigLib.createBuilder()
                 .title(text("cirrus.config.title"))
                 .category(cloudCategory())
+                .category(skyCategory())
                 .save(CirrusConfig.SPEC::save)
                 .build()
                 .generateScreen(parent);
@@ -113,6 +114,53 @@ public final class CirrusConfigScreen {
                                 "cirrus.config.clouds.topLayerOpacity",
                                 CirrusConfig.TOP_LAYER_OPACITY,
                                 CirrusConfig.TOP_LAYER_OPACITY_SETTING
+                        ))
+                        .build())
+                .build();
+    }
+
+    private static ConfigCategory skyCategory() {
+        return ConfigCategory.createBuilder()
+                .name(text("cirrus.config.category.sky"))
+                .tooltip(text("cirrus.config.category.sky.description"))
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.aurora"))
+                        .option(booleanOption("cirrus.config.sky.auroraEnabled", CirrusConfig.AURORA_ENABLED))
+                        .option(booleanOption(
+                                "cirrus.config.sky.auroraColdBiomesOnly",
+                                CirrusConfig.AURORA_COLD_BIOMES_ONLY
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.auroraOpacity",
+                                CirrusConfig.AURORA_OPACITY,
+                                CirrusConfig.AURORA_OPACITY_SETTING
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.auroraAnimationSpeed",
+                                CirrusConfig.AURORA_ANIMATION_SPEED,
+                                CirrusConfig.AURORA_ANIMATION_SPEED_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.auroraMovement",
+                                CirrusConfig.AURORA_MOVEMENT,
+                                CirrusConfig.AURORA_MOVEMENT_SETTING
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.auroraRibbonWidth",
+                                CirrusConfig.AURORA_RIBBON_WIDTH,
+                                CirrusConfig.AURORA_RIBBON_WIDTH_SETTING
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.auroraHeight",
+                                CirrusConfig.AURORA_HEIGHT_DEGREES,
+                                CirrusConfig.AURORA_HEIGHT_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%+.0f degrees", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.auroraNightlyVariation",
+                                CirrusConfig.AURORA_NIGHTLY_VARIATION,
+                                CirrusConfig.AURORA_NIGHTLY_VARIATION_SETTING
                         ))
                         .build())
                 .build();

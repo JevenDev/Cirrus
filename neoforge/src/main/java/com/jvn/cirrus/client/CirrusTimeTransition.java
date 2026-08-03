@@ -24,6 +24,7 @@ public final class CirrusTimeTransition {
     private static double transitionDelta;
     private static long transitionStartNanos;
     private static double transitionDurationTicks;
+    private static double transitionProgress = 1.0;
     private static boolean transitionActive;
     private static boolean rendering;
 
@@ -71,6 +72,24 @@ public final class CirrusTimeTransition {
         return visualDayTime;
     }
 
+    public static double visualDayTime(ClientLevel level, float partialTick) {
+        float configuredRate = level.getDayTimePerTick();
+        double ticksPerGameTick = configuredRate < 0.0F ? 1.0 : configuredRate;
+        return displayedDayTime + level.getDayTimeFraction() + partialTick * ticksPerGameTick;
+    }
+
+    public static boolean isTransitionActive() {
+        return transitionActive;
+    }
+
+    public static double transitionProgress() {
+        return transitionProgress;
+    }
+
+    public static long authoritativeDayTime() {
+        return lastActualDayTime;
+    }
+
     private static void reset(ClientLevel level, long actualDayTime, long gameTime) {
         trackedLevel = level;
         lastActualDayTime = actualDayTime;
@@ -81,6 +100,7 @@ public final class CirrusTimeTransition {
         transitionTargetDayTime = actualDayTime;
         transitionDelta = 0.0;
         transitionDurationTicks = 0.0;
+        transitionProgress = 1.0;
         transitionActive = false;
     }
 
@@ -103,12 +123,14 @@ public final class CirrusTimeTransition {
         }
         transitionDurationTicks = durationTicks(Math.abs(transitionDelta));
         transitionStartNanos = now;
+        transitionProgress = 0.0;
         transitionActive = true;
     }
 
     private static void updateTransition(long actualDayTime, long now) {
         if (!transitionActive) {
             displayedDayTime = actualDayTime;
+            transitionProgress = 1.0;
             return;
         }
 
@@ -117,12 +139,14 @@ public final class CirrusTimeTransition {
                 ? 1.0
                 : Math.min(1.0, elapsedTicks / transitionDurationTicks);
         double easedProgress = smootherStep(progress);
+        transitionProgress = easedProgress;
         double naturalTimePassed = actualDayTime - transitionTargetDayTime;
         displayedDayTime = transitionStartDayTime
                 + transitionDelta * easedProgress
                 + naturalTimePassed;
         if (progress >= 1.0) {
             displayedDayTime = actualDayTime;
+            transitionProgress = 1.0;
             transitionActive = false;
         }
     }
