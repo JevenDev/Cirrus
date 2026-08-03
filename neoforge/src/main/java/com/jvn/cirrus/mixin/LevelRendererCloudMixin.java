@@ -137,14 +137,20 @@ public abstract class LevelRendererCloudMixin {
             boolean isFoggy,
             Runnable skyFogSetup
     ) {
-        if (level != null && CirrusConfig.CUSTOM_STARS_ENABLED.get()) {
+        boolean renderStarField = CirrusConfig.CUSTOM_STARS_ENABLED.get();
+        boolean renderShootingStars = CirrusConfig.SHOOTING_STARS_ENABLED.get();
+        if (level != null && (renderStarField || renderShootingStars)) {
+            if (!renderStarField) {
+                vanillaStars.drawWithShader(modelViewMatrix, projectionMatrix, vanillaShader);
+            }
             cirrus$starRenderer.render(
                     level,
                     modelViewMatrix,
                     projectionMatrix,
                     frustumMatrix,
                     partialTick,
-                    ticks
+                    ticks,
+                    renderStarField
             );
         } else {
             vanillaStars.drawWithShader(modelViewMatrix, projectionMatrix, vanillaShader);

@@ -175,6 +175,64 @@ public final class CirrusConfigScreen {
                         ))
                         .build())
                 .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.shootingStars"))
+                        .option(booleanOption(
+                                "cirrus.config.sky.shootingStarsEnabled",
+                                CirrusConfig.SHOOTING_STARS_ENABLED
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.shootingStarFrequency",
+                                CirrusConfig.SHOOTING_STAR_FREQUENCY,
+                                CirrusConfig.SHOOTING_STAR_FREQUENCY_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2f/min", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.shootingStarOpacity",
+                                CirrusConfig.SHOOTING_STAR_OPACITY,
+                                CirrusConfig.SHOOTING_STAR_OPACITY_SETTING
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.shootingStarMinimumSize",
+                                CirrusConfig.SHOOTING_STAR_MIN_SIZE,
+                                CirrusConfig.SHOOTING_STAR_MIN_SIZE_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.shootingStarMaximumSize",
+                                CirrusConfig.SHOOTING_STAR_MAX_SIZE,
+                                CirrusConfig.SHOOTING_STAR_MAX_SIZE_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.shootingStarMinimumSpeed",
+                                CirrusConfig.SHOOTING_STAR_MIN_SPEED,
+                                CirrusConfig.SHOOTING_STAR_MIN_SPEED_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.shootingStarMaximumSpeed",
+                                CirrusConfig.SHOOTING_STAR_MAX_SPEED,
+                                CirrusConfig.SHOOTING_STAR_MAX_SPEED_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.shootingStarTrailLength",
+                                CirrusConfig.SHOOTING_STAR_TRAIL_LENGTH,
+                                CirrusConfig.SHOOTING_STAR_TRAIL_LENGTH_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.shootingStarBloom",
+                                CirrusConfig.SHOOTING_STAR_BLOOM,
+                                CirrusConfig.SHOOTING_STAR_BLOOM_SETTING
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.shootingStarColorVariation",
+                                CirrusConfig.SHOOTING_STAR_COLOR_VARIATION,
+                                CirrusConfig.SHOOTING_STAR_COLOR_VARIATION_SETTING
+                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.skyColors"))
                         .option(booleanOption(
                                 "cirrus.config.sky.nightSkyColorsEnabled",

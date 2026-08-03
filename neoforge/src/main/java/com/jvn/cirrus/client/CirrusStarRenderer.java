@@ -20,8 +20,11 @@ import org.joml.Vector3f;
 
 public final class CirrusStarRenderer implements AutoCloseable {
     public static final int MAX_STAR_COUNT = 8000;
+    private static final int SHOOTING_STAR_CANDIDATE_COUNT = 32;
+    private static final int SHOOTING_STAR_TRAIL_SEGMENTS = 12;
     private static final float CELESTIAL_RADIUS = 100.0F;
     private static final long STAR_SEED = 10842L;
+    private static final long SHOOTING_STAR_SEED = 734287L;
     private static final ResourceLocation NORTH_STAR_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "textures/environment/north_star.png");
     private static final float FULL_ROTATION = (float)(Math.PI * 2.0);
@@ -34,6 +37,7 @@ public final class CirrusStarRenderer implements AutoCloseable {
 
     private VertexBuffer starBuffer;
     private VertexBuffer northStarBuffer;
+    private VertexBuffer shootingStarBuffer;
 
     public void render(
             ClientLevel level,
@@ -41,11 +45,20 @@ public final class CirrusStarRenderer implements AutoCloseable {
             Matrix4f projectionMatrix,
             Matrix4f fixedSkyModelViewMatrix,
             float partialTick,
-            int ticks
+            int ticks,
+            boolean renderStarField
     ) {
         float visibility = level.getStarBrightness(partialTick)
                 * (1.0F - level.getRainLevel(partialTick));
         if (visibility <= 0.0F) {
+            return;
+        }
+
+        float shootingFrequency = CirrusConfig.SHOOTING_STAR_FREQUENCY.get().floatValue();
+        boolean renderShootingStars = CirrusConfig.SHOOTING_STARS_ENABLED.get()
+                && shootingFrequency > 0.0F
+                && CirrusConfig.SHOOTING_STAR_OPACITY.get() > 0.0;
+        if (!renderStarField && !renderShootingStars) {
             return;
         }
 
@@ -85,9 +98,43 @@ public final class CirrusStarRenderer implements AutoCloseable {
             );
         }
 
-        Uniform northStar = shader.getUniform("CirrusNorthStar");
-        if (northStar != null) {
-            northStar.set(0.0F);
+        float shootingMinimumSize = CirrusConfig.SHOOTING_STAR_MIN_SIZE.get().floatValue();
+        float shootingMaximumSize = CirrusConfig.SHOOTING_STAR_MAX_SIZE.get().floatValue();
+        Uniform shootingAppearance = shader.getUniform("CirrusShootingStarAppearance");
+        if (shootingAppearance != null) {
+            shootingAppearance.set(
+                    CirrusConfig.SHOOTING_STARS_ENABLED.get() ? 1.0F : 0.0F,
+                    Math.min(shootingMinimumSize, shootingMaximumSize),
+                    Math.max(shootingMinimumSize, shootingMaximumSize),
+                    CirrusConfig.SHOOTING_STAR_OPACITY.get().floatValue()
+            );
+        }
+
+        float shootingMinimumSpeed = CirrusConfig.SHOOTING_STAR_MIN_SPEED.get().floatValue();
+        float shootingMaximumSpeed = CirrusConfig.SHOOTING_STAR_MAX_SPEED.get().floatValue();
+        Uniform shootingAnimation = shader.getUniform("CirrusShootingStarAnimation");
+        if (shootingAnimation != null) {
+            shootingAnimation.set(
+                    (ticks + partialTick) / 20.0F,
+                    shootingFrequency,
+                    Math.min(shootingMinimumSpeed, shootingMaximumSpeed),
+                    Math.max(shootingMinimumSpeed, shootingMaximumSpeed)
+            );
+        }
+
+        Uniform shootingVisual = shader.getUniform("CirrusShootingStarVisual");
+        if (shootingVisual != null) {
+            shootingVisual.set(
+                    CirrusConfig.SHOOTING_STAR_TRAIL_LENGTH.get().floatValue(),
+                    CirrusConfig.SHOOTING_STAR_BLOOM.get().floatValue(),
+                    CirrusConfig.SHOOTING_STAR_COLOR_VARIATION.get().floatValue(),
+                    0.0F
+            );
+        }
+
+        Uniform renderMode = shader.getUniform("CirrusStarRenderMode");
+        if (renderMode != null) {
+            renderMode.set(0.0F);
         }
 
         float[] previousColor = RenderSystem.getShaderColor();
@@ -95,24 +142,36 @@ public final class CirrusStarRenderer implements AutoCloseable {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShaderTexture(0, NORTH_STAR_TEXTURE);
         try {
-            starBuffer.bind();
-            starBuffer.drawWithShader(modelViewMatrix, projectionMatrix, shader);
+            if (renderStarField) {
+                starBuffer.bind();
+                starBuffer.drawWithShader(modelViewMatrix, projectionMatrix, shader);
+            }
+
+            if (renderShootingStars) {
+                if (renderMode != null) {
+                    renderMode.set(2.0F);
+                }
+                shootingStarBuffer.bind();
+                shootingStarBuffer.drawWithShader(fixedSkyModelViewMatrix, projectionMatrix, shader);
+            }
 
             // Polaris is world-fixed instead of following the rotating
             // celestial matrix. Keep it bright, large, and gently twinkling.
-            if (appearance != null) {
-                appearance.set(
-                        1.0F,
-                        Math.max(minimumOpacity, maximumOpacity),
-                        Math.max(minimumOpacity, maximumOpacity),
-                        0.0F
-                );
+            if (renderStarField) {
+                if (appearance != null) {
+                    appearance.set(
+                            1.0F,
+                            Math.max(minimumOpacity, maximumOpacity),
+                            Math.max(minimumOpacity, maximumOpacity),
+                            0.0F
+                    );
+                }
+                if (renderMode != null) {
+                    renderMode.set(1.0F);
+                }
+                northStarBuffer.bind();
+                northStarBuffer.drawWithShader(fixedSkyModelViewMatrix, projectionMatrix, shader);
             }
-            if (northStar != null) {
-                northStar.set(1.0F);
-            }
-            northStarBuffer.bind();
-            northStarBuffer.drawWithShader(fixedSkyModelViewMatrix, projectionMatrix, shader);
         } finally {
             VertexBuffer.unbind();
             RenderSystem.setShaderTexture(0, previousTexture);
@@ -173,6 +232,51 @@ public final class CirrusStarRenderer implements AutoCloseable {
         starBuffer.upload(mesh);
         VertexBuffer.unbind();
 
+        Random shootingRandom = new Random(SHOOTING_STAR_SEED);
+        BufferBuilder shootingBuilder = Tesselator.getInstance().begin(
+                VertexFormat.Mode.QUADS,
+                DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
+        );
+        for (int index = 0; index < SHOOTING_STAR_CANDIDATE_COUNT; index++) {
+            float vertical = 0.25F + shootingRandom.nextFloat() * 0.70F;
+            float azimuth = shootingRandom.nextFloat() * FULL_ROTATION;
+            float horizontal = Mth.sqrt(1.0F - vertical * vertical);
+            Vector3f direction = new Vector3f(
+                    horizontal * Mth.cos(azimuth),
+                    vertical,
+                    horizontal * Mth.sin(azimuth)
+            );
+            Vector3f tangent = new Vector3f(-direction.z, 0.0F, direction.x).normalize();
+            Vector3f bitangent = new Vector3f(tangent).cross(direction);
+            float rotation = shootingRandom.nextFloat() * FULL_ROTATION;
+            tangent.mul(Mth.cos(rotation)).add(bitangent.mul(Mth.sin(rotation))).normalize();
+
+            float sizeRandom = shootingRandom.nextFloat();
+            float speedRandom = shootingRandom.nextFloat();
+            float colorRandom = shootingRandom.nextFloat();
+            float candidateSlot = index / (float)(SHOOTING_STAR_CANDIDATE_COUNT - 1);
+            for (int segment = 0; segment < SHOOTING_STAR_TRAIL_SEGMENTS; segment++) {
+                float segmentStart = segment / (float)SHOOTING_STAR_TRAIL_SEGMENTS;
+                float segmentEnd = (segment + 1) / (float)SHOOTING_STAR_TRAIL_SEGMENTS;
+                for (float[] corner : CORNERS) {
+                    float alongTrail = corner[0] > 0.0F ? segmentEnd : segmentStart;
+                    shootingBuilder.addVertex(
+                                    direction.x * CELESTIAL_RADIUS,
+                                    direction.y * CELESTIAL_RADIUS,
+                                    direction.z * CELESTIAL_RADIUS
+                            )
+                            .setUv(alongTrail, corner[1])
+                            .setColor(sizeRandom, speedRandom, colorRandom, candidateSlot)
+                            .setNormal(tangent.x, tangent.y, tangent.z);
+                }
+            }
+        }
+
+        shootingStarBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        shootingStarBuffer.bind();
+        shootingStarBuffer.upload(shootingBuilder.buildOrThrow());
+        VertexBuffer.unbind();
+
         float northElevation = (float)Math.toRadians(45.0);
         Vector3f northDirection = new Vector3f(
                 0.0F,
@@ -209,6 +313,10 @@ public final class CirrusStarRenderer implements AutoCloseable {
         if (northStarBuffer != null) {
             northStarBuffer.close();
             northStarBuffer = null;
+        }
+        if (shootingStarBuffer != null) {
+            shootingStarBuffer.close();
+            shootingStarBuffer = null;
         }
     }
 }

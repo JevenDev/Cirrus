@@ -23,6 +23,15 @@ public final class CirrusConfig {
     public static final DoubleSetting STAR_TWINKLE_STRENGTH_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
     public static final DoubleSetting STAR_TWINKLE_SPEED_SETTING = new DoubleSetting(1.0, 0.0, 3.0, 0.05);
     public static final DoubleSetting STAR_COLOR_VARIATION_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
+    public static final DoubleSetting SHOOTING_STAR_FREQUENCY_SETTING = new DoubleSetting(1.0, 0.0, 12.0, 0.25);
+    public static final DoubleSetting SHOOTING_STAR_OPACITY_SETTING = new DoubleSetting(0.85, 0.0, 1.0, 0.05);
+    public static final DoubleSetting SHOOTING_STAR_MIN_SIZE_SETTING = new DoubleSetting(0.75, 0.25, 4.0, 0.05);
+    public static final DoubleSetting SHOOTING_STAR_MAX_SIZE_SETTING = new DoubleSetting(1.5, 0.25, 4.0, 0.05);
+    public static final DoubleSetting SHOOTING_STAR_MIN_SPEED_SETTING = new DoubleSetting(0.65, 0.25, 3.0, 0.05);
+    public static final DoubleSetting SHOOTING_STAR_MAX_SPEED_SETTING = new DoubleSetting(1.35, 0.25, 3.0, 0.05);
+    public static final DoubleSetting SHOOTING_STAR_TRAIL_LENGTH_SETTING = new DoubleSetting(3.0, 0.25, 3.0, 0.05);
+    public static final DoubleSetting SHOOTING_STAR_BLOOM_SETTING = new DoubleSetting(2.0, 0.0, 2.0, 0.05);
+    public static final DoubleSetting SHOOTING_STAR_COLOR_VARIATION_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
     public static final DoubleSetting NIGHT_SKY_COLOR_OPACITY_SETTING = new DoubleSetting(0.55, 0.0, 1.0, 0.05);
     public static final DoubleSetting MILKY_WAY_OPACITY_SETTING = new DoubleSetting(0.65, 0.0, 1.0, 0.05);
     public static final DoubleSetting AURORA_OPACITY_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
@@ -56,6 +65,16 @@ public final class CirrusConfig {
     public static final ModConfigSpec.DoubleValue STAR_TWINKLE_STRENGTH;
     public static final ModConfigSpec.DoubleValue STAR_TWINKLE_SPEED;
     public static final ModConfigSpec.DoubleValue STAR_COLOR_VARIATION;
+    public static final ModConfigSpec.BooleanValue SHOOTING_STARS_ENABLED;
+    public static final ModConfigSpec.DoubleValue SHOOTING_STAR_FREQUENCY;
+    public static final ModConfigSpec.DoubleValue SHOOTING_STAR_OPACITY;
+    public static final ModConfigSpec.DoubleValue SHOOTING_STAR_MIN_SIZE;
+    public static final ModConfigSpec.DoubleValue SHOOTING_STAR_MAX_SIZE;
+    public static final ModConfigSpec.DoubleValue SHOOTING_STAR_MIN_SPEED;
+    public static final ModConfigSpec.DoubleValue SHOOTING_STAR_MAX_SPEED;
+    public static final ModConfigSpec.DoubleValue SHOOTING_STAR_TRAIL_LENGTH;
+    public static final ModConfigSpec.DoubleValue SHOOTING_STAR_BLOOM;
+    public static final ModConfigSpec.DoubleValue SHOOTING_STAR_COLOR_VARIATION;
     public static final ModConfigSpec.BooleanValue NIGHT_SKY_COLORS_ENABLED;
     public static final ModConfigSpec.DoubleValue NIGHT_SKY_COLOR_OPACITY;
     public static final ModConfigSpec.BooleanValue MILKY_WAY_ENABLED;
@@ -187,6 +206,54 @@ public final class CirrusConfig {
                 builder,
                 "starColorVariation",
                 "Strength of subtle warm and cool color differences between stars."
+        );
+        SHOOTING_STARS_ENABLED = builder
+                .comment("Occasionally render shader-animated shooting stars at night.")
+                .define("shootingStarsEnabled", true);
+        SHOOTING_STAR_FREQUENCY = SHOOTING_STAR_FREQUENCY_SETTING.define(
+                builder,
+                "shootingStarFrequency",
+                "Average shooting-star events per real-world minute. Zero disables events."
+        );
+        SHOOTING_STAR_OPACITY = SHOOTING_STAR_OPACITY_SETTING.define(
+                builder,
+                "shootingStarOpacity",
+                "Maximum opacity of shooting-star heads and trails."
+        );
+        SHOOTING_STAR_MIN_SIZE = SHOOTING_STAR_MIN_SIZE_SETTING.define(
+                builder,
+                "shootingStarMinimumSize",
+                "Size multiplier used by the smallest shooting stars."
+        );
+        SHOOTING_STAR_MAX_SIZE = SHOOTING_STAR_MAX_SIZE_SETTING.define(
+                builder,
+                "shootingStarMaximumSize",
+                "Size multiplier used by the largest shooting stars."
+        );
+        SHOOTING_STAR_MIN_SPEED = SHOOTING_STAR_MIN_SPEED_SETTING.define(
+                builder,
+                "shootingStarMinimumSpeed",
+                "Speed multiplier used by the slowest shooting stars."
+        );
+        SHOOTING_STAR_MAX_SPEED = SHOOTING_STAR_MAX_SPEED_SETTING.define(
+                builder,
+                "shootingStarMaximumSpeed",
+                "Speed multiplier used by the fastest shooting stars."
+        );
+        SHOOTING_STAR_TRAIL_LENGTH = SHOOTING_STAR_TRAIL_LENGTH_SETTING.define(
+                builder,
+                "shootingStarTrailLength",
+                "Length multiplier for shooting-star trails."
+        );
+        SHOOTING_STAR_BLOOM = SHOOTING_STAR_BLOOM_SETTING.define(
+                builder,
+                "shootingStarBloom",
+                "Strength of the soft glow around shooting-star cores and trails."
+        );
+        SHOOTING_STAR_COLOR_VARIATION = SHOOTING_STAR_COLOR_VARIATION_SETTING.define(
+                builder,
+                "shootingStarColorVariation",
+                "Strength of warm and cool color variation between shooting stars."
         );
         NIGHT_SKY_COLORS_ENABLED = builder
                 .comment("Tint the night sky with a restrained indigo, mauve, and gold palette.")
