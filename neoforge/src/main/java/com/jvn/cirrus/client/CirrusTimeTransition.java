@@ -1,5 +1,6 @@
 package com.jvn.cirrus.client;
 
+import com.jvn.cirrus.config.CirrusConfig;
 import net.minecraft.client.multiplayer.ClientLevel;
 
 /**
@@ -37,7 +38,7 @@ public final class CirrusTimeTransition {
         long actualDayTime = level.getLevelData().getDayTime();
         long gameTime = level.getGameTime();
         long now = System.nanoTime();
-        if (trackedLevel != level) {
+        if (!CirrusConfig.SMOOTH_TIME_TRANSITIONS.get() || trackedLevel != level) {
             reset(level, actualDayTime, gameTime);
         } else if (!level.dimensionType().hasFixedTime()) {
             long actualDelta = actualDayTime - lastActualDayTime;
@@ -153,8 +154,9 @@ public final class CirrusTimeTransition {
 
     private static double durationTicks(double delta) {
         double nightFraction = Math.min(1.0, delta / FULL_NIGHT_TICKS);
-        return MIN_DURATION_TICKS
+        double baseDuration = MIN_DURATION_TICKS
                 + (MAX_DURATION_TICKS - MIN_DURATION_TICKS) * nightFraction;
+        return baseDuration / CirrusConfig.TIME_TRANSITION_SPEED.get();
     }
 
     private static double smootherStep(double value) {

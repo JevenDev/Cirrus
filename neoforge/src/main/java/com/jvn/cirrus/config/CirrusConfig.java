@@ -15,6 +15,7 @@ public final class CirrusConfig {
     public static final DoubleSetting TOP_LAYER_HEIGHT_SETTING = new DoubleSetting(64.0, 16.0, 256.0, 1.0);
     public static final DoubleSetting TOP_LAYER_SPEED_SETTING = new DoubleSetting(0.50, 0.0, 4.0, 0.05);
     public static final DoubleSetting TOP_LAYER_OPACITY_SETTING = new DoubleSetting(0.15, 0.05, 1.0, 0.05);
+    public static final DoubleSetting TIME_TRANSITION_SPEED_SETTING = new DoubleSetting(1.0, 0.25, 4.0, 0.05);
     public static final IntSetting STAR_DENSITY_SETTING = new IntSetting(2000, 250, 8000, 250);
     public static final DoubleSetting STAR_MIN_OPACITY_SETTING = new DoubleSetting(0.25, 0.0, 1.0, 0.05);
     public static final DoubleSetting STAR_MAX_OPACITY_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
@@ -56,6 +57,8 @@ public final class CirrusConfig {
     public static final ModConfigSpec.DoubleValue TOP_LAYER_HEIGHT_OFFSET;
     public static final ModConfigSpec.DoubleValue TOP_LAYER_SPEED;
     public static final ModConfigSpec.DoubleValue TOP_LAYER_OPACITY;
+    public static final ModConfigSpec.BooleanValue SMOOTH_TIME_TRANSITIONS;
+    public static final ModConfigSpec.DoubleValue TIME_TRANSITION_SPEED;
     public static final ModConfigSpec.BooleanValue CUSTOM_STARS_ENABLED;
     public static final ModConfigSpec.IntValue STAR_DENSITY;
     public static final ModConfigSpec.DoubleValue STAR_MIN_OPACITY;
@@ -164,6 +167,14 @@ public final class CirrusConfig {
         builder.pop();
 
         builder.comment("Sky rendering").push("sky");
+        SMOOTH_TIME_TRANSITIONS = builder
+                .comment("Smooth abrupt visual changes in the sky when the world's day time changes.")
+                .define("smoothTimeTransitions", true);
+        TIME_TRANSITION_SPEED = TIME_TRANSITION_SPEED_SETTING.define(
+                builder,
+                "timeTransitionSpeed",
+                "Speed multiplier for smooth time transitions. Higher values complete transitions faster."
+        );
         CUSTOM_STARS_ENABLED = builder
                 .comment("Replace vanilla stars with Cirrus' shader-driven star field.")
                 .define("customStarsEnabled", true);

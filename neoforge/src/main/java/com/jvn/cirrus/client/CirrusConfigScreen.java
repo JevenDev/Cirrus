@@ -124,6 +124,19 @@ public final class CirrusConfigScreen {
                 .name(text("cirrus.config.category.sky"))
                 .tooltip(text("cirrus.config.category.sky.description"))
                 .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.time"))
+                        .option(booleanOption(
+                                "cirrus.config.sky.smoothTimeTransitions",
+                                CirrusConfig.SMOOTH_TIME_TRANSITIONS
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.timeTransitionSpeed",
+                                CirrusConfig.TIME_TRANSITION_SPEED,
+                                CirrusConfig.TIME_TRANSITION_SPEED_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.stars"))
                         .option(booleanOption(
                                 "cirrus.config.sky.customStarsEnabled",
