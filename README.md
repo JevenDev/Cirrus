@@ -1,6 +1,8 @@
 <div align="center">
 
-<h2><strong>A better sky, one cloud at a time.</strong></h2>
+<h2><strong>The sky's the beginning.</strong></h2>
+
+<img src="https://i.imgur.com/m6geeAW.png" alt="Northern lights" width="900">
 
 </div>
 
@@ -14,36 +16,42 @@
 
 </div>
 
-Cirrus overhauls Minecraft's clouds while keeping the familiar vanilla look. It replaces the single vanilla cloud sheet with layered, independently moving clouds and adds weather-aware lighting and celestial occlusion.
+The intended experience is without Iris/Shaders.
 
-> **Client-side:** Cirrus is client-side only, and can be used on multiplayer servers without a server-side installation.
+Cirrus is a skybox overhaul while staying close to the vanilla style. It adds layered clouds, richer nights, and weather-aware effects, all with an in-game config.
 
-![features](https://cdn.modrinth.com/data/cached_images/ec0e4dc78ec1a652eb11b233dd2926f7461fe770.png)
+> **Client-side only.** You can use Cirrus on multiplayer servers without installing it on the server.
+
+<p align="center"><img src="https://cdn.modrinth.com/data/cached_images/ec0e4dc78ec1a652eb11b233dd2926f7461fe770.png" alt="Features" width="900"></p>
+
+<p align="center"><img src="https://i.imgur.com/HwMik3Q.gif" alt="Sky transition" width="900"></p>
 
 ## What It Adds
 
-| Feature | What it does |
-|---|---|
-| Layered clouds | Replaces vanilla clouds with three independently sampled layers for a sky with more depth and variation |
-| Independent movement | Gives each cloud layer its own height, speed, and opacity, including support for stationary layers |
-| Extended cloud distance | Separates cloud render distance from terrain render distance so clouds can remain visible far beyond nearby chunks |
-| Weather-aware shading | Darkens clouds during rain and thunder, then illuminates nearby clouds when lightning strikes |
-| Celestial occlusion | Allows clouds to naturally pass in front of the moon |
-| Shader-rendered stars | Preserves Minecraft's pixel stars while adding configurable density, size, brightness, color, twinkle, and a bright, gently pulsing diamond-and-cross North Star |
-| Shooting stars | Adds occasional shader-animated meteors that curve around the sky, with configurable frequency, opacity, size and speed ranges, trail length, color, and bloom |
-| Night-sky palette | Adds configurable indigo, mauve, and restrained gold coloring behind the stars, Milky Way, clouds, and northern lights |
-| Milky Way | Adds a rotating shader-driven galactic band with layered haze, dust lanes, and a warm stellar core behind clouds and northern lights |
-| Northern lights | Adds animated, shader-driven auroras to night skies, restricted to cold biomes by default |
-| Customization | Provides an in-game config for cloud layers, weather effects, movement, height, and opacity |
+- Three independently moving cloud layers with adjustable height, speed, opacity, and render distance
+- Clouds that darken with storms and light up around lightning
+- Configurable stars, including twinkle, color variation, and a North Star
+- Occasional shooting stars with customizable trails, speed, color, and glow
+- A rotating Milky Way and a subtle night-sky color palette
+- Animated northern lights that appear in cold biomes by default (configurable!)
 
-![compatibility](https://cdn.modrinth.com/data/cached_images/1252c11050b7daf8b8621712b58dd1005e7ba982.png)
+Every major effect can be adjusted or turned off!!!
+
+<p align="center"><img src="https://cdn.modrinth.com/data/cached_images/1252c11050b7daf8b8621712b58dd1005e7ba982.png" alt="Compatibility" width="900"></p>
+
+<p align="center"><img src="https://i.imgur.com/J3kAQvi.png" alt="Milky Way galaxy" width="900"></p>
 
 ## Compatibility
 
-- [YetAnotherConfigLib](https://modrinth.com/mod/yacl) is required for the in-game configuration screen.
-- Shader packs or other mods that replace Minecraft's cloud rendering may override Cirrus features or cause visual conflicts.
+- [YetAnotherConfigLib](https://modrinth.com/mod/yacl) is required.
+- Shader packs and mods that replace cloud or sky rendering may override Cirrus or cause visual conflicts.
 
-![credits & license](https://cdn.modrinth.com/data/cached_images/5fd3ad80e342e6985dd6ebda1f7afd9c48749fce.png)
+<p align="center"><img src="https://cdn.modrinth.com/data/cached_images/5fd3ad80e342e6985dd6ebda1f7afd9c48749fce.png" alt="Credits and license" width="900"></p>
+
+<p align="center"><img src="https://i.imgur.com/Ya2yjVh.png" alt="Sunset clouds" width="900"></p>
+
+<details>
+<summary><strong>Modpacks, credits & license</strong></summary>
 
 ## Modpacks
 
@@ -68,3 +76,5 @@ For any general queries/unlisted questions, DM me on Twitter (@prodbyjvn) / Disc
   <p><strong><em>Warning: this mod ONLY exists on Modrinth & CurseForge as of June 2026. Any sites hosting this mod outside of Modrinth/CurseForge are not official releases.</em></strong></p>
 
 </div>
+
+</details>
