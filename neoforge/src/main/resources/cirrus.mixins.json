@@ -5,7 +5,8 @@
   "client": [
     "ClientLevelDataMixin",
     "GameRendererMixin",
-    "LevelRendererCloudMixin"
+    "LevelRendererCloudMixin",
+    "LevelRendererStarMixin"
   ],
   "injectors": {
     "defaultRequire": 1
