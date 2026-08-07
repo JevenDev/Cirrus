@@ -18,8 +18,11 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -208,12 +211,15 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         float distanceBlocks = distanceChunks * 16.0F;
         float fadeLength = Math.max(32.0F, distanceBlocks * 0.15F);
         Vec3 cloudColor = level.getCloudColor(partialTick);
+        boolean preserveVanillaFog = hasVisibilityLimitingFog(level, cameraX, cameraZ);
 
         try {
             FogRenderer.levelFogColor();
-            RenderSystem.setShaderFogStart(Math.max(0.0F, distanceBlocks - fadeLength));
-            RenderSystem.setShaderFogEnd(distanceBlocks);
-            RenderSystem.setShaderFogShape(FogShape.CYLINDER);
+            if (!preserveVanillaFog) {
+                RenderSystem.setShaderFogStart(Math.max(0.0F, distanceBlocks - fadeLength));
+                RenderSystem.setShaderFogEnd(distanceBlocks);
+                RenderSystem.setShaderFogShape(FogShape.CYLINDER);
+            }
             RenderSystem.setShaderColor((float)cloudColor.x, (float)cloudColor.y, (float)cloudColor.z, 1.0F);
 
             drawLayer(
@@ -293,6 +299,21 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             RenderSystem.setShaderFogEnd(oldFogEnd);
             RenderSystem.setShaderFogShape(oldFogShape);
         }
+    }
+
+    private static boolean hasVisibilityLimitingFog(ClientLevel level, double cameraX, double cameraZ) {
+        Minecraft minecraft = Minecraft.getInstance();
+        Entity cameraEntity = minecraft.getCameraEntity();
+        if (cameraEntity instanceof LivingEntity livingEntity
+                && (livingEntity.hasEffect(MobEffects.BLINDNESS)
+                        || livingEntity.hasEffect(MobEffects.DARKNESS))) {
+            return true;
+        }
+        if (minecraft.gameRenderer.getMainCamera().getFluidInCamera() != FogType.NONE) {
+            return true;
+        }
+        return level.effects().isFoggyAt(Mth.floor(cameraX), Mth.floor(cameraZ))
+                || minecraft.gui.getBossOverlay().shouldCreateWorldFog();
     }
 
     private void prepareLayer(
