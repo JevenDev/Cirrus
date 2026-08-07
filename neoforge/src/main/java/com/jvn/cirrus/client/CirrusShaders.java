@@ -25,6 +25,8 @@ public final class CirrusShaders {
             ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_milky_way");
     private static final ResourceLocation STARS_LOCATION =
             ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_stars");
+    private static final ResourceLocation END_SKY_LOCATION =
+            ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_end_sky");
 
     private static ShaderInstance clouds;
     private static ShaderInstance cloudMask;
@@ -32,6 +34,7 @@ public final class CirrusShaders {
     private static ShaderInstance aurora;
     private static ShaderInstance milkyWay;
     private static ShaderInstance stars;
+    private static ShaderInstance endSky;
 
     private CirrusShaders() {
     }
@@ -86,6 +89,14 @@ public final class CirrusShaders {
                 ),
                 shader -> stars = shader
         );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        END_SKY_LOCATION,
+                        DefaultVertexFormat.POSITION
+                ),
+                shader -> endSky = shader
+        );
     }
 
     public static ShaderInstance clouds() {
@@ -110,5 +121,9 @@ public final class CirrusShaders {
 
     public static ShaderInstance stars() {
         return Objects.requireNonNull(stars, "Cirrus star shader has not finished loading");
+    }
+
+    public static ShaderInstance endSky() {
+        return Objects.requireNonNull(endSky, "Cirrus End sky shader has not finished loading");
     }
 }

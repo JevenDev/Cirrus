@@ -3,6 +3,7 @@ package com.jvn.cirrus.mixin;
 import com.jvn.cirrus.client.CirrusAuroraRenderer;
 import com.jvn.cirrus.client.CirrusCloudRenderer;
 import com.jvn.cirrus.client.CirrusCloudMode;
+import com.jvn.cirrus.client.CirrusEndSkyRenderer;
 import com.jvn.cirrus.client.CirrusMilkyWayRenderer;
 import com.jvn.cirrus.client.CirrusShaders;
 import com.jvn.cirrus.config.CirrusConfig;
@@ -17,6 +18,7 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.level.Level;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,6 +34,7 @@ public abstract class LevelRendererCloudMixin {
     @Unique private final CirrusCloudRenderer cirrus$cloudRenderer = new CirrusCloudRenderer();
     @Unique private final CirrusAuroraRenderer cirrus$auroraRenderer = new CirrusAuroraRenderer();
     @Unique private final CirrusMilkyWayRenderer cirrus$milkyWayRenderer = new CirrusMilkyWayRenderer();
+    @Unique private final CirrusEndSkyRenderer cirrus$endSkyRenderer = new CirrusEndSkyRenderer();
     @Unique private CloudStatus cirrus$lastCloudMode;
     @Unique private boolean cirrus$celestialMaskActive;
 
@@ -83,6 +86,34 @@ public abstract class LevelRendererCloudMixin {
                     cameraZ
             );
         }
+    }
+
+    @Inject(
+            method = "renderSky",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/LevelRenderer;renderEndSky(" +
+                            "Lcom/mojang/blaze3d/vertex/PoseStack;)V"
+            ),
+            cancellable = true
+    )
+    private void cirrus$renderEndSky(
+            Matrix4f frustumMatrix,
+            Matrix4f projectionMatrix,
+            float partialTick,
+            Camera camera,
+            boolean isFoggy,
+            Runnable skyFogSetup,
+            CallbackInfo ci
+    ) {
+        if (level == null
+                || !Level.END.equals(level.dimension())
+                || !CirrusConfig.END_SKY_ENABLED.get()) {
+            return;
+        }
+
+        cirrus$endSkyRenderer.render(frustumMatrix, projectionMatrix, partialTick, ticks);
+        ci.cancel();
     }
 
     @Inject(
@@ -179,5 +210,6 @@ public abstract class LevelRendererCloudMixin {
         cirrus$cloudRenderer.close();
         cirrus$auroraRenderer.close();
         cirrus$milkyWayRenderer.close();
+        cirrus$endSkyRenderer.close();
     }
 }

@@ -317,6 +317,25 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.AURORA_NIGHTLY_VARIATION_SETTING
                         ))
                         .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.endSky"))
+                        .option(booleanOption("cirrus.config.sky.endSkyEnabled", CirrusConfig.END_SKY_ENABLED))
+                        .option(booleanOption(
+                                "cirrus.config.sky.endSkyPixelationEnabled",
+                                CirrusConfig.END_SKY_PIXELATION_ENABLED
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.endSkyIntensity",
+                                CirrusConfig.END_SKY_INTENSITY,
+                                CirrusConfig.END_SKY_INTENSITY_SETTING
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.endSkyAnimationSpeed",
+                                CirrusConfig.END_SKY_ANIMATION_SPEED,
+                                CirrusConfig.END_SKY_ANIMATION_SPEED_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .build())
                 .build();
     }
 

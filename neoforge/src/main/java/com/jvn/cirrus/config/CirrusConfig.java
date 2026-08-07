@@ -41,6 +41,8 @@ public final class CirrusConfig {
     public static final DoubleSetting AURORA_RIBBON_WIDTH_SETTING = new DoubleSetting(1.0, 0.5, 2.0, 0.05);
     public static final DoubleSetting AURORA_HEIGHT_SETTING = new DoubleSetting(-10.0, -20.0, 30.0, 1.0);
     public static final DoubleSetting AURORA_NIGHTLY_VARIATION_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
+    public static final DoubleSetting END_SKY_INTENSITY_SETTING = new DoubleSetting(1.0, 0.0, 2.0, 0.05);
+    public static final DoubleSetting END_SKY_ANIMATION_SPEED_SETTING = new DoubleSetting(1.0, 0.0, 3.0, 0.05);
 
     public static final ModConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
     public static final ModConfigSpec.IntValue CLOUD_RENDER_DISTANCE;
@@ -92,6 +94,10 @@ public final class CirrusConfig {
     public static final ModConfigSpec.DoubleValue AURORA_RIBBON_WIDTH;
     public static final ModConfigSpec.DoubleValue AURORA_HEIGHT_DEGREES;
     public static final ModConfigSpec.DoubleValue AURORA_NIGHTLY_VARIATION;
+    public static final ModConfigSpec.BooleanValue END_SKY_ENABLED;
+    public static final ModConfigSpec.BooleanValue END_SKY_PIXELATION_ENABLED;
+    public static final ModConfigSpec.DoubleValue END_SKY_INTENSITY;
+    public static final ModConfigSpec.DoubleValue END_SKY_ANIMATION_SPEED;
     public static final ModConfigSpec SPEC;
 
     static {
@@ -323,6 +329,22 @@ public final class CirrusConfig {
                 builder,
                 "auroraNightlyVariation",
                 "How strongly the aurora layout changes from one night to the next."
+        );
+        END_SKY_ENABLED = builder
+                .comment("Replace the vanilla End sky with animated nebulas, storm clouds, stars, lightning, and distant shards.")
+                .define("endSkyEnabled", true);
+        END_SKY_PIXELATION_ENABLED = builder
+                .comment("Sample the End sky through a sky-fixed pixel grid for a Minecraft-native finish.")
+                .define("endSkyPixelationEnabled", true);
+        END_SKY_INTENSITY = END_SKY_INTENSITY_SETTING.define(
+                builder,
+                "endSkyIntensity",
+                "Brightness and color strength of the End sky's nebulas and storms."
+        );
+        END_SKY_ANIMATION_SPEED = END_SKY_ANIMATION_SPEED_SETTING.define(
+                builder,
+                "endSkyAnimationSpeed",
+                "Speed multiplier for the End sky's slow cosmic drift. Zero freezes the effect."
         );
         builder.pop();
         SPEC = builder.build();
