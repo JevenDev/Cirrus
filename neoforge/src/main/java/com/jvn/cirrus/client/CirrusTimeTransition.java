@@ -118,14 +118,21 @@ public final class CirrusTimeTransition {
     private static void startTransition(long targetDayTime, long now) {
         transitionStartDayTime = displayedDayTime;
         transitionTargetDayTime = targetDayTime;
-        transitionDelta = targetDayTime - displayedDayTime;
-        if (transitionDelta < 0.0) {
-            transitionDelta += Math.ceil(-transitionDelta / FULL_DAY_TICKS) * FULL_DAY_TICKS;
-        }
+        transitionDelta = shortestDayDelta(displayedDayTime, targetDayTime);
         transitionDurationTicks = durationTicks(Math.abs(transitionDelta));
         transitionStartNanos = now;
         transitionProgress = 0.0;
         transitionActive = true;
+    }
+
+    private static double shortestDayDelta(double startDayTime, long targetDayTime) {
+        double delta = (targetDayTime - startDayTime) % FULL_DAY_TICKS;
+        if (delta > FULL_NIGHT_TICKS) {
+            delta -= FULL_DAY_TICKS;
+        } else if (delta < -FULL_NIGHT_TICKS) {
+            delta += FULL_DAY_TICKS;
+        }
+        return delta;
     }
 
     private static void updateTransition(long actualDayTime, long now) {
