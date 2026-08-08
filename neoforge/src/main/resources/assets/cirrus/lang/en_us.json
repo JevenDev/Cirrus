@@ -82,7 +82,7 @@
   "cirrus.config.sky.auroraNightlyVariation.description": "Controls how different the ribbon count, spacing, shape, coverage, and colors can be each night.",
   "cirrus.config.group.endSky": "End Sky",
   "cirrus.config.sky.endSkyEnabled": "Custom End Sky",
-  "cirrus.config.sky.endSkyEnabled.description": "Replaces the plain End sky with moving clouds, lightning, stars, and floating shapes.",
+  "cirrus.config.sky.endSkyEnabled.description": "Replaces the plain End sky with moving clouds, lightning, and spreading darkness.",
   "cirrus.config.sky.endSkyPixelationEnabled": "Pixelated End Sky",
   "cirrus.config.sky.endSkyPixelationEnabled.description": "Gives the End sky a pixelated look that fits Minecraft.",
   "cirrus.config.sky.endSkyIntensity": "End Sky Brightness",

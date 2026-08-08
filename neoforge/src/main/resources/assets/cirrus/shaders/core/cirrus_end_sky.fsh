@@ -97,31 +97,6 @@ vec3 pixelatedDirection(vec3 direction) {
     return octahedralDecode(snapped * 2.0 - 1.0);
 }
 
-float starLayer(vec3 direction, float scale, float threshold) {
-    vec3 samplePosition = direction * scale;
-    vec3 cell = floor(samplePosition);
-    vec3 local = fract(samplePosition) - 0.5;
-    vec3 random = hash33(cell);
-    vec3 starPosition = (random - 0.5) * 0.72;
-    float distanceToStar = length(local - starPosition);
-    float exists = step(threshold, hash13(cell + 91.7));
-    float core = 1.0 - smoothstep(0.018, 0.072, distanceToStar);
-    float twinkle = 0.82 + 0.18 * sin(CirrusEndTime * 0.55 + random.x * 41.0);
-    return exists * core * twinkle;
-}
-
-float shardLayer(vec3 direction) {
-    vec3 samplePosition = direction * 26.0;
-    vec3 cell = floor(samplePosition);
-    vec3 local = fract(samplePosition) - 0.5;
-    vec3 random = hash33(cell + 17.0);
-    local -= (random - 0.5) * 0.62;
-    float exists = step(0.987, hash13(cell + 53.0));
-    float body = 1.0 - smoothstep(0.035, 0.075, max(abs(local.x) * 0.34, abs(local.y) + abs(local.z) * 0.62));
-    float halo = 1.0 - smoothstep(0.055, 0.18, length(local * vec3(0.45, 1.0, 1.0)));
-    return exists * (body + halo * 0.25);
-}
-
 float lightningSegment(vec2 uv, vec2 startPoint, vec2 endPoint, float seed, float width) {
     vec2 segment = endPoint - startPoint;
     float segmentLengthSquared = max(dot(segment, segment), 0.000001);
@@ -395,23 +370,25 @@ void main() {
     color += vec3(0.50, 0.055, 0.58) * voidBoundary * 0.38 * intensity;
 
     // Darkness surges use a new seeded layout for every event. Randomized start,
-    // duration, reach, direction, resistance, and uneven breakup prevent a recognizable cycle.
+    // Timing stays independent from frequency, while stable breakup noise lets the clouds return smoothly.
     float surgeFrequency = max(CirrusEndSurgeFrequency, 0.0);
-    float surgeClock = CirrusEndTime * max(surgeFrequency, 0.001);
-    float surgeWindow = 47.0;
-    float surgeEvent = floor(surgeClock / surgeWindow);
-    float surgeAge = mod(surgeClock, surgeWindow);
+    float normalizedSurgeFrequency = clamp(surgeFrequency / 3.0, 0.0, 1.0);
+    float surgeWindow = mix(72.0, 34.0, normalizedSurgeFrequency);
+    float surgeEvent = floor(CirrusEndTime / surgeWindow);
+    float surgeAge = mod(CirrusEndTime, surgeWindow);
     vec3 surgeRandom = hash33(vec3(surgeEvent, 211.0, 67.0));
     vec3 surgeAxisRandom = hash33(vec3(surgeEvent, 19.0, 233.0));
-    float surgeOccurs = step(0.32, surgeRandom.z) * step(0.001, surgeFrequency);
-    float surgeStart = mix(2.5, 12.0, surgeRandom.x);
+    float surgeChance = mix(0.32, 0.88, normalizedSurgeFrequency);
+    float surgeOccurs = step(1.0 - surgeChance, surgeRandom.z)
+            * step(0.001, surgeFrequency);
+    float surgeStart = mix(2.0, 6.0, surgeRandom.x);
     float surgeDuration = mix(
-        12.0,
-        25.0,
+        18.0,
+        26.0,
         hash13(vec3(surgeEvent, 83.0, 149.0))
     );
     float surgeProgress = (surgeAge - surgeStart) / surgeDuration;
-    float surgeGrowth = smoothstep(0.02, 0.58, surgeProgress);
+    float surgeGrowth = smoothstep(0.02, 0.54, surgeProgress);
 
     float surgeY = mix(-0.20, 0.76, surgeAxisRandom.y);
     float surgeAzimuth = surgeAxisRandom.x * PI * 2.0;
@@ -437,19 +414,22 @@ void main() {
         surgeReach + 0.23,
         distortedSurgeFacing
     );
-    float surgeDissolvePattern = clamp(
-        voidDetail * 0.55 + foldedCloud * 0.30 + nearCloud * 0.15,
-        0.0,
-        1.0
+    float surgeDissolveBroad = valueNoise(
+        direction * 4.6 + surgeAxis * 5.3 + surgeRandom * 17.0
     );
-    float surgeDissolveThreshold = mix(
-        1.12,
-        -0.12,
-        smoothstep(0.68, 1.0, surgeProgress)
+    float surgeDissolveFine = valueNoise(
+        direction * 9.2 - surgeAxis.zxy * 7.1 + surgeRandom.yzx * 23.0
     );
+    float surgeDissolvePattern = mix(
+        surgeDissolveBroad,
+        surgeDissolveFine,
+        0.34
+    );
+    float surgeDissolvePhase = smoothstep(0.62, 1.0, surgeProgress);
+    float surgeDissolveThreshold = mix(1.24, -0.28, surgeDissolvePhase);
     float surgeDissolve = smoothstep(
-        surgeDissolveThreshold - 0.10,
-        surgeDissolveThreshold + 0.10,
+        surgeDissolveThreshold - 0.22,
+        surgeDissolveThreshold + 0.22,
         surgeDissolvePattern
     );
     float surgeLife = smoothstep(0.0, 0.12, surgeProgress)
@@ -593,17 +573,6 @@ void main() {
             * intensity
             * lightningIntensity;
 
-    float faintStars = starLayer(direction, 118.0, 0.972);
-    float brightStars = starLayer(direction, 61.0, 0.982);
-    float starColorNoise = hash13(floor(direction * 61.0) + 8.0);
-    vec3 starColor = mix(vec3(0.58, 0.72, 1.0), vec3(1.0, 0.58, 0.92), starColorNoise);
-    float starVisibility = (1.0 - combinedCloudDensity * (0.86 - voidMask * 0.55))
-            * (1.0 - surgeAmount * 0.55);
-    color += vec3(0.64, 0.58, 0.90) * faintStars * 0.52 * intensity * starVisibility;
-    color += starColor * brightStars * 1.34 * intensity * starVisibility;
-
-    float shards = shardLayer(direction);
-    color += vec3(0.45, 0.08, 0.72) * shards * intensity;
 
     float softPulse = 0.975 + 0.025 * sin(time * 0.07);
     color *= softPulse;
@@ -611,7 +580,7 @@ void main() {
     color = pow(max(color, vec3(0.0)), vec3(0.82));
 
     // Collapse low and middle values toward End-black without muting the rare
-    // luminous filaments, stars, or lightning flashes.
+    // luminous filaments or lightning flashes.
     float finalLuminance = max(color.r, max(color.g, color.b));
     float highlightPreservation = smoothstep(0.16, 0.64, finalLuminance);
     color *= mix(0.30, 1.0, highlightPreservation);

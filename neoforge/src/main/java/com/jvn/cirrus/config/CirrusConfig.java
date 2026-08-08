@@ -345,7 +345,7 @@ public final class CirrusConfig {
                 "How strongly the aurora layout changes from one night to the next."
         );
         END_SKY_ENABLED = builder
-                .comment("Replace the vanilla End sky with animated nebulas, storm clouds, stars, lightning, and distant shards.")
+                .comment("Replace the vanilla End sky with moving clouds, lightning, and spreading darkness.")
                 .define("endSkyEnabled", true);
         END_SKY_PIXELATION_ENABLED = builder
                 .comment("Sample the End sky through a sky-fixed pixel grid for a Minecraft-native finish.")
