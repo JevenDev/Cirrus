@@ -35,6 +35,9 @@ public final class CirrusConfig {
     public static final DoubleSetting SHOOTING_STAR_COLOR_VARIATION_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
     public static final DoubleSetting NIGHT_SKY_COLOR_OPACITY_SETTING = new DoubleSetting(0.55, 0.0, 1.0, 0.05);
     public static final DoubleSetting MILKY_WAY_OPACITY_SETTING = new DoubleSetting(0.65, 0.0, 1.0, 0.05);
+    public static final IntSetting MILKY_WAY_PIXELATION_RESOLUTION_SETTING = new IntSetting(320, 32, 640, 16);
+    public static final IntSetting AURORA_PIXELATION_RESOLUTION_SETTING = new IntSetting(320, 32, 640, 16);
+    public static final IntSetting END_SKY_PIXELATION_RESOLUTION_SETTING = new IntSetting(480, 32, 640, 16);
     public static final DoubleSetting AURORA_OPACITY_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
     public static final DoubleSetting AURORA_ANIMATION_SPEED_SETTING = new DoubleSetting(5.0, 0.0, 5.0, 0.05);
     public static final DoubleSetting AURORA_MOVEMENT_SETTING = new DoubleSetting(2.0, 0.0, 2.0, 0.05);
@@ -91,9 +94,11 @@ public final class CirrusConfig {
     public static final ModConfigSpec.DoubleValue NIGHT_SKY_COLOR_OPACITY;
     public static final ModConfigSpec.BooleanValue MILKY_WAY_ENABLED;
     public static final ModConfigSpec.BooleanValue MILKY_WAY_PIXELATION_ENABLED;
+    public static final ModConfigSpec.IntValue MILKY_WAY_PIXELATION_RESOLUTION;
     public static final ModConfigSpec.DoubleValue MILKY_WAY_OPACITY;
     public static final ModConfigSpec.BooleanValue AURORA_ENABLED;
     public static final ModConfigSpec.BooleanValue AURORA_PIXELATION_ENABLED;
+    public static final ModConfigSpec.IntValue AURORA_PIXELATION_RESOLUTION;
     public static final ModConfigSpec.BooleanValue AURORA_COLD_BIOMES_ONLY;
     public static final ModConfigSpec.DoubleValue AURORA_OPACITY;
     public static final ModConfigSpec.DoubleValue AURORA_ANIMATION_SPEED;
@@ -103,6 +108,7 @@ public final class CirrusConfig {
     public static final ModConfigSpec.DoubleValue AURORA_NIGHTLY_VARIATION;
     public static final ModConfigSpec.BooleanValue END_SKY_ENABLED;
     public static final ModConfigSpec.BooleanValue END_SKY_PIXELATION_ENABLED;
+    public static final ModConfigSpec.IntValue END_SKY_PIXELATION_RESOLUTION;
     public static final ModConfigSpec.DoubleValue END_SKY_INTENSITY;
     public static final ModConfigSpec.DoubleValue END_SKY_ANIMATION_SPEED;
     public static final ModConfigSpec.DoubleValue END_SKY_MORPH_SPEED;
@@ -300,6 +306,11 @@ public final class CirrusConfig {
         MILKY_WAY_PIXELATION_ENABLED = builder
                 .comment("Render the Milky Way through a sky-fixed pixel grid.")
                 .define("milkyWayPixelationEnabled", true);
+        MILKY_WAY_PIXELATION_RESOLUTION = MILKY_WAY_PIXELATION_RESOLUTION_SETTING.define(
+                builder,
+                "milkyWayPixelationResolution",
+                "Number of pixel-grid cells across each face. Lower values produce larger pixels."
+        );
         MILKY_WAY_OPACITY = MILKY_WAY_OPACITY_SETTING.define(
                 builder,
                 "milkyWayOpacity",
@@ -311,6 +322,11 @@ public final class CirrusConfig {
         AURORA_PIXELATION_ENABLED = builder
                 .comment("Render northern lights through a sky-fixed pixel grid.")
                 .define("auroraPixelationEnabled", true);
+        AURORA_PIXELATION_RESOLUTION = AURORA_PIXELATION_RESOLUTION_SETTING.define(
+                builder,
+                "auroraPixelationResolution",
+                "Number of pixel-grid cells across each face. Lower values produce larger pixels."
+        );
         AURORA_COLD_BIOMES_ONLY = builder
                 .comment("Only render northern lights while the camera is in or near a freezing biome.")
                 .define("auroraColdBiomesOnly", true);
@@ -350,6 +366,11 @@ public final class CirrusConfig {
         END_SKY_PIXELATION_ENABLED = builder
                 .comment("Sample the End sky through a sky-fixed pixel grid for a Minecraft-native finish.")
                 .define("endSkyPixelationEnabled", true);
+        END_SKY_PIXELATION_RESOLUTION = END_SKY_PIXELATION_RESOLUTION_SETTING.define(
+                builder,
+                "endSkyPixelationResolution",
+                "Resolution of the End sky's pixel grid. Lower values produce larger pixels."
+        );
         END_SKY_INTENSITY = END_SKY_INTENSITY_SETTING.define(
                 builder,
                 "endSkyIntensity",

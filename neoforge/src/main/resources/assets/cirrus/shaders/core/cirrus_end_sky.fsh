@@ -11,6 +11,7 @@ uniform float CirrusEndLightningIntensity;
 uniform float CirrusEndSurgeFrequency;
 uniform float CirrusEndSurgeStrength;
 uniform float CirrusEndPixelation;
+uniform float CirrusEndPixelationResolution;
 
 in vec3 worldDirection;
 out vec4 fragColor;
@@ -92,7 +93,7 @@ vec3 octahedralDecode(vec2 encoded) {
 
 vec3 pixelatedDirection(vec3 direction) {
     vec2 encoded = octahedralEncode(direction);
-    vec2 resolution = vec2(480.0);
+    vec2 resolution = vec2(max(CirrusEndPixelationResolution, 1.0));
     vec2 snapped = (floor((encoded * 0.5 + 0.5) * resolution) + 0.5) / resolution;
     return octahedralDecode(snapped * 2.0 - 1.0);
 }

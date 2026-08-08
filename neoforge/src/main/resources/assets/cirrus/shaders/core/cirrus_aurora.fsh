@@ -3,6 +3,7 @@
 uniform float CirrusAuroraTime;
 uniform float CirrusAuroraIntensity;
 uniform float CirrusAuroraPixelation;
+uniform float CirrusAuroraPixelationResolution;
 uniform vec4 CirrusAuroraVariant;
 uniform vec4 CirrusAuroraSettings;
 
@@ -11,16 +12,16 @@ in vec3 worldDirection;
 out vec4 fragColor;
 
 const float HALF_PI = 1.57079632679;
-const float CIRRUS_AURORA_PIXELS_PER_FACE = 320.0;
+float cirrusAuroraPixelsPerFace() { return max(CirrusAuroraPixelationResolution, 1.0); }
 
 float pixelateCubeCoordinate(float value) {
     float normalized = clamp(value * 0.5 + 0.5, 0.0, 1.0);
     float cell = min(
-        floor(normalized * CIRRUS_AURORA_PIXELS_PER_FACE),
-        CIRRUS_AURORA_PIXELS_PER_FACE - 1.0
+        floor(normalized * cirrusAuroraPixelsPerFace()),
+        cirrusAuroraPixelsPerFace() - 1.0
     );
     return (
-        (cell + 0.5) / CIRRUS_AURORA_PIXELS_PER_FACE
+        (cell + 0.5) / cirrusAuroraPixelsPerFace()
     ) * 2.0 - 1.0;
 }
 

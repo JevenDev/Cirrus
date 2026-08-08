@@ -65,6 +65,10 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
         if (pixelationUniform != null) {
             pixelationUniform.set(CirrusConfig.MILKY_WAY_PIXELATION_ENABLED.get() ? 1.0F : 0.0F);
         }
+        Uniform pixelationResolutionUniform = shader.getUniform("CirrusMilkyWayPixelationResolution");
+        if (pixelationResolutionUniform != null) {
+            pixelationResolutionUniform.set(CirrusConfig.MILKY_WAY_PIXELATION_RESOLUTION.get().floatValue());
+        }
         Uniform nightSkyIntensityUniform = shader.getUniform("CirrusNightSkyIntensity");
         if (nightSkyIntensityUniform != null) {
             nightSkyIntensityUniform.set(nightSkyIntensity);

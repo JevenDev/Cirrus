@@ -2,6 +2,7 @@
 
 uniform float CirrusMilkyWayIntensity;
 uniform float CirrusMilkyWayPixelation;
+uniform float CirrusMilkyWayPixelationResolution;
 uniform float CirrusNightSkyIntensity;
 uniform float CirrusMilkyWayRotation;
 
@@ -57,16 +58,16 @@ vec3 rotateX(vec3 direction, float angle) {
     );
 }
 
-const float CIRRUS_MILKY_WAY_PIXELS_PER_FACE = 320.0;
+float cirrusMilkyWayPixelsPerFace() { return max(CirrusMilkyWayPixelationResolution, 1.0); }
 
 float pixelateCubeCoordinate(float value) {
     float normalized = clamp(value * 0.5 + 0.5, 0.0, 1.0);
     float cell = min(
-        floor(normalized * CIRRUS_MILKY_WAY_PIXELS_PER_FACE),
-        CIRRUS_MILKY_WAY_PIXELS_PER_FACE - 1.0
+        floor(normalized * cirrusMilkyWayPixelsPerFace()),
+        cirrusMilkyWayPixelsPerFace() - 1.0
     );
     return (
-        (cell + 0.5) / CIRRUS_MILKY_WAY_PIXELS_PER_FACE
+        (cell + 0.5) / cirrusMilkyWayPixelsPerFace()
     ) * 2.0 - 1.0;
 }
 

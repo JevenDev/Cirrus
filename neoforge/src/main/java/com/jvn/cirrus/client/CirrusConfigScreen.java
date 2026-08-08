@@ -267,6 +267,12 @@ public final class CirrusConfigScreen {
                                 "cirrus.config.sky.milkyWayPixelationEnabled",
                                 CirrusConfig.MILKY_WAY_PIXELATION_ENABLED
                         ))
+                        .option(integerOption(
+                                "cirrus.config.sky.milkyWayPixelationResolution",
+                                CirrusConfig.MILKY_WAY_PIXELATION_RESOLUTION,
+                                CirrusConfig.MILKY_WAY_PIXELATION_RESOLUTION_SETTING,
+                                value -> Component.literal(value + " cells")
+                        ))
                         .option(percentageOption(
                                 "cirrus.config.sky.milkyWayOpacity",
                                 CirrusConfig.MILKY_WAY_OPACITY,
@@ -279,6 +285,12 @@ public final class CirrusConfigScreen {
                         .option(booleanOption(
                                 "cirrus.config.sky.auroraPixelationEnabled",
                                 CirrusConfig.AURORA_PIXELATION_ENABLED
+                        ))
+                        .option(integerOption(
+                                "cirrus.config.sky.auroraPixelationResolution",
+                                CirrusConfig.AURORA_PIXELATION_RESOLUTION,
+                                CirrusConfig.AURORA_PIXELATION_RESOLUTION_SETTING,
+                                value -> Component.literal(value + " cells")
                         ))
                         .option(booleanOption(
                                 "cirrus.config.sky.auroraColdBiomesOnly",
@@ -323,6 +335,12 @@ public final class CirrusConfigScreen {
                         .option(booleanOption(
                                 "cirrus.config.sky.endSkyPixelationEnabled",
                                 CirrusConfig.END_SKY_PIXELATION_ENABLED
+                        ))
+                        .option(integerOption(
+                                "cirrus.config.sky.endSkyPixelationResolution",
+                                CirrusConfig.END_SKY_PIXELATION_RESOLUTION,
+                                CirrusConfig.END_SKY_PIXELATION_RESOLUTION_SETTING,
+                                value -> Component.literal(value + " cells")
                         ))
                         .option(percentageOption(
                                 "cirrus.config.sky.endSkyIntensity",

@@ -40,6 +40,7 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
         setUniform(shader, "CirrusEndSurgeFrequency", CirrusConfig.END_SKY_SURGE_FREQUENCY.get().floatValue());
         setUniform(shader, "CirrusEndSurgeStrength", CirrusConfig.END_SKY_SURGE_STRENGTH.get().floatValue());
         setUniform(shader, "CirrusEndPixelation", CirrusConfig.END_SKY_PIXELATION_ENABLED.get() ? 1.0F : 0.0F);
+        setUniform(shader, "CirrusEndPixelationResolution", CirrusConfig.END_SKY_PIXELATION_RESOLUTION.get().floatValue());
 
         PoseStack poseStack = new PoseStack();
         poseStack.mulPose(frustumMatrix);
