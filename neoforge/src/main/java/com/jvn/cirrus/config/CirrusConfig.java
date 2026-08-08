@@ -43,6 +43,13 @@ public final class CirrusConfig {
     public static final DoubleSetting AURORA_NIGHTLY_VARIATION_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
     public static final DoubleSetting END_SKY_INTENSITY_SETTING = new DoubleSetting(1.0, 0.0, 2.0, 0.05);
     public static final DoubleSetting END_SKY_ANIMATION_SPEED_SETTING = new DoubleSetting(1.0, 0.0, 3.0, 0.05);
+    public static final DoubleSetting END_SKY_MORPH_SPEED_SETTING = new DoubleSetting(3.0, 0.0, 3.0, 0.05);
+    public static final DoubleSetting END_SKY_VOID_COVERAGE_SETTING = new DoubleSetting(2.0, 0.0, 2.0, 0.05);
+    public static final DoubleSetting END_SKY_VOID_DARKNESS_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
+    public static final DoubleSetting END_SKY_LIGHTNING_FREQUENCY_SETTING = new DoubleSetting(3.0, 0.0, 3.0, 0.05);
+    public static final DoubleSetting END_SKY_LIGHTNING_INTENSITY_SETTING = new DoubleSetting(2.0, 0.0, 2.0, 0.05);
+    public static final DoubleSetting END_SKY_SURGE_FREQUENCY_SETTING = new DoubleSetting(3.0, 0.0, 3.0, 0.05);
+    public static final DoubleSetting END_SKY_SURGE_STRENGTH_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
 
     public static final ModConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
     public static final ModConfigSpec.IntValue CLOUD_RENDER_DISTANCE;
@@ -98,6 +105,13 @@ public final class CirrusConfig {
     public static final ModConfigSpec.BooleanValue END_SKY_PIXELATION_ENABLED;
     public static final ModConfigSpec.DoubleValue END_SKY_INTENSITY;
     public static final ModConfigSpec.DoubleValue END_SKY_ANIMATION_SPEED;
+    public static final ModConfigSpec.DoubleValue END_SKY_MORPH_SPEED;
+    public static final ModConfigSpec.DoubleValue END_SKY_VOID_COVERAGE;
+    public static final ModConfigSpec.DoubleValue END_SKY_VOID_DARKNESS;
+    public static final ModConfigSpec.DoubleValue END_SKY_LIGHTNING_FREQUENCY;
+    public static final ModConfigSpec.DoubleValue END_SKY_LIGHTNING_INTENSITY;
+    public static final ModConfigSpec.DoubleValue END_SKY_SURGE_FREQUENCY;
+    public static final ModConfigSpec.DoubleValue END_SKY_SURGE_STRENGTH;
     public static final ModConfigSpec SPEC;
 
     static {
@@ -344,7 +358,35 @@ public final class CirrusConfig {
         END_SKY_ANIMATION_SPEED = END_SKY_ANIMATION_SPEED_SETTING.define(
                 builder,
                 "endSkyAnimationSpeed",
-                "Speed multiplier for the End sky's slow cosmic drift. Zero freezes the effect."
+                "Speed multiplier for the End sky's layered drift. Zero freezes positional movement."
+        );
+        END_SKY_MORPH_SPEED = END_SKY_MORPH_SPEED_SETTING.define(
+                builder, "endSkyMorphSpeed",
+                "Speed multiplier for clouds reshaping and merging. Zero freezes shape changes."
+        );
+        END_SKY_VOID_COVERAGE = END_SKY_VOID_COVERAGE_SETTING.define(
+                builder, "endSkyVoidCoverage",
+                "Amount of the End sky occupied by morphing black voids."
+        );
+        END_SKY_VOID_DARKNESS = END_SKY_VOID_DARKNESS_SETTING.define(
+                builder, "endSkyVoidDarkness",
+                "Strength of the permanent black voids. Zero removes their darkening."
+        );
+        END_SKY_LIGHTNING_FREQUENCY = END_SKY_LIGHTNING_FREQUENCY_SETTING.define(
+                builder, "endSkyLightningFrequency",
+                "Frequency multiplier for chain and distant lightning. Zero disables both."
+        );
+        END_SKY_LIGHTNING_INTENSITY = END_SKY_LIGHTNING_INTENSITY_SETTING.define(
+                builder, "endSkyLightningIntensity",
+                "Brightness of End lightning bolts and their illumination."
+        );
+        END_SKY_SURGE_FREQUENCY = END_SKY_SURGE_FREQUENCY_SETTING.define(
+                builder, "endSkySurgeFrequency",
+                "Frequency multiplier for irregular darkness-spreading events. Zero disables them."
+        );
+        END_SKY_SURGE_STRENGTH = END_SKY_SURGE_STRENGTH_SETTING.define(
+                builder, "endSkySurgeStrength",
+                "Maximum strength of temporary darkness-spreading events."
         );
         builder.pop();
         SPEC = builder.build();

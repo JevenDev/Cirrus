@@ -8,6 +8,13 @@
     { "name": "CirrusEndTime", "type": "float", "count": 1, "values": [ 0.0 ] },
     { "name": "CirrusEndIntensity", "type": "float", "count": 1, "values": [ 1.0 ] },
     { "name": "CirrusEndAnimationSpeed", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "CirrusEndMorphSpeed", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "CirrusEndVoidCoverage", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "CirrusEndVoidDarkness", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "CirrusEndLightningFrequency", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "CirrusEndLightningIntensity", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "CirrusEndSurgeFrequency", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "CirrusEndSurgeStrength", "type": "float", "count": 1, "values": [ 1.0 ] },
     { "name": "CirrusEndPixelation", "type": "float", "count": 1, "values": [ 1.0 ] }
   ]
 }

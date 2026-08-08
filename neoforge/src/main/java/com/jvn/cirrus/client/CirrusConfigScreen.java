@@ -335,6 +335,45 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.END_SKY_ANIMATION_SPEED_SETTING,
                                 value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
                         ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.endSkyMorphSpeed",
+                                CirrusConfig.END_SKY_MORPH_SPEED,
+                                CirrusConfig.END_SKY_MORPH_SPEED_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.endSkyVoidCoverage",
+                                CirrusConfig.END_SKY_VOID_COVERAGE,
+                                CirrusConfig.END_SKY_VOID_COVERAGE_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.endSkyVoidDarkness",
+                                CirrusConfig.END_SKY_VOID_DARKNESS,
+                                CirrusConfig.END_SKY_VOID_DARKNESS_SETTING
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.endSkyLightningFrequency",
+                                CirrusConfig.END_SKY_LIGHTNING_FREQUENCY,
+                                CirrusConfig.END_SKY_LIGHTNING_FREQUENCY_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.endSkyLightningIntensity",
+                                CirrusConfig.END_SKY_LIGHTNING_INTENSITY,
+                                CirrusConfig.END_SKY_LIGHTNING_INTENSITY_SETTING
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.endSkySurgeFrequency",
+                                CirrusConfig.END_SKY_SURGE_FREQUENCY,
+                                CirrusConfig.END_SKY_SURGE_FREQUENCY_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.endSkySurgeStrength",
+                                CirrusConfig.END_SKY_SURGE_STRENGTH,
+                                CirrusConfig.END_SKY_SURGE_STRENGTH_SETTING
+                        ))
                         .build())
                 .build();
     }

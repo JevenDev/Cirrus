@@ -3,6 +3,13 @@
 uniform float CirrusEndTime;
 uniform float CirrusEndIntensity;
 uniform float CirrusEndAnimationSpeed;
+uniform float CirrusEndMorphSpeed;
+uniform float CirrusEndVoidCoverage;
+uniform float CirrusEndVoidDarkness;
+uniform float CirrusEndLightningFrequency;
+uniform float CirrusEndLightningIntensity;
+uniform float CirrusEndSurgeFrequency;
+uniform float CirrusEndSurgeStrength;
 uniform float CirrusEndPixelation;
 
 in vec3 worldDirection;
@@ -115,37 +122,30 @@ float shardLayer(vec3 direction) {
     return exists * (body + halo * 0.25);
 }
 
-float lightningBolt(vec3 direction, vec3 axis, float seed) {
-    vec3 tangent = normalize(cross(axis, abs(axis.y) > 0.8 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0)));
-    vec3 bitangent = cross(axis, tangent);
-    float facing = dot(direction, axis);
-    vec2 boltUv = vec2(dot(direction, tangent), dot(direction, bitangent)) / max(facing, 0.2);
-
-    float crookedCenter = sin(boltUv.y * 24.0 + seed * 19.0) * 0.018;
-    crookedCenter += sin(boltUv.y * 57.0 - seed * 31.0) * 0.009;
-    crookedCenter += sin(boltUv.y * 113.0 + seed * 7.0) * 0.004;
-    float verticalMask = smoothstep(-0.38, -0.30, boltUv.y) * (1.0 - smoothstep(0.28, 0.38, boltUv.y));
-    float mainDistance = abs(boltUv.x - crookedCenter);
-    float mainBolt = (1.0 - smoothstep(0.004, 0.014, mainDistance)) * verticalMask;
-
-    float branchWindow = smoothstep(-0.04, 0.02, boltUv.y) * (1.0 - smoothstep(0.15, 0.23, boltUv.y));
-    float branchCenter = crookedCenter + (boltUv.y - 0.08) * 0.72;
-    branchCenter += sin(boltUv.y * 76.0 + seed * 43.0) * 0.010;
-    float branch = (1.0 - smoothstep(0.004, 0.013, abs(boltUv.x - branchCenter))) * branchWindow;
-    return (mainBolt + branch * 0.72) * smoothstep(0.68, 0.86, facing);
-}
-
 float lightningSegment(vec2 uv, vec2 startPoint, vec2 endPoint, float seed, float width) {
     vec2 segment = endPoint - startPoint;
-    float progress = clamp(dot(uv - startPoint, segment) / dot(segment, segment), 0.0, 1.0);
+    float segmentLengthSquared = max(dot(segment, segment), 0.000001);
+    float progress = clamp(dot(uv - startPoint, segment) / segmentLengthSquared, 0.0, 1.0);
     vec2 normal = normalize(vec2(-segment.y, segment.x));
-    float crooked = sin(progress * 31.0 + seed * 17.0) * width * 1.8;
-    crooked += sin(progress * 83.0 - seed * 29.0) * width * 0.72;
+
+    float coarseCell = floor(progress * 9.0);
+    float coarseLocal = fract(progress * 9.0);
+    float coarseA = hash13(vec3(coarseCell, seed * 17.13, seed + 4.0)) - 0.5;
+    float coarseB = hash13(vec3(coarseCell + 1.0, seed * 17.13, seed + 4.0)) - 0.5;
+    float crooked = mix(coarseA, coarseB, coarseLocal) * width * 7.0;
+
+    float fineCell = floor(progress * 23.0);
+    float fineLocal = fract(progress * 23.0);
+    float fineA = hash13(vec3(fineCell, seed * 9.71, seed + 19.0)) - 0.5;
+    float fineB = hash13(vec3(fineCell + 1.0, seed * 9.71, seed + 19.0)) - 0.5;
+    crooked += mix(fineA, fineB, fineLocal) * width * 2.2;
+    crooked *= sin(progress * PI);
+
     vec2 closest = mix(startPoint, endPoint, progress) + normal * crooked;
     float distanceToSegment = length(uv - closest);
-    float core = 1.0 - smoothstep(width * 0.28, width, distanceToSegment);
-    float glow = 1.0 - smoothstep(width, width * 4.5, distanceToSegment);
-    return core + glow * 0.22;
+    float core = 1.0 - smoothstep(width * 0.18, width * 0.72, distanceToSegment);
+    float glow = 1.0 - smoothstep(width * 0.72, width * 3.0, distanceToSegment);
+    return core + glow * 0.14;
 }
 
 float chainLightning(vec3 direction, vec3 axis, float seed) {
@@ -153,23 +153,45 @@ float chainLightning(vec3 direction, vec3 axis, float seed) {
     vec3 bitangent = cross(axis, tangent);
     float facing = dot(direction, axis);
     vec2 uv = vec2(dot(direction, tangent), dot(direction, bitangent)) / max(facing, 0.24);
+    vec3 bends = hash33(vec3(seed * 31.7 + 2.0, seed * 13.1 + 7.0, seed * 47.3 + 11.0)) - 0.5;
 
-    float bendA = (seed - 0.5) * 0.08;
-    float bendB = (fract(seed * 7.31) - 0.5) * 0.10;
-    vec2 point0 = vec2(-0.34, 0.12 + bendA);
-    vec2 point1 = vec2(-0.18, -0.015 + bendB);
-    vec2 point2 = vec2(-0.015, 0.075 - bendA);
-    vec2 point3 = vec2(0.16, -0.045 - bendB);
-    vec2 point4 = vec2(0.34, 0.035 + bendA);
+    vec2 point0 = vec2(bends.z * 0.035, 0.36);
+    vec2 point1 = vec2(bends.x * 0.105, 0.19);
+    vec2 point2 = vec2(bends.y * 0.090, 0.015);
+    vec2 point3 = vec2(-bends.x * 0.080, -0.17);
+    vec2 point4 = vec2(bends.z * 0.060, -0.35);
 
-    float chain = lightningSegment(uv, point0, point1, seed + 1.0, 0.0070);
-    chain += lightningSegment(uv, point1, point2, seed + 2.0, 0.0062);
-    chain += lightningSegment(uv, point2, point3, seed + 3.0, 0.0055);
-    chain += lightningSegment(uv, point3, point4, seed + 4.0, 0.0048);
-    chain += lightningSegment(uv, point1, vec2(-0.10, -0.19), seed + 5.0, 0.0044) * 0.72;
-    chain += lightningSegment(uv, point2, vec2(0.08, 0.24), seed + 6.0, 0.0040) * 0.64;
-    chain += lightningSegment(uv, point3, vec2(0.25, -0.16), seed + 7.0, 0.0036) * 0.52;
-    return chain * smoothstep(0.58, 0.87, facing);
+    float bolt = lightningSegment(uv, point0, point1, seed + 1.0, 0.0048);
+    bolt += lightningSegment(uv, point1, point2, seed + 2.0, 0.0043);
+    bolt += lightningSegment(uv, point2, point3, seed + 3.0, 0.0038);
+    bolt += lightningSegment(uv, point3, point4, seed + 4.0, 0.0032);
+
+    vec2 branchA = point1 + vec2(-0.13 - bends.y * 0.05, -0.13);
+    vec2 branchB = point2 + vec2(0.12 + bends.z * 0.05, -0.12);
+    vec2 branchC = point3 + vec2(-0.085 + bends.x * 0.04, -0.09);
+    bolt += lightningSegment(uv, point1, branchA, seed + 5.0, 0.0028) * 0.62;
+    bolt += lightningSegment(uv, point2, branchB, seed + 6.0, 0.0025) * 0.52;
+    bolt += lightningSegment(uv, point3, branchC, seed + 7.0, 0.0021) * 0.40;
+    return bolt * smoothstep(0.64, 0.88, facing);
+}
+
+float lightningBolt(vec3 direction, vec3 axis, float seed) {
+    vec3 tangent = normalize(cross(axis, abs(axis.y) > 0.8 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0)));
+    vec3 bitangent = cross(axis, tangent);
+    float facing = dot(direction, axis);
+    vec2 uv = vec2(dot(direction, tangent), dot(direction, bitangent)) / max(facing, 0.24);
+    vec3 bends = hash33(vec3(seed * 23.9 + 5.0, seed * 41.3 + 17.0, seed * 11.7 + 29.0)) - 0.5;
+
+    vec2 point0 = vec2(bends.x * 0.025, 0.24);
+    vec2 point1 = vec2(bends.y * 0.060, 0.085);
+    vec2 point2 = vec2(-bends.x * 0.050, -0.075);
+    vec2 point3 = vec2(bends.z * 0.040, -0.23);
+    float bolt = lightningSegment(uv, point0, point1, seed + 11.0, 0.0032);
+    bolt += lightningSegment(uv, point1, point2, seed + 12.0, 0.0028);
+    bolt += lightningSegment(uv, point2, point3, seed + 13.0, 0.0023);
+    vec2 branch = point1 + vec2(0.075 + bends.z * 0.035, -0.095);
+    bolt += lightningSegment(uv, point1, branch, seed + 14.0, 0.0019) * 0.44;
+    return bolt * smoothstep(0.72, 0.90, facing);
 }
 
 float cloudBank(vec3 direction, float scale, vec3 drift, vec3 seed, float morphTime) {
@@ -238,6 +260,7 @@ void main() {
     vec3 direction = mix(smoothDirection, pixelatedDirection(smoothDirection), clamp(CirrusEndPixelation, 0.0, 1.0));
     float intensity = clamp(CirrusEndIntensity, 0.0, 2.0);
     float time = CirrusEndTime * max(CirrusEndAnimationSpeed, 0.0);
+    float morphTime = time * max(CirrusEndMorphSpeed, 0.0);
     vec3 driftingDirection = rotateY(direction, time * 0.0022);
 
     float vertical = direction.y * 0.5 + 0.5;
@@ -273,21 +296,21 @@ void main() {
         1.62,
         vec3(-time * 0.0024, time * 0.0011, time * 0.0016),
         vec3(23.0, -9.0, 4.0),
-        time * 0.035
+        morphTime * 0.035
     );
     float middleCloud = cloudBank(
         rotateY(direction, -time * 0.0085),
         2.36,
         vec3(time * 0.0072, -time * 0.0032, time * 0.0018),
         vec3(-12.0, 7.0, 18.0),
-        time * 0.065
+        morphTime * 0.065
     );
     float nearCloud = cloudBank(
         rotateY(direction, time * 0.0150),
         3.28,
         vec3(-time * 0.0130, time * 0.0058, -time * 0.0045),
         vec3(5.0, 21.0, -14.0),
-        time * 0.100
+        morphTime * 0.100
     );
 
     compositeCloudLayer(
@@ -326,9 +349,9 @@ void main() {
     // Large morphing voids cut through the luminous material. Their soft outer
     // masks deepen the cloud banks while the cores approach true End-black.
     vec3 voidMorphOffset = vec3(
-        sin(time * 0.055 + 1.7),
-        cos(time * 0.046 - 0.8),
-        sin(time * 0.039 + 2.9)
+        sin(morphTime * 0.055 + 1.7),
+        cos(morphTime * 0.046 - 0.8),
+        sin(morphTime * 0.039 + 2.9)
     ) * 0.90;
     float voidWarpA = valueNoise(direction * 1.08 + voidMorphOffset + vec3(7.0, -3.0, 11.0));
     float voidWarpB = valueNoise(direction.yzx * 1.24 - voidMorphOffset.zxy + vec3(-5.0, 13.0, 2.0));
@@ -351,20 +374,120 @@ void main() {
         + vec3(-8.0, 17.0, 5.0)
     );
     float voidField = voidBroad + (voidDetail - 0.5) * 0.32;
-    float voidMask = smoothstep(0.44, 0.66, voidField);
-    float voidCore = smoothstep(0.56, 0.73, voidField);
+    float configuredVoidCoverage = clamp(CirrusEndVoidCoverage, 0.0, 2.0);
+    float voidThresholdShift = (configuredVoidCoverage - 1.0) * 0.16;
+    float voidEnabled = smoothstep(0.0, 0.08, configuredVoidCoverage);
+    float voidMask = smoothstep(
+        0.44 - voidThresholdShift,
+        0.66 - voidThresholdShift,
+        voidField
+    ) * voidEnabled;
+    float voidCore = smoothstep(
+        0.56 - voidThresholdShift,
+        0.73 - voidThresholdShift,
+        voidField
+    ) * voidEnabled;
     float voidBoundary = max(voidMask - voidCore, 0.0);
-    float voidStrength = min(intensity, 1.0);
+    float voidStrength = min(intensity, 1.0)
+            * clamp(CirrusEndVoidDarkness, 0.0, 1.0);
     color *= 1.0 - voidMask * 0.76 * voidStrength;
     color = mix(color, vec3(0.0003, 0.0001, 0.002), voidCore * 0.94 * voidStrength);
     color += vec3(0.50, 0.055, 0.58) * voidBoundary * 0.38 * intensity;
 
-    // Major chain strikes are rare and linger as broken, fading afterimages.
+    // Darkness surges use a new seeded layout for every event. Randomized start,
+    // duration, reach, direction, resistance, and uneven breakup prevent a recognizable cycle.
+    float surgeFrequency = max(CirrusEndSurgeFrequency, 0.0);
+    float surgeClock = CirrusEndTime * max(surgeFrequency, 0.001);
+    float surgeWindow = 47.0;
+    float surgeEvent = floor(surgeClock / surgeWindow);
+    float surgeAge = mod(surgeClock, surgeWindow);
+    vec3 surgeRandom = hash33(vec3(surgeEvent, 211.0, 67.0));
+    vec3 surgeAxisRandom = hash33(vec3(surgeEvent, 19.0, 233.0));
+    float surgeOccurs = step(0.32, surgeRandom.z) * step(0.001, surgeFrequency);
+    float surgeStart = mix(2.5, 12.0, surgeRandom.x);
+    float surgeDuration = mix(
+        12.0,
+        25.0,
+        hash13(vec3(surgeEvent, 83.0, 149.0))
+    );
+    float surgeProgress = (surgeAge - surgeStart) / surgeDuration;
+    float surgeGrowth = smoothstep(0.02, 0.58, surgeProgress);
+
+    float surgeY = mix(-0.20, 0.76, surgeAxisRandom.y);
+    float surgeAzimuth = surgeAxisRandom.x * PI * 2.0;
+    float surgeHorizontal = sqrt(max(1.0 - surgeY * surgeY, 0.0));
+    vec3 surgeAxis = vec3(
+        cos(surgeAzimuth) * surgeHorizontal,
+        surgeY,
+        sin(surgeAzimuth) * surgeHorizontal
+    );
+
+    float minimumReach = mix(-0.42, 0.08, surgeRandom.y);
+    float surgeReach = mix(0.98, minimumReach, surgeGrowth);
+    float distortedSurgeFacing = dot(direction, surgeAxis)
+            + (voidDetail - 0.5) * 0.18
+            + (foldedCloud - 0.5) * 0.08;
+    float surgeOuter = smoothstep(
+        surgeReach - 0.14,
+        surgeReach + 0.06,
+        distortedSurgeFacing
+    );
+    float surgeInner = smoothstep(
+        surgeReach + 0.06,
+        surgeReach + 0.23,
+        distortedSurgeFacing
+    );
+    float surgeDissolvePattern = clamp(
+        voidDetail * 0.55 + foldedCloud * 0.30 + nearCloud * 0.15,
+        0.0,
+        1.0
+    );
+    float surgeDissolveThreshold = mix(
+        1.12,
+        -0.12,
+        smoothstep(0.68, 1.0, surgeProgress)
+    );
+    float surgeDissolve = smoothstep(
+        surgeDissolveThreshold - 0.10,
+        surgeDissolveThreshold + 0.10,
+        surgeDissolvePattern
+    );
+    float surgeLife = smoothstep(0.0, 0.12, surgeProgress)
+            * (1.0 - surgeDissolve);
+    float surgeArea = surgeOuter * surgeLife * surgeOccurs;
+    float surgeEdge = max(surgeOuter - surgeInner, 0.0)
+            * surgeLife
+            * surgeOccurs;
+    float atmosphereResistance = clamp(
+        filaments * 0.72 + illuminatedEdges * 0.34,
+        0.0,
+        0.75
+    );
+    float surgeAmount = surgeArea
+            * (1.0 - atmosphereResistance)
+            * clamp(CirrusEndSurgeStrength, 0.0, 1.0);
+    color *= 1.0 - surgeAmount * 0.72;
+    color = mix(
+        color,
+        vec3(0.0002, 0.00005, 0.0015),
+        surgeAmount * surgeAmount * 0.68
+    );
+    color += vec3(0.32, 0.035, 0.44)
+            * surgeEdge
+            * clamp(CirrusEndSurgeStrength, 0.0, 1.0)
+            * 0.18
+            * intensity;
+
+    // Major strikes are narrow, forked, and partly hidden inside the clouds.
+    float lightningFrequency = max(CirrusEndLightningFrequency, 0.0);
+    float lightningClock = CirrusEndTime * max(lightningFrequency, 0.001);
+    float lightningIntensity = clamp(CirrusEndLightningIntensity, 0.0, 2.0);
     float lightningWindow = 16.0;
-    float lightningEvent = floor(CirrusEndTime / lightningWindow);
-    float lightningAge = mod(CirrusEndTime, lightningWindow);
+    float lightningEvent = floor(lightningClock / lightningWindow);
+    float lightningAge = mod(lightningClock, lightningWindow);
     vec3 lightningRandom = hash33(vec3(lightningEvent, 37.0, 91.0));
-    float lightningOccurs = step(0.45, lightningRandom.z);
+    float lightningOccurs = step(0.45, lightningRandom.z)
+            * step(0.001, lightningFrequency);
     float firstFlash = 1.0 - smoothstep(0.0, 0.075, lightningAge);
     float secondFlash = smoothstep(0.11, 0.14, lightningAge)
             * (1.0 - smoothstep(0.14, 0.30, lightningAge));
@@ -388,7 +511,8 @@ void main() {
     color += vec3(0.30, 0.18, 0.60)
             * regionalFlash
             * (0.22 + combinedCloudDensity * 0.78)
-            * intensity;
+            * intensity
+            * lightningIntensity;
     float layeredIllumination = clamp(
         farDensity * 0.26 + middleDensity * 0.66 + nearDensity,
         0.0,
@@ -396,34 +520,43 @@ void main() {
     );
     color += vec3(0.48, 0.30, 0.86)
             * lightningHalo
-            * (layeredIllumination * 0.82 + illuminatedEdges * 0.80 + voidBoundary * 0.52)
+            * (layeredIllumination * 0.82 + illuminatedEdges * 0.80 + voidBoundary * 0.52 + surgeEdge * 0.38)
             * 1.34
-            * intensity;
+            * intensity
+            * lightningIntensity;
     color += vec3(0.56, 0.66, 1.00)
             * lightningFlash
             * smoothstep(0.62, 0.97, lightningAlignment)
             * illuminatedEdges
             * 0.62
-            * intensity;
+            * intensity
+            * lightningIntensity;
 
     float chain = chainLightning(direction, lightningAxis, lightningRandom.x);
     float dissolveNoise = hash13(floor(direction * 420.0) + lightningEvent * 13.7);
     float chainDissolve = smoothstep(0.0, 0.34, chainDecay - dissolveNoise * 0.52);
-    float chainVisibility = mix(0.18, 1.0, smoothstep(0.08, 0.66, combinedCloudDensity));
-    color += vec3(0.76, 0.82, 1.00)
+    float chainVisibility = mix(
+        0.04,
+        0.74,
+        smoothstep(0.10, 0.68, combinedCloudDensity)
+    ) * (0.78 + illuminatedEdges * 0.22);
+    color += vec3(0.72, 0.78, 1.00)
             * chain
             * max(lightningFlash, chainDecay * chainDissolve)
             * chainVisibility
-            * 2.05
-            * intensity;
+            * 1.28
+            * intensity
+            * lightningIntensity;
 
     // A separate, faster event clock creates small flashes behind the far and
     // middle banks. These are dimmer, shorter, and only expose distant depth.
     float distantWindow = 11.0;
-    float distantEvent = floor((CirrusEndTime + 4.0) / distantWindow);
-    float distantAge = mod(CirrusEndTime + 4.0, distantWindow);
+    float distantClock = lightningClock + 4.0;
+    float distantEvent = floor(distantClock / distantWindow);
+    float distantAge = mod(distantClock, distantWindow);
     vec3 distantRandom = hash33(vec3(distantEvent, 173.0, 29.0));
-    float distantOccurs = step(0.30, distantRandom.z);
+    float distantOccurs = step(0.30, distantRandom.z)
+            * step(0.001, lightningFrequency);
     float distantFirst = 1.0 - smoothstep(0.0, 0.08, distantAge);
     float distantSecond = smoothstep(0.18, 0.21, distantAge)
             * (1.0 - smoothstep(0.21, 0.38, distantAge));
@@ -442,26 +575,30 @@ void main() {
             * distantFlash
             * distantFacing
             * (0.18 + farDensity * 0.42)
-            * intensity;
+            * intensity
+            * lightningIntensity;
     color += vec3(0.30, 0.22, 0.68)
             * distantFlash
             * distantFacing
             * distantClouds
             * 0.88
-            * intensity;
+            * intensity
+            * lightningIntensity;
     float distantBolt = lightningBolt(direction, distantAxis, distantRandom.x);
     color += vec3(0.48, 0.56, 0.92)
             * distantBolt
             * distantFlash
             * farDensity
-            * 0.42
-            * intensity;
+            * 0.26
+            * intensity
+            * lightningIntensity;
 
     float faintStars = starLayer(direction, 118.0, 0.972);
     float brightStars = starLayer(direction, 61.0, 0.982);
     float starColorNoise = hash13(floor(direction * 61.0) + 8.0);
     vec3 starColor = mix(vec3(0.58, 0.72, 1.0), vec3(1.0, 0.58, 0.92), starColorNoise);
-    float starVisibility = 1.0 - combinedCloudDensity * (0.86 - voidMask * 0.55);
+    float starVisibility = (1.0 - combinedCloudDensity * (0.86 - voidMask * 0.55))
+            * (1.0 - surgeAmount * 0.55);
     color += vec3(0.64, 0.58, 0.90) * faintStars * 0.52 * intensity * starVisibility;
     color += starColor * brightStars * 1.34 * intensity * starVisibility;
 
