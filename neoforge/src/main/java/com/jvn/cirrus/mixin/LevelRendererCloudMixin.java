@@ -25,6 +25,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LevelRenderer.class)
@@ -37,6 +38,7 @@ public abstract class LevelRendererCloudMixin {
     @Unique private final CirrusEndSkyRenderer cirrus$endSkyRenderer = new CirrusEndSkyRenderer();
     @Unique private CloudStatus cirrus$lastCloudMode;
     @Unique private boolean cirrus$celestialMaskActive;
+    @Unique private float cirrus$precipitationCeiling = Float.POSITIVE_INFINITY;
 
     @Inject(method = "renderLevel", at = @At("HEAD"))
     private void cirrus$noticeCloudModeChange(
@@ -86,6 +88,48 @@ public abstract class LevelRendererCloudMixin {
                     cameraZ
             );
         }
+    }
+
+    @Inject(method = "renderSnowAndRain", at = @At("HEAD"))
+    private void cirrus$preparePrecipitationCeiling(
+            LightTexture lightTexture,
+            float partialTick,
+            double cameraX,
+            double cameraY,
+            double cameraZ,
+            CallbackInfo ci
+    ) {
+        cirrus$precipitationCeiling = Float.POSITIVE_INFINITY;
+        if (level == null || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
+            return;
+        }
+
+        float cloudHeight = level.effects().getCloudHeight();
+        if (Float.isNaN(cloudHeight)) {
+            return;
+        }
+
+        double highestLayer = cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get();
+        if (CirrusConfig.TOP_LAYER_ENABLED.get()) {
+            highestLayer += CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
+                    + CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get();
+        } else if (CirrusConfig.UPPER_LAYER_ENABLED.get()) {
+            highestLayer += CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get();
+        }
+        cirrus$precipitationCeiling = (float)(highestLayer + 0.33 - cameraY);
+    }
+
+    @ModifyArg(
+            method = "renderSnowAndRain",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lcom/mojang/blaze3d/vertex/BufferBuilder;addVertex(FFF)"
+                            + "Lcom/mojang/blaze3d/vertex/VertexConsumer;"
+            ),
+            index = 1
+    )
+    private float cirrus$capPrecipitationAtHighestCloudLayer(float y) {
+        return Math.min(y, cirrus$precipitationCeiling);
     }
 
     @Inject(
