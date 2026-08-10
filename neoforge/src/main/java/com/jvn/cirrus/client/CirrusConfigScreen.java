@@ -48,6 +48,16 @@ public final class CirrusConfigScreen {
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.cloudWeather"))
                         .option(booleanOption(
+                                "cirrus.config.clouds.customLightningEnabled",
+                                CirrusConfig.CUSTOM_LIGHTNING_ENABLED
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.clouds.lightningBoltIntensity",
+                                CirrusConfig.LIGHTNING_BOLT_INTENSITY,
+                                CirrusConfig.LIGHTNING_BOLT_INTENSITY_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(booleanOption(
                                 "cirrus.config.clouds.hideLightningCloudFlashes",
                                 CirrusConfig.HIDE_LIGHTNING_CLOUD_FLASHES
                         ))

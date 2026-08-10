@@ -24,6 +24,7 @@ in vec2 texCoord0;
 in float vertexDistance;
 in vec4 vertexColor;
 in vec3 viewDirection;
+in vec3 viewNormal;
 
 out vec4 fragColor;
 
@@ -120,14 +121,74 @@ void main() {
     color.rgb *= mix(1.0, 0.92, rainLevel);
     color.rgb *= mix(1.0, 0.84, thunderLevel);
     float lightningFlash = clamp(CirrusLightningFlash, 0.0, 1.0);
+    if (lightningFlash > 0.001) {
     vec3 lightningOffset = viewDirection - CirrusLightningViewPosition;
     vec3 viewUp = normalize(CirrusWorldUpViewDirection);
     vec3 horizontalOffset = lightningOffset - viewUp * dot(lightningOffset, viewUp);
     float lightningRadius = max(CirrusLightningRadius, 1.0);
     float lightningDistance = length(horizontalOffset);
-    float lightningFalloff = 1.0 - smoothstep(lightningRadius * 0.12, lightningRadius, lightningDistance);
-    float localizedFlash = clamp(lightningFlash * lightningFalloff, 0.0, 1.0);
-    color.rgb = mix(color.rgb, vec3(0.86, 0.90, 1.0), localizedFlash);
+    float normalizedLightningDistance = lightningDistance / lightningRadius;
+    float regionalFlash = 1.0 - smoothstep(0.08, 0.95, normalizedLightningDistance);
+    float localFlash = 1.0 - smoothstep(0.015, 0.42, normalizedLightningDistance);
+    float channelFlash = 1.0 - smoothstep(0.0, 0.13, normalizedLightningDistance);
+
+    float neighboringAlpha = min(
+        min(
+            textureOffset(Sampler0, texCoord0, ivec2(-1, 0)).a,
+            textureOffset(Sampler0, texCoord0, ivec2(1, 0)).a
+        ),
+        min(
+            textureOffset(Sampler0, texCoord0, ivec2(0, -1)).a,
+            textureOffset(Sampler0, texCoord0, ivec2(0, 1)).a
+        )
+    );
+    float exposedEdge = 1.0 - smoothstep(0.08, 0.55, neighboringAlpha);
+    float nearbyDensity = 0.125 * (
+        textureOffset(Sampler0, texCoord0, ivec2(-1, 0)).a
+        + textureOffset(Sampler0, texCoord0, ivec2(1, 0)).a
+        + textureOffset(Sampler0, texCoord0, ivec2(0, -1)).a
+        + textureOffset(Sampler0, texCoord0, ivec2(0, 1)).a
+        + textureOffset(Sampler0, texCoord0, ivec2(-2, -2)).a
+        + textureOffset(Sampler0, texCoord0, ivec2(2, -2)).a
+        + textureOffset(Sampler0, texCoord0, ivec2(-2, 2)).a
+        + textureOffset(Sampler0, texCoord0, ivec2(2, 2)).a
+    );
+    float wideDensity = 0.25 * (
+        textureOffset(Sampler0, texCoord0, ivec2(-4, 0)).a
+        + textureOffset(Sampler0, texCoord0, ivec2(4, 0)).a
+        + textureOffset(Sampler0, texCoord0, ivec2(0, -4)).a
+        + textureOffset(Sampler0, texCoord0, ivec2(0, 4)).a
+    );
+    float densityCavity = 1.0 - smoothstep(0.22, 0.90, mix(nearbyDensity, wideDensity, 0.42));
+    float densityContrast = clamp(abs(cloudSample.a - nearbyDensity) * 2.8, 0.0, 1.0);
+    float illuminatedFold = clamp(
+        exposedEdge * 0.50 + densityCavity * 0.34 + densityContrast * 0.56,
+        0.0,
+        1.0
+    );
+
+    vec3 normalizedCloudDirection = normalize(viewDirection);
+    float cloudAboveViewer = smoothstep(-0.04, 0.46, dot(normalizedCloudDirection, viewUp));
+    float surfaceResponse = mix(0.78, 1.16, cloudAboveViewer);
+    float flashEnergy = lightningFlash * surfaceResponse;
+
+    vec3 coolScatter = vec3(0.42, 0.50, 0.82);
+    vec3 hotScatter = vec3(0.96, 0.97, 1.0);
+    float whiteHeat = clamp(localFlash * 0.68 + illuminatedFold * 0.46, 0.0, 1.0);
+    vec3 lightningColor = mix(coolScatter, hotScatter, whiteHeat);
+    color.rgb *= mix(vec3(1.0), vec3(0.76, 0.81, 1.06), regionalFlash * flashEnergy * 0.26);
+    color.rgb += lightningColor * flashEnergy * (
+        regionalFlash * (0.10 + illuminatedFold * 0.12)
+        + localFlash * (0.34 + illuminatedFold * 0.42)
+        + channelFlash * (0.22 + illuminatedFold * 0.15)
+        + exposedEdge * localFlash * 0.18
+    );
+    color.a = mix(
+        color.a,
+        1.0,
+        localFlash * lightningFlash * (0.10 + illuminatedFold * 0.18)
+    );
+    }
 
     fragColor = linear_fog(color, vertexDistance, FogStart, FogEnd, FogColor);
 }

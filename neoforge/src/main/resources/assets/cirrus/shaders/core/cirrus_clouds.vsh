@@ -15,6 +15,7 @@ out vec2 texCoord0;
 out float vertexDistance;
 out vec4 vertexColor;
 out vec3 viewDirection;
+out vec3 viewNormal;
 
 void main() {
     vec4 pos = ModelViewMat * vec4(Position, 1.0);
@@ -24,4 +25,5 @@ void main() {
     vertexDistance = fog_distance(pos.xyz, FogShape);
     vertexColor = Color;
     viewDirection = pos.xyz;
+    viewNormal = normalize(mat3(ModelViewMat) * Normal);
 }

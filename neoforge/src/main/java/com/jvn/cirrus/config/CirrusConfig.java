@@ -4,6 +4,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class CirrusConfig {
     public static final IntSetting CLOUD_RENDER_DISTANCE_SETTING = new IntSetting(64, 2, 128, 1);
+    public static final DoubleSetting LIGHTNING_BOLT_INTENSITY_SETTING =
+            new DoubleSetting(1.0, 0.25, 2.0, 0.05);
     public static final DoubleSetting LIGHTNING_CLOUD_FLASH_OPACITY_SETTING =
             new DoubleSetting(0.75, 0.0, 1.0, 0.05);
     public static final DoubleSetting LOWER_LAYER_HEIGHT_SETTING = new DoubleSetting(0.0, -128.0, 128.0, 1.0);
@@ -63,6 +65,8 @@ public final class CirrusConfig {
 
     public static final ModConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
     public static final ModConfigSpec.IntValue CLOUD_RENDER_DISTANCE;
+    public static final ModConfigSpec.BooleanValue CUSTOM_LIGHTNING_ENABLED;
+    public static final ModConfigSpec.DoubleValue LIGHTNING_BOLT_INTENSITY;
     public static final ModConfigSpec.BooleanValue HIDE_LIGHTNING_CLOUD_FLASHES;
     public static final ModConfigSpec.DoubleValue LIGHTNING_CLOUD_FLASH_OPACITY;
     public static final ModConfigSpec.DoubleValue LOWER_LAYER_HEIGHT_OFFSET;
@@ -151,6 +155,14 @@ public final class CirrusConfig {
                 builder,
                 "renderDistanceChunks",
                 "Cloud render distance in chunks, independent of terrain render distance."
+        );
+        CUSTOM_LIGHTNING_ENABLED = builder
+                .comment("Replace vanilla lightning bolts with Cirrus' branching, layered renderer.")
+                .define("customLightningEnabled", true);
+        LIGHTNING_BOLT_INTENSITY = LIGHTNING_BOLT_INTENSITY_SETTING.define(
+                builder,
+                "lightningBoltIntensity",
+                "Brightness of Cirrus lightning bolt cores and glow."
         );
         HIDE_LIGHTNING_CLOUD_FLASHES = builder
                 .comment("Hide Cirrus cloud illumination during lightning without changing the vanilla sky flash.")

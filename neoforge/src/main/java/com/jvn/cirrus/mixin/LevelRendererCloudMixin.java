@@ -3,8 +3,10 @@ package com.jvn.cirrus.mixin;
 import com.jvn.cirrus.client.CirrusAuroraRenderer;
 import com.jvn.cirrus.client.CirrusCloudRenderer;
 import com.jvn.cirrus.client.CirrusCloudMode;
+import com.jvn.cirrus.client.CirrusCloudAttachment;
 import com.jvn.cirrus.client.CirrusEndSkyRenderer;
 import com.jvn.cirrus.client.CirrusMilkyWayRenderer;
+import com.jvn.cirrus.client.CirrusLightningSkyRenderer;
 import com.jvn.cirrus.client.CirrusPrecipitationCeiling;
 import com.jvn.cirrus.client.CirrusShaders;
 import com.jvn.cirrus.config.CirrusConfig;
@@ -36,6 +38,8 @@ public abstract class LevelRendererCloudMixin {
     @Unique private final CirrusCloudRenderer cirrus$cloudRenderer = new CirrusCloudRenderer();
     @Unique private final CirrusAuroraRenderer cirrus$auroraRenderer = new CirrusAuroraRenderer();
     @Unique private final CirrusMilkyWayRenderer cirrus$milkyWayRenderer = new CirrusMilkyWayRenderer();
+    @Unique private final CirrusLightningSkyRenderer cirrus$lightningSkyRenderer =
+            new CirrusLightningSkyRenderer();
     @Unique private final CirrusEndSkyRenderer cirrus$endSkyRenderer = new CirrusEndSkyRenderer();
     @Unique private CloudStatus cirrus$lastCloudMode;
     @Unique private boolean cirrus$celestialMaskActive;
@@ -52,6 +56,7 @@ public abstract class LevelRendererCloudMixin {
             Matrix4f projectionMatrix,
             CallbackInfo ci
     ) {
+        CirrusCloudAttachment.updateRenderTicks(ticks);
         CloudStatus mode = Minecraft.getInstance().options.getCloudsType();
         if (mode != cirrus$lastCloudMode) {
             if (!CirrusCloudMode.isActive(mode)) {
@@ -166,6 +171,7 @@ public abstract class LevelRendererCloudMixin {
     ) {
         if (level != null) {
             cirrus$milkyWayRenderer.render(level, frustumMatrix, projectionMatrix, partialTick);
+            cirrus$lightningSkyRenderer.render(level, frustumMatrix, projectionMatrix, partialTick, camera);
             cirrus$auroraRenderer.render(level, frustumMatrix, projectionMatrix, partialTick, ticks, camera);
         }
     }
@@ -231,6 +237,7 @@ public abstract class LevelRendererCloudMixin {
     @Inject(method = "onResourceManagerReload", at = @At("HEAD"))
     private void cirrus$releaseCloudsOnReload(ResourceManager resourceManager, CallbackInfo ci) {
         cirrus$cloudRenderer.invalidate();
+        CirrusCloudAttachment.invalidate();
     }
 
     @Inject(method = "close", at = @At("HEAD"))
@@ -238,6 +245,8 @@ public abstract class LevelRendererCloudMixin {
         cirrus$cloudRenderer.close();
         cirrus$auroraRenderer.close();
         cirrus$milkyWayRenderer.close();
+        cirrus$lightningSkyRenderer.close();
         cirrus$endSkyRenderer.close();
+        CirrusCloudAttachment.invalidate();
     }
 }

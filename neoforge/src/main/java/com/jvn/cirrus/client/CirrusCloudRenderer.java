@@ -480,6 +480,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             float cloudRenderDistance
     ) {
         float intensity = CirrusConfig.HIDE_LIGHTNING_CLOUD_FLASHES.get()
+                || Minecraft.getInstance().options.hideLightningFlash().get()
                 ? 0.0F
                 : Mth.clamp(level.getSkyFlashTime() - partialTick, 0.0F, 1.0F)
                         * CirrusConfig.LIGHTNING_CLOUD_FLASH_OPACITY.get().floatValue();
@@ -494,10 +495,11 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             return new LightningState(0.0F, new Vector3f(), viewUp, radius);
         }
 
+        Vec3 visualOrigin = CirrusCloudAttachment.findVisualOrigin(nearestLightning, partialTick);
         Vector3f viewPosition = new Vector3f(
-                (float)(nearestLightning.getX() - cameraX),
-                (float)(nearestLightning.getY() - cameraY),
-                (float)(nearestLightning.getZ() - cameraZ)
+                (float)(nearestLightning.getX() + visualOrigin.x - cameraX),
+                (float)(nearestLightning.getY() + visualOrigin.y - cameraY),
+                (float)(nearestLightning.getZ() + visualOrigin.z - cameraZ)
         );
         frustumMatrix.transformPosition(viewPosition);
         return new LightningState(intensity, viewPosition, viewUp, radius);
@@ -509,6 +511,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
      */
     private LightningBolt nearestLightning(ClientLevel level, int ticks, double cameraX, double cameraZ) {
         if (cachedLightningLevel != level || ticks >= nextLightningTargetScanTick
+                || (cachedNearestLightning == null && level.getSkyFlashTime() > 0)
                 || (cachedNearestLightning != null && cachedNearestLightning.isRemoved())) {
             cachedLightningLevel = level;
             cachedNearestLightning = null;

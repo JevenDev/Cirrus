@@ -31,6 +31,7 @@ Cirrus is a skybox overhaul while staying close to the vanilla style. It adds la
 - Three independently moving cloud layers with adjustable height, speed, opacity, and render distance
 - Customizable morning, day, evening, and night gradients with smooth palette transitions
 - Clouds that darken with storms and light up around lightning
+- Narrow, layered lightning bolts with deterministic branching and electric glow
 - Configurable stars, including twinkle, color variation, and a North Star
 - Occasional shooting stars with customizable trails, speed, color, and glow
 - A rotating Milky Way and a subtle night-sky color palette
