@@ -32,8 +32,8 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
             float partialTick
     ) {
         boolean milkyWayEnabled = CirrusConfig.MILKY_WAY_ENABLED.get();
-        boolean nightSkyColorsEnabled = CirrusConfig.NIGHT_SKY_COLORS_ENABLED.get();
-        if (!milkyWayEnabled && !nightSkyColorsEnabled) {
+        boolean skyGradientsEnabled = CirrusConfig.SKY_GRADIENTS_ENABLED.get();
+        if (!milkyWayEnabled && !skyGradientsEnabled) {
             return;
         }
 
@@ -46,12 +46,15 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
                         * weatherVisibility
                         * CirrusConfig.MILKY_WAY_OPACITY.get().floatValue()
                 : 0.0F;
-        float nightSkyIntensity = nightSkyColorsEnabled
-                ? nightStrength
+        CirrusSkyPalette.Sample skyPalette = skyGradientsEnabled
+                ? CirrusSkyPalette.sample(level, partialTick)
+                : null;
+        float skyGradientIntensity = skyPalette != null
+                ? skyPalette.strength()
                         * weatherVisibility
-                        * CirrusConfig.NIGHT_SKY_COLOR_OPACITY.get().floatValue()
+                        * CirrusConfig.SKY_GRADIENT_OPACITY.get().floatValue()
                 : 0.0F;
-        if (Math.max(milkyWayIntensity, nightSkyIntensity) < 0.002F) {
+        if (Math.max(milkyWayIntensity, skyGradientIntensity) < 0.002F) {
             return;
         }
 
@@ -69,9 +72,27 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
         if (pixelationResolutionUniform != null) {
             pixelationResolutionUniform.set(CirrusConfig.MILKY_WAY_PIXELATION_RESOLUTION.get().floatValue());
         }
-        Uniform nightSkyIntensityUniform = shader.getUniform("CirrusNightSkyIntensity");
-        if (nightSkyIntensityUniform != null) {
-            nightSkyIntensityUniform.set(nightSkyIntensity);
+        Uniform skyGradientIntensityUniform = shader.getUniform("CirrusSkyGradientIntensity");
+        if (skyGradientIntensityUniform != null) {
+            skyGradientIntensityUniform.set(skyGradientIntensity);
+        }
+        Uniform skyGradientHeightUniform = shader.getUniform("CirrusSkyGradientHeight");
+        if (skyGradientHeightUniform != null) {
+            skyGradientHeightUniform.set(CirrusConfig.SKY_GRADIENT_HEIGHT.get().floatValue());
+        }
+        if (skyPalette != null) {
+            Uniform horizonColorUniform = shader.getUniform("CirrusSkyHorizonColor");
+            if (horizonColorUniform != null) {
+                horizonColorUniform.set(
+                        skyPalette.horizonRed(), skyPalette.horizonGreen(), skyPalette.horizonBlue()
+                );
+            }
+            Uniform zenithColorUniform = shader.getUniform("CirrusSkyZenithColor");
+            if (zenithColorUniform != null) {
+                zenithColorUniform.set(
+                        skyPalette.zenithRed(), skyPalette.zenithGreen(), skyPalette.zenithBlue()
+                );
+            }
         }
         Uniform rotationUniform = shader.getUniform("CirrusMilkyWayRotation");
         if (rotationUniform != null) {

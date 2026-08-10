@@ -33,7 +33,14 @@ public final class CirrusConfig {
     public static final DoubleSetting SHOOTING_STAR_TRAIL_LENGTH_SETTING = new DoubleSetting(3.0, 0.25, 3.0, 0.05);
     public static final DoubleSetting SHOOTING_STAR_BLOOM_SETTING = new DoubleSetting(2.0, 0.0, 2.0, 0.05);
     public static final DoubleSetting SHOOTING_STAR_COLOR_VARIATION_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
-    public static final DoubleSetting NIGHT_SKY_COLOR_OPACITY_SETTING = new DoubleSetting(0.55, 0.0, 1.0, 0.05);
+    public static final DoubleSetting SKY_GRADIENT_OPACITY_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
+    public static final DoubleSetting SKY_GRADIENT_TRANSITION_TICKS_SETTING =
+            new DoubleSetting(1800.0, 0.0, 2400.0, 100.0);
+    public static final DoubleSetting SKY_GRADIENT_HEIGHT_SETTING = new DoubleSetting(0.90, 0.15, 0.90, 0.05);
+    public static final DoubleSetting MORNING_GRADIENT_STRENGTH_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
+    public static final DoubleSetting DAY_GRADIENT_STRENGTH_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
+    public static final DoubleSetting EVENING_GRADIENT_STRENGTH_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
+    public static final DoubleSetting NIGHT_GRADIENT_STRENGTH_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
     public static final DoubleSetting MILKY_WAY_OPACITY_SETTING = new DoubleSetting(0.65, 0.0, 1.0, 0.05);
     public static final IntSetting MILKY_WAY_PIXELATION_RESOLUTION_SETTING = new IntSetting(320, 32, 640, 16);
     public static final IntSetting AURORA_PIXELATION_RESOLUTION_SETTING = new IntSetting(320, 32, 640, 16);
@@ -90,8 +97,22 @@ public final class CirrusConfig {
     public static final ModConfigSpec.DoubleValue SHOOTING_STAR_TRAIL_LENGTH;
     public static final ModConfigSpec.DoubleValue SHOOTING_STAR_BLOOM;
     public static final ModConfigSpec.DoubleValue SHOOTING_STAR_COLOR_VARIATION;
-    public static final ModConfigSpec.BooleanValue NIGHT_SKY_COLORS_ENABLED;
-    public static final ModConfigSpec.DoubleValue NIGHT_SKY_COLOR_OPACITY;
+    public static final ModConfigSpec.BooleanValue SKY_GRADIENTS_ENABLED;
+    public static final ModConfigSpec.DoubleValue SKY_GRADIENT_OPACITY;
+    public static final ModConfigSpec.DoubleValue SKY_GRADIENT_TRANSITION_TICKS;
+    public static final ModConfigSpec.DoubleValue SKY_GRADIENT_HEIGHT;
+    public static final ModConfigSpec.IntValue MORNING_HORIZON_COLOR;
+    public static final ModConfigSpec.IntValue MORNING_ZENITH_COLOR;
+    public static final ModConfigSpec.DoubleValue MORNING_GRADIENT_STRENGTH;
+    public static final ModConfigSpec.IntValue DAY_HORIZON_COLOR;
+    public static final ModConfigSpec.IntValue DAY_ZENITH_COLOR;
+    public static final ModConfigSpec.DoubleValue DAY_GRADIENT_STRENGTH;
+    public static final ModConfigSpec.IntValue EVENING_HORIZON_COLOR;
+    public static final ModConfigSpec.IntValue EVENING_ZENITH_COLOR;
+    public static final ModConfigSpec.DoubleValue EVENING_GRADIENT_STRENGTH;
+    public static final ModConfigSpec.IntValue NIGHT_HORIZON_COLOR;
+    public static final ModConfigSpec.IntValue NIGHT_ZENITH_COLOR;
+    public static final ModConfigSpec.DoubleValue NIGHT_GRADIENT_STRENGTH;
     public static final ModConfigSpec.BooleanValue MILKY_WAY_ENABLED;
     public static final ModConfigSpec.BooleanValue MILKY_WAY_PIXELATION_ENABLED;
     public static final ModConfigSpec.IntValue MILKY_WAY_PIXELATION_RESOLUTION;
@@ -292,13 +313,59 @@ public final class CirrusConfig {
                 "shootingStarColorVariation",
                 "Strength of warm and cool color variation between shooting stars."
         );
-        NIGHT_SKY_COLORS_ENABLED = builder
-                .comment("Tint the night sky with a restrained indigo, mauve, and gold palette.")
-                .define("nightSkyColorsEnabled", true);
-        NIGHT_SKY_COLOR_OPACITY = NIGHT_SKY_COLOR_OPACITY_SETTING.define(
+        SKY_GRADIENTS_ENABLED = builder
+                .comment("Overlay configurable horizon-to-zenith gradients that transition through the full day.")
+                .define("skyGradientsEnabled", true);
+        SKY_GRADIENT_OPACITY = SKY_GRADIENT_OPACITY_SETTING.define(
                 builder,
-                "nightSkyColorOpacity",
-                "Strength of the custom night-sky color palette."
+                "skyGradientOpacity",
+                "Overall strength of every custom sky gradient."
+        );
+        SKY_GRADIENT_TRANSITION_TICKS = SKY_GRADIENT_TRANSITION_TICKS_SETTING.define(
+                builder,
+                "skyGradientTransitionTicks",
+                "Duration of each smooth transition between morning, day, evening, and night."
+        );
+        SKY_GRADIENT_HEIGHT = SKY_GRADIENT_HEIGHT_SETTING.define(
+                builder,
+                "skyGradientHeight",
+                "How far each horizon color reaches toward the top of the sky."
+        );
+        MORNING_HORIZON_COLOR = defineColor(
+                builder, "morningHorizonColor", 0xFF9E78, "RGB color at the morning horizon."
+        );
+        MORNING_ZENITH_COLOR = defineColor(
+                builder, "morningZenithColor", 0x7397CC, "RGB color at the top of the morning sky."
+        );
+        MORNING_GRADIENT_STRENGTH = MORNING_GRADIENT_STRENGTH_SETTING.define(
+                builder, "morningGradientStrength", "Strength of the morning gradient."
+        );
+        DAY_HORIZON_COLOR = defineColor(
+                builder, "dayHorizonColor", 0xB9DAF2, "RGB color at the daytime horizon."
+        );
+        DAY_ZENITH_COLOR = defineColor(
+                builder, "dayZenithColor", 0x4D88CA, "RGB color at the top of the daytime sky."
+        );
+        DAY_GRADIENT_STRENGTH = DAY_GRADIENT_STRENGTH_SETTING.define(
+                builder, "dayGradientStrength", "Strength of the daytime gradient."
+        );
+        EVENING_HORIZON_COLOR = defineColor(
+                builder, "eveningHorizonColor", 0xF07862, "RGB color at the evening horizon."
+        );
+        EVENING_ZENITH_COLOR = defineColor(
+                builder, "eveningZenithColor", 0x5C5B9E, "RGB color at the top of the evening sky."
+        );
+        EVENING_GRADIENT_STRENGTH = EVENING_GRADIENT_STRENGTH_SETTING.define(
+                builder, "eveningGradientStrength", "Strength of the evening gradient."
+        );
+        NIGHT_HORIZON_COLOR = defineColor(
+                builder, "nightHorizonColor", 0x40264F, "RGB color at the night horizon."
+        );
+        NIGHT_ZENITH_COLOR = defineColor(
+                builder, "nightZenithColor", 0x171B48, "RGB color at the top of the night sky."
+        );
+        NIGHT_GRADIENT_STRENGTH = NIGHT_GRADIENT_STRENGTH_SETTING.define(
+                builder, "nightGradientStrength", "Strength of the night gradient."
         );
         MILKY_WAY_ENABLED = builder
                 .comment("Render a shader-driven Milky Way behind clouds and northern lights.")
@@ -414,6 +481,15 @@ public final class CirrusConfig {
     }
 
     private CirrusConfig() {
+    }
+
+    private static ModConfigSpec.IntValue defineColor(
+            ModConfigSpec.Builder builder,
+            String name,
+            int defaultValue,
+            String comment
+    ) {
+        return builder.comment(comment).defineInRange(name, defaultValue, 0x000000, 0xFFFFFF);
     }
 
     public record IntSetting(int defaultValue, int minimum, int maximum, int step) {

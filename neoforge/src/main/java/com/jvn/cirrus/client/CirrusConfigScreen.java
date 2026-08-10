@@ -6,9 +6,11 @@ import dev.isxander.yacl3.api.Option;
 import dev.isxander.yacl3.api.OptionDescription;
 import dev.isxander.yacl3.api.OptionGroup;
 import dev.isxander.yacl3.api.YetAnotherConfigLib;
+import dev.isxander.yacl3.api.controller.ColorControllerBuilder;
 import dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
+import java.awt.Color;
 import java.util.Locale;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -22,6 +24,7 @@ public final class CirrusConfigScreen {
         return YetAnotherConfigLib.createBuilder()
                 .title(text("cirrus.config.title"))
                 .category(cloudCategory())
+                .category(skyColorCategory())
                 .category(skyCategory())
                 .save(CirrusConfig.SPEC::save)
                 .build()
@@ -116,6 +119,80 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.TOP_LAYER_OPACITY_SETTING
                         ))
                         .build())
+                .build();
+    }
+
+    private static ConfigCategory skyColorCategory() {
+        return ConfigCategory.createBuilder()
+                .name(text("cirrus.config.category.skyColors"))
+                .tooltip(text("cirrus.config.category.skyColors.description"))
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.skyGradientGeneral"))
+                        .option(booleanOption(
+                                "cirrus.config.sky.skyGradientsEnabled",
+                                CirrusConfig.SKY_GRADIENTS_ENABLED
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.skyGradientOpacity",
+                                CirrusConfig.SKY_GRADIENT_OPACITY,
+                                CirrusConfig.SKY_GRADIENT_OPACITY_SETTING
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.skyGradientTransitionTicks",
+                                CirrusConfig.SKY_GRADIENT_TRANSITION_TICKS,
+                                CirrusConfig.SKY_GRADIENT_TRANSITION_TICKS_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.0f ticks", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.skyGradientHeight",
+                                CirrusConfig.SKY_GRADIENT_HEIGHT,
+                                CirrusConfig.SKY_GRADIENT_HEIGHT_SETTING
+                        ))
+                        .build())
+                .group(gradientPhaseGroup(
+                        "morning",
+                        CirrusConfig.MORNING_HORIZON_COLOR,
+                        CirrusConfig.MORNING_ZENITH_COLOR,
+                        CirrusConfig.MORNING_GRADIENT_STRENGTH,
+                        CirrusConfig.MORNING_GRADIENT_STRENGTH_SETTING
+                ))
+                .group(gradientPhaseGroup(
+                        "day",
+                        CirrusConfig.DAY_HORIZON_COLOR,
+                        CirrusConfig.DAY_ZENITH_COLOR,
+                        CirrusConfig.DAY_GRADIENT_STRENGTH,
+                        CirrusConfig.DAY_GRADIENT_STRENGTH_SETTING
+                ))
+                .group(gradientPhaseGroup(
+                        "evening",
+                        CirrusConfig.EVENING_HORIZON_COLOR,
+                        CirrusConfig.EVENING_ZENITH_COLOR,
+                        CirrusConfig.EVENING_GRADIENT_STRENGTH,
+                        CirrusConfig.EVENING_GRADIENT_STRENGTH_SETTING
+                ))
+                .group(gradientPhaseGroup(
+                        "night",
+                        CirrusConfig.NIGHT_HORIZON_COLOR,
+                        CirrusConfig.NIGHT_ZENITH_COLOR,
+                        CirrusConfig.NIGHT_GRADIENT_STRENGTH,
+                        CirrusConfig.NIGHT_GRADIENT_STRENGTH_SETTING
+                ))
+                .build();
+    }
+
+    private static OptionGroup gradientPhaseGroup(
+            String phase,
+            ModConfigSpec.IntValue horizonColor,
+            ModConfigSpec.IntValue zenithColor,
+            ModConfigSpec.DoubleValue strength,
+            CirrusConfig.DoubleSetting strengthSetting
+    ) {
+        String key = "cirrus.config.sky." + phase;
+        return OptionGroup.createBuilder()
+                .name(text("cirrus.config.group." + phase + "Gradient"))
+                .option(colorOption(key + "HorizonColor", horizonColor))
+                .option(colorOption(key + "ZenithColor", zenithColor))
+                .option(percentageOption(key + "GradientStrength", strength, strengthSetting))
                 .build();
     }
 
@@ -243,18 +320,6 @@ public final class CirrusConfigScreen {
                                 "cirrus.config.sky.shootingStarColorVariation",
                                 CirrusConfig.SHOOTING_STAR_COLOR_VARIATION,
                                 CirrusConfig.SHOOTING_STAR_COLOR_VARIATION_SETTING
-                        ))
-                        .build())
-                .group(OptionGroup.createBuilder()
-                        .name(text("cirrus.config.group.skyColors"))
-                        .option(booleanOption(
-                                "cirrus.config.sky.nightSkyColorsEnabled",
-                                CirrusConfig.NIGHT_SKY_COLORS_ENABLED
-                        ))
-                        .option(percentageOption(
-                                "cirrus.config.sky.nightSkyColorOpacity",
-                                CirrusConfig.NIGHT_SKY_COLOR_OPACITY,
-                                CirrusConfig.NIGHT_SKY_COLOR_OPACITY_SETTING
                         ))
                         .build())
                 .group(OptionGroup.createBuilder()
@@ -402,6 +467,19 @@ public final class CirrusConfigScreen {
                 .description(description(key))
                 .binding(value.getDefault(), value::get, value::set)
                 .controller(TickBoxControllerBuilder::create)
+                .build();
+    }
+
+    private static Option<Color> colorOption(String key, ModConfigSpec.IntValue value) {
+        return Option.<Color>createBuilder()
+                .name(text(key))
+                .description(description(key))
+                .binding(
+                        new Color(value.getDefault()),
+                        () -> new Color(value.get()),
+                        color -> value.set(color.getRGB() & 0xFFFFFF)
+                )
+                .controller(ColorControllerBuilder::create)
                 .build();
     }
 

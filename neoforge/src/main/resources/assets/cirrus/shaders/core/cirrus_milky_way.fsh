@@ -3,7 +3,10 @@
 uniform float CirrusMilkyWayIntensity;
 uniform float CirrusMilkyWayPixelation;
 uniform float CirrusMilkyWayPixelationResolution;
-uniform float CirrusNightSkyIntensity;
+uniform float CirrusSkyGradientIntensity;
+uniform float CirrusSkyGradientHeight;
+uniform vec3 CirrusSkyHorizonColor;
+uniform vec3 CirrusSkyZenithColor;
 uniform float CirrusMilkyWayRotation;
 
 in vec3 worldDirection;
@@ -211,46 +214,30 @@ void main() {
     );
     milkyWayColor *= 0.93 + luminousKnots * 0.15;
 
-    // Echo the reference palette across the underlying night sky at a much
-    // lower strength: gold near the galactic horizon, mauve through the lower
-    // sky, and deep indigo overhead.
+    // Blend the two configured palette stops by elevation. Java cross-fades
+    // both colors and their strength between the four time-of-day phases.
     float elevation = clamp(viewDirection.y, 0.0, 1.0);
-    float goldFocus = mix(
-        0.28,
-        1.0,
-        pow(max(dot(smoothCelestialDirection, coreDirection), 0.0), 2.4)
-    );
-    vec3 horizonMauve = vec3(0.34, 0.14, 0.33);
-    vec3 horizonGold = vec3(0.72, 0.54, 0.09);
-    vec3 midMauve = vec3(0.29, 0.16, 0.40);
-    vec3 deepIndigo = vec3(0.09, 0.10, 0.30);
-    vec3 horizonColor = mix(horizonMauve, horizonGold, goldFocus);
-    vec3 lowerSkyColor = mix(
-        horizonColor,
-        midMauve,
-        smoothstep(0.015, 0.27, elevation)
-    );
-    vec3 nightSkyColor = mix(
-        lowerSkyColor,
-        deepIndigo,
-        smoothstep(0.22, 0.82, elevation)
+    vec3 skyGradientColor = mix(
+        CirrusSkyHorizonColor,
+        CirrusSkyZenithColor,
+        smoothstep(0.015, max(CirrusSkyGradientHeight, 0.02), elevation)
     );
     float horizonColorBoost = 1.0 - smoothstep(0.02, 0.32, elevation);
     float skyDomeFade = smoothstep(-0.18, 0.02, viewDirection.y);
-    float nightSkyAlpha = CirrusNightSkyIntensity
-            * mix(0.15, 0.26, horizonColorBoost)
+    float skyGradientAlpha = CirrusSkyGradientIntensity
+            * mix(0.22, 0.38, horizonColorBoost)
             * skyDomeFade;
 
-    // Composite the Milky Way over the subtle sky tint, then let Minecraft
-    // blend the combined layer over its vanilla night sky.
+    // Composite the Milky Way over the configured gradient, then let Minecraft
+    // blend the combined layer over its vanilla sky.
     float combinedAlpha = milkyWayAlpha
-            + nightSkyAlpha * (1.0 - milkyWayAlpha);
+            + skyGradientAlpha * (1.0 - milkyWayAlpha);
     if (combinedAlpha < 0.001) {
         discard;
     }
     vec3 combinedColor = (
         milkyWayColor * milkyWayAlpha
-        + nightSkyColor * nightSkyAlpha * (1.0 - milkyWayAlpha)
+        + skyGradientColor * skyGradientAlpha * (1.0 - milkyWayAlpha)
     ) / combinedAlpha;
     fragColor = vec4(combinedColor, combinedAlpha);
 }
