@@ -6,7 +6,11 @@
     "ClientLevelDataMixin",
     "GameRendererMixin",
     "LevelRendererCloudMixin",
-    "LevelRendererStarMixin"
+    "LevelRendererStarMixin",
+    "compat.wherewindsblow.BlizzardRendererMixin",
+    "compat.wherewindsblow.GpuSnowfallRendererMixin",
+    "compat.wherewindsblow.SnowfallRendererMixin",
+    "compat.wherewindsblow.WindReactivePrecipitationRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

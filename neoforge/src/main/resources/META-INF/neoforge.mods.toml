@@ -33,6 +33,13 @@ ordering="NONE"
 side="CLIENT"
 
 [[dependencies."${mod_id}"]]
+modId="where_winds_blow"
+type="optional"
+versionRange="[1.0.0,)"
+ordering="AFTER"
+side="CLIENT"
+
+[[dependencies."${mod_id}"]]
 modId="yet_another_config_lib_v3"
 type="required"
 versionRange="[3.8.1,)"

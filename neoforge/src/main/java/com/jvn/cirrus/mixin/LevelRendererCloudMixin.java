@@ -5,6 +5,7 @@ import com.jvn.cirrus.client.CirrusCloudRenderer;
 import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusEndSkyRenderer;
 import com.jvn.cirrus.client.CirrusMilkyWayRenderer;
+import com.jvn.cirrus.client.CirrusPrecipitationCeiling;
 import com.jvn.cirrus.client.CirrusShaders;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -99,24 +100,7 @@ public abstract class LevelRendererCloudMixin {
             double cameraZ,
             CallbackInfo ci
     ) {
-        cirrus$precipitationCeiling = Float.POSITIVE_INFINITY;
-        if (level == null || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
-            return;
-        }
-
-        float cloudHeight = level.effects().getCloudHeight();
-        if (Float.isNaN(cloudHeight)) {
-            return;
-        }
-
-        double highestLayer = cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get();
-        if (CirrusConfig.TOP_LAYER_ENABLED.get()) {
-            highestLayer += CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
-                    + CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get();
-        } else if (CirrusConfig.UPPER_LAYER_ENABLED.get()) {
-            highestLayer += CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get();
-        }
-        cirrus$precipitationCeiling = (float)(highestLayer + 0.33 - cameraY);
+        cirrus$precipitationCeiling = CirrusPrecipitationCeiling.relative(level, cameraY);
     }
 
     @ModifyArg(
