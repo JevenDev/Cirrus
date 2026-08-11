@@ -1,14 +1,13 @@
 package com.jvn.cirrus.client;
 
+import com.jvn.toucanlib.neoforge.config.ToucanConfigScreens;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
 public final class CirrusClient {
     private CirrusClient() {
     }
 
     public static void registerConfigScreen(ModContainer modContainer) {
-        IConfigScreenFactory factory = (container, parent) -> CirrusConfigScreen.create(parent);
-        modContainer.registerExtensionPoint(IConfigScreenFactory.class, factory);
+        ToucanConfigScreens.register(modContainer, CirrusConfigScreen::create);
     }
 }

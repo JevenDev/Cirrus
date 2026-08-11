@@ -1,16 +1,12 @@
 package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.config.CirrusConfig;
+import com.jvn.toucanlib.client.render.ToucanSkyDome;
+import com.jvn.toucanlib.neoforge.client.ToucanShaders;
 import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexBuffer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.util.Mth;
@@ -60,46 +56,33 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
 
         prepareDome();
         ShaderInstance shader = CirrusShaders.milkyWay();
-        Uniform intensityUniform = shader.getUniform("CirrusMilkyWayIntensity");
-        if (intensityUniform != null) {
-            intensityUniform.set(milkyWayIntensity);
-        }
-        Uniform pixelationUniform = shader.getUniform("CirrusMilkyWayPixelation");
-        if (pixelationUniform != null) {
-            pixelationUniform.set(CirrusConfig.MILKY_WAY_PIXELATION_ENABLED.get() ? 1.0F : 0.0F);
-        }
-        Uniform pixelationResolutionUniform = shader.getUniform("CirrusMilkyWayPixelationResolution");
-        if (pixelationResolutionUniform != null) {
-            pixelationResolutionUniform.set(CirrusConfig.MILKY_WAY_PIXELATION_RESOLUTION.get().floatValue());
-        }
-        Uniform skyGradientIntensityUniform = shader.getUniform("CirrusSkyGradientIntensity");
-        if (skyGradientIntensityUniform != null) {
-            skyGradientIntensityUniform.set(skyGradientIntensity);
-        }
-        Uniform skyGradientHeightUniform = shader.getUniform("CirrusSkyGradientHeight");
-        if (skyGradientHeightUniform != null) {
-            skyGradientHeightUniform.set(CirrusConfig.SKY_GRADIENT_HEIGHT.get().floatValue());
-        }
+        ToucanShaders.setUniform(shader, "CirrusMilkyWayIntensity", milkyWayIntensity);
+        ToucanShaders.setUniform(
+                shader, "CirrusMilkyWayPixelation", CirrusConfig.MILKY_WAY_PIXELATION_ENABLED.get()
+        );
+        ToucanShaders.setUniform(
+                shader, "CirrusMilkyWayPixelationResolution",
+                CirrusConfig.MILKY_WAY_PIXELATION_RESOLUTION.get().floatValue()
+        );
+        ToucanShaders.setUniform(shader, "CirrusSkyGradientIntensity", skyGradientIntensity);
+        ToucanShaders.setUniform(
+                shader, "CirrusSkyGradientHeight", CirrusConfig.SKY_GRADIENT_HEIGHT.get().floatValue()
+        );
         if (skyPalette != null) {
-            Uniform horizonColorUniform = shader.getUniform("CirrusSkyHorizonColor");
-            if (horizonColorUniform != null) {
-                horizonColorUniform.set(
-                        skyPalette.horizonRed(), skyPalette.horizonGreen(), skyPalette.horizonBlue()
-                );
-            }
-            Uniform zenithColorUniform = shader.getUniform("CirrusSkyZenithColor");
-            if (zenithColorUniform != null) {
-                zenithColorUniform.set(
-                        skyPalette.zenithRed(), skyPalette.zenithGreen(), skyPalette.zenithBlue()
-                );
-            }
+            ToucanShaders.setUniform(
+                    shader, "CirrusSkyHorizonColor",
+                    skyPalette.horizonRed(), skyPalette.horizonGreen(), skyPalette.horizonBlue()
+            );
+            ToucanShaders.setUniform(
+                    shader, "CirrusSkyZenithColor",
+                    skyPalette.zenithRed(), skyPalette.zenithGreen(), skyPalette.zenithBlue()
+            );
         }
-        Uniform rotationUniform = shader.getUniform("CirrusMilkyWayRotation");
-        if (rotationUniform != null) {
-            // Use the same smoothed celestial angle as Minecraft's sun, moon,
-            // and stars so the galactic band remains attached to the sky.
-            rotationUniform.set(level.getTimeOfDay(partialTick) * Mth.TWO_PI);
-        }
+        // Use the same smoothed celestial angle as Minecraft's sun, moon,
+        // and stars so the galactic band remains attached to the sky.
+        ToucanShaders.setUniform(
+                shader, "CirrusMilkyWayRotation", level.getTimeOfDay(partialTick) * Mth.TWO_PI
+        );
 
         float[] previousColor = RenderSystem.getShaderColor();
         PoseStack poseStack = new PoseStack();
@@ -129,50 +112,11 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
     }
 
     private void prepareDome() {
-        if (domeBuffer != null) {
-            return;
-        }
-
-        BufferBuilder builder = Tesselator.getInstance().begin(
-                VertexFormat.Mode.QUADS,
-                DefaultVertexFormat.POSITION
-        );
-        for (int elevationIndex = 0; elevationIndex < ELEVATION_SEGMENTS; elevationIndex++) {
-            float elevation0 = Mth.lerp(
-                    elevationIndex / (float)ELEVATION_SEGMENTS,
-                    MIN_ELEVATION,
-                    MAX_ELEVATION
+        if (domeBuffer == null) {
+            domeBuffer = ToucanSkyDome.create(
+                    DOME_RADIUS, AZIMUTH_SEGMENTS, ELEVATION_SEGMENTS, MIN_ELEVATION, MAX_ELEVATION
             );
-            float elevation1 = Mth.lerp(
-                    (elevationIndex + 1) / (float)ELEVATION_SEGMENTS,
-                    MIN_ELEVATION,
-                    MAX_ELEVATION
-            );
-            for (int azimuthIndex = 0; azimuthIndex < AZIMUTH_SEGMENTS; azimuthIndex++) {
-                float azimuth0 = azimuthIndex * Mth.TWO_PI / AZIMUTH_SEGMENTS;
-                float azimuth1 = (azimuthIndex + 1) * Mth.TWO_PI / AZIMUTH_SEGMENTS;
-
-                addDomeVertex(builder, azimuth0, elevation0);
-                addDomeVertex(builder, azimuth0, elevation1);
-                addDomeVertex(builder, azimuth1, elevation1);
-                addDomeVertex(builder, azimuth1, elevation0);
-            }
         }
-
-        MeshData mesh = builder.buildOrThrow();
-        domeBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
-        domeBuffer.bind();
-        domeBuffer.upload(mesh);
-        VertexBuffer.unbind();
-    }
-
-    private static void addDomeVertex(BufferBuilder builder, float azimuth, float elevation) {
-        float horizontal = Mth.cos(elevation) * DOME_RADIUS;
-        builder.addVertex(
-                Mth.sin(azimuth) * horizontal,
-                Mth.sin(elevation) * DOME_RADIUS,
-                Mth.cos(azimuth) * horizontal
-        );
     }
 
     @Override

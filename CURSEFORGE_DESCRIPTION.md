@@ -38,7 +38,7 @@ Every major effect can be adjusted or turned off.
 ## Requirements and compatibility
 
 *   Made for **Minecraft 1.21.1** on **NeoForge**
-*   [YetAnotherConfigLib](https://www.curseforge.com/minecraft/mc-mods/yacl) is required
+*   [ToucanLib](https://www.curseforge.com/minecraft/mc-mods/toucanlib), [Architectury API](https://www.curseforge.com/minecraft/mc-mods/architectury-api), and [YetAnotherConfigLib](https://www.curseforge.com/minecraft/mc-mods/yacl) are required
 *   Shader packs and mods that replace cloud or sky rendering may override Cirrus or cause visual conflicts
 
 ![Credits and license](https://cdn.modrinth.com/data/cached_images/5fd3ad80e342e6985dd6ebda1f7afd9c48749fce.png)

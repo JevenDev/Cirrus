@@ -1,15 +1,11 @@
 package com.jvn.cirrus.client;
 
+import com.jvn.toucanlib.client.render.ToucanSkyDome;
+import com.jvn.toucanlib.neoforge.client.ToucanShaders;
 import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexBuffer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -60,14 +56,11 @@ public final class CirrusLightningSkyRenderer implements AutoCloseable {
 
         prepareDome();
         ShaderInstance shader = CirrusShaders.lightningSky();
-        Uniform directionUniform = shader.getUniform("CirrusLightningSkyDirection");
-        if (directionUniform != null) {
-            directionUniform.set((float)flashDirection.x, (float)flashDirection.y, (float)flashDirection.z);
-        }
-        Uniform intensityUniform = shader.getUniform("CirrusLightningSkyIntensity");
-        if (intensityUniform != null) {
-            intensityUniform.set(intensity);
-        }
+        ToucanShaders.setUniform(
+                shader, "CirrusLightningSkyDirection",
+                (float)flashDirection.x, (float)flashDirection.y, (float)flashDirection.z
+        );
+        ToucanShaders.setUniform(shader, "CirrusLightningSkyIntensity", intensity);
 
         float[] previousColor = RenderSystem.getShaderColor();
         PoseStack poseStack = new PoseStack();
@@ -110,45 +103,11 @@ public final class CirrusLightningSkyRenderer implements AutoCloseable {
     }
 
     private void prepareDome() {
-        if (domeBuffer != null) {
-            return;
-        }
-
-        BufferBuilder builder = Tesselator.getInstance().begin(
-                VertexFormat.Mode.QUADS,
-                DefaultVertexFormat.POSITION
-        );
-        for (int elevationIndex = 0; elevationIndex < ELEVATION_SEGMENTS; elevationIndex++) {
-            float elevation0 = Mth.lerp(
-                    elevationIndex / (float)ELEVATION_SEGMENTS, MIN_ELEVATION, MAX_ELEVATION
+        if (domeBuffer == null) {
+            domeBuffer = ToucanSkyDome.create(
+                    DOME_RADIUS, AZIMUTH_SEGMENTS, ELEVATION_SEGMENTS, MIN_ELEVATION, MAX_ELEVATION
             );
-            float elevation1 = Mth.lerp(
-                    (elevationIndex + 1) / (float)ELEVATION_SEGMENTS, MIN_ELEVATION, MAX_ELEVATION
-            );
-            for (int azimuthIndex = 0; azimuthIndex < AZIMUTH_SEGMENTS; azimuthIndex++) {
-                float azimuth0 = azimuthIndex * Mth.TWO_PI / AZIMUTH_SEGMENTS;
-                float azimuth1 = (azimuthIndex + 1) * Mth.TWO_PI / AZIMUTH_SEGMENTS;
-                addDomeVertex(builder, azimuth0, elevation0);
-                addDomeVertex(builder, azimuth0, elevation1);
-                addDomeVertex(builder, azimuth1, elevation1);
-                addDomeVertex(builder, azimuth1, elevation0);
-            }
         }
-
-        MeshData mesh = builder.buildOrThrow();
-        domeBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
-        domeBuffer.bind();
-        domeBuffer.upload(mesh);
-        VertexBuffer.unbind();
-    }
-
-    private static void addDomeVertex(BufferBuilder builder, float azimuth, float elevation) {
-        float horizontal = Mth.cos(elevation) * DOME_RADIUS;
-        builder.addVertex(
-                Mth.sin(azimuth) * horizontal,
-                Mth.sin(elevation) * DOME_RADIUS,
-                Mth.cos(azimuth) * horizontal
-        );
     }
 
     @Override

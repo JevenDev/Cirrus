@@ -1,6 +1,7 @@
 package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.config.CirrusConfig;
+import com.jvn.toucanlib.client.ToucanEasing;
 import net.minecraft.client.multiplayer.ClientLevel;
 
 /**
@@ -146,7 +147,7 @@ public final class CirrusTimeTransition {
         double progress = transitionDurationTicks <= 0.0
                 ? 1.0
                 : Math.min(1.0, elapsedTicks / transitionDurationTicks);
-        double easedProgress = smootherStep(progress);
+        double easedProgress = ToucanEasing.smootherstep(progress);
         transitionProgress = easedProgress;
         double naturalTimePassed = actualDayTime - transitionTargetDayTime;
         displayedDayTime = transitionStartDayTime
@@ -164,10 +165,5 @@ public final class CirrusTimeTransition {
         double baseDuration = MIN_DURATION_TICKS
                 + (MAX_DURATION_TICKS - MIN_DURATION_TICKS) * nightFraction;
         return baseDuration / CirrusConfig.TIME_TRANSITION_SPEED.get();
-    }
-
-    private static double smootherStep(double value) {
-        double x = Math.max(0.0, Math.min(1.0, value));
-        return x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
     }
 }

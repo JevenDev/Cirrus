@@ -1,11 +1,10 @@
 package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.Cirrus;
+import com.jvn.toucanlib.neoforge.client.ToucanShaders;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import java.io.IOException;
 import java.util.Objects;
 import net.minecraft.client.renderer.ShaderInstance;
-import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -13,23 +12,6 @@ import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 
 @EventBusSubscriber(value = Dist.CLIENT, modid = Cirrus.MOD_ID)
 public final class CirrusShaders {
-    private static final ResourceLocation CLOUDS_LOCATION =
-            ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_clouds");
-    private static final ResourceLocation CLOUD_MASK_LOCATION =
-            ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_cloud_mask");
-    private static final ResourceLocation MOON_OCCLUSION_LOCATION =
-            ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_moon_occlusion");
-    private static final ResourceLocation AURORA_LOCATION =
-            ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_aurora");
-    private static final ResourceLocation MILKY_WAY_LOCATION =
-            ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_milky_way");
-    private static final ResourceLocation STARS_LOCATION =
-            ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_stars");
-    private static final ResourceLocation END_SKY_LOCATION =
-            ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_end_sky");
-    private static final ResourceLocation LIGHTNING_SKY_LOCATION =
-            ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "cirrus_lightning_sky");
-
     private static ShaderInstance clouds;
     private static ShaderInstance cloudMask;
     private static ShaderInstance moonOcclusion;
@@ -43,70 +25,38 @@ public final class CirrusShaders {
     }
 
     @SubscribeEvent
-    public static void registerShaders(RegisterShadersEvent event) throws IOException {
-        event.registerShader(
-                new ShaderInstance(
-                        event.getResourceProvider(),
-                        CLOUDS_LOCATION,
-                        DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
-                ),
-                shader -> clouds = shader
+    public static void registerShaders(RegisterShadersEvent event) {
+        ToucanShaders.register(
+                event, Cirrus.IDS.id("cirrus_clouds"),
+                DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL, shader -> clouds = shader
         );
-        event.registerShader(
-                new ShaderInstance(
-                        event.getResourceProvider(),
-                        CLOUD_MASK_LOCATION,
-                        DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
-                ),
-                shader -> cloudMask = shader
+        ToucanShaders.register(
+                event, Cirrus.IDS.id("cirrus_cloud_mask"),
+                DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL, shader -> cloudMask = shader
         );
-        event.registerShader(
-                new ShaderInstance(
-                        event.getResourceProvider(),
-                        MOON_OCCLUSION_LOCATION,
-                        DefaultVertexFormat.POSITION_TEX
-                ),
-                shader -> moonOcclusion = shader
+        ToucanShaders.register(
+                event, Cirrus.IDS.id("cirrus_moon_occlusion"),
+                DefaultVertexFormat.POSITION_TEX, shader -> moonOcclusion = shader
         );
-        event.registerShader(
-                new ShaderInstance(
-                        event.getResourceProvider(),
-                        AURORA_LOCATION,
-                        DefaultVertexFormat.POSITION
-                ),
-                shader -> aurora = shader
+        ToucanShaders.register(
+                event, Cirrus.IDS.id("cirrus_aurora"),
+                DefaultVertexFormat.POSITION, shader -> aurora = shader
         );
-        event.registerShader(
-                new ShaderInstance(
-                        event.getResourceProvider(),
-                        MILKY_WAY_LOCATION,
-                        DefaultVertexFormat.POSITION
-                ),
-                shader -> milkyWay = shader
+        ToucanShaders.register(
+                event, Cirrus.IDS.id("cirrus_milky_way"),
+                DefaultVertexFormat.POSITION, shader -> milkyWay = shader
         );
-        event.registerShader(
-                new ShaderInstance(
-                        event.getResourceProvider(),
-                        STARS_LOCATION,
-                        DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
-                ),
-                shader -> stars = shader
+        ToucanShaders.register(
+                event, Cirrus.IDS.id("cirrus_stars"),
+                DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL, shader -> stars = shader
         );
-        event.registerShader(
-                new ShaderInstance(
-                        event.getResourceProvider(),
-                        END_SKY_LOCATION,
-                        DefaultVertexFormat.POSITION
-                ),
-                shader -> endSky = shader
+        ToucanShaders.register(
+                event, Cirrus.IDS.id("cirrus_end_sky"),
+                DefaultVertexFormat.POSITION, shader -> endSky = shader
         );
-        event.registerShader(
-                new ShaderInstance(
-                        event.getResourceProvider(),
-                        LIGHTNING_SKY_LOCATION,
-                        DefaultVertexFormat.POSITION
-                ),
-                shader -> lightningSky = shader
+        ToucanShaders.register(
+                event, Cirrus.IDS.id("cirrus_lightning_sky"),
+                DefaultVertexFormat.POSITION, shader -> lightningSky = shader
         );
     }
 

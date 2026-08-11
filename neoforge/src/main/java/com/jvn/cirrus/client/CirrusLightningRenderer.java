@@ -1,5 +1,7 @@
 package com.jvn.cirrus.client;
 
+import static com.jvn.toucanlib.util.ToucanRandom.signedDouble;
+
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -106,12 +108,12 @@ public final class CirrusLightningRenderer {
         for (int step = 1; step <= TRUNK_STEPS; step++) {
             double heightProgress = step / (double)TRUNK_STEPS;
             double wander = Mth.lerp(heightProgress, 0.72, 2.15);
-            x += signed(random) * wander;
-            z += signed(random) * wander;
+            x += signedDouble(random) * wander;
+            z += signedDouble(random) * wander;
 
             if (step > 2 && step < TRUNK_STEPS - 1 && random.nextFloat() < 0.22F) {
-                x += signed(random) * 2.4;
-                z += signed(random) * 2.4;
+                x += signedDouble(random) * 2.4;
+                z += signedDouble(random) * 2.4;
             }
 
             points[step] = new Vec3(x, step * stepHeight, z);
@@ -177,7 +179,7 @@ public final class CirrusLightningRenderer {
 
         for (int index = 0; index < length; index++) {
             float progress = index / (float)length;
-            direction = direction.add(signed(random) * 0.85, 0.0, signed(random) * 0.85);
+            direction = direction.add(signedDouble(random) * 0.85, 0.0, signedDouble(random) * 0.85);
             Vec3 next = point.add(direction.x, -drop, direction.z);
             float fromWidth = Mth.lerp(progress, startWidth, 0.018F);
             float toWidth = Mth.lerp((index + 1.0F) / length, startWidth, 0.018F);
@@ -359,10 +361,6 @@ public final class CirrusLightningRenderer {
     ) {
         consumer.addVertex(pose, (float)position.x, (float)position.y, (float)position.z)
                 .setColor(red, green, blue, alpha);
-    }
-
-    private static double signed(RandomSource random) {
-        return random.nextDouble() * 2.0 - 1.0;
     }
 
     private record Segment(

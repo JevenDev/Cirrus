@@ -1,5 +1,7 @@
 package com.jvn.cirrus.client;
 
+import static com.jvn.toucanlib.util.ToucanRandom.signedFloat;
+
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.shaders.Uniform;
@@ -26,7 +28,7 @@ public final class CirrusStarRenderer implements AutoCloseable {
     private static final long STAR_SEED = 10842L;
     private static final long SHOOTING_STAR_SEED = 734287L;
     private static final ResourceLocation NORTH_STAR_TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(Cirrus.MOD_ID, "textures/environment/north_star.png");
+            Cirrus.IDS.texture("environment/north_star.png");
     private static final float FULL_ROTATION = (float)(Math.PI * 2.0);
     private static final float[][] CORNERS = {
             {1.0F, -1.0F},
@@ -195,7 +197,7 @@ public final class CirrusStarRenderer implements AutoCloseable {
                 DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
         );
         for (int index = 0; index < MAX_STAR_COUNT; index++) {
-            float vertical = random.nextFloat() * 2.0F - 1.0F;
+            float vertical = signedFloat(random);
             float azimuth = random.nextFloat() * FULL_ROTATION;
             float horizontal = Mth.sqrt(1.0F - vertical * vertical);
             Vector3f direction = new Vector3f(

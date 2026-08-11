@@ -1,6 +1,8 @@
 package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.config.CirrusConfig;
+import com.jvn.toucanlib.client.ToucanEasing;
+import com.jvn.toucanlib.util.ToucanColorValues;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.util.Mth;
 
@@ -121,8 +123,12 @@ public final class CirrusSkyPalette {
 
     private static Sample fromColors(int horizon, int zenith, float strength) {
         return new Sample(
-                red(horizon), green(horizon), blue(horizon),
-                red(zenith), green(zenith), blue(zenith),
+                ToucanColorValues.red(horizon) / 255.0F,
+                ToucanColorValues.green(horizon) / 255.0F,
+                ToucanColorValues.blue(horizon) / 255.0F,
+                ToucanColorValues.red(zenith) / 255.0F,
+                ToucanColorValues.green(zenith) / 255.0F,
+                ToucanColorValues.blue(zenith) / 255.0F,
                 strength
         );
     }
@@ -145,19 +151,7 @@ public final class CirrusSkyPalette {
 
     private static float transitionAmount(float tick, float center, float halfDuration) {
         float linear = (tick - (center - halfDuration)) / (halfDuration * 2.0F);
-        return (float)Mth.smoothstep(Mth.clamp(linear, 0.0F, 1.0F));
-    }
-
-    private static float red(int rgb) {
-        return ((rgb >> 16) & 0xFF) / 255.0F;
-    }
-
-    private static float green(int rgb) {
-        return ((rgb >> 8) & 0xFF) / 255.0F;
-    }
-
-    private static float blue(int rgb) {
-        return (rgb & 0xFF) / 255.0F;
+        return ToucanEasing.smoothstep(linear);
     }
 
     private enum Phase {

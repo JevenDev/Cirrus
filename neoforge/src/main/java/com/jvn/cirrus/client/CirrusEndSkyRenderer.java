@@ -1,15 +1,11 @@
 package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.config.CirrusConfig;
-import com.mojang.blaze3d.shaders.Uniform;
+import com.jvn.toucanlib.client.render.ToucanSkyDome;
+import com.jvn.toucanlib.neoforge.client.ToucanShaders;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexBuffer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
@@ -29,18 +25,30 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
     ) {
         prepareDome();
         ShaderInstance shader = CirrusShaders.endSky();
-        setUniform(shader, "CirrusEndTime", (ticks + partialTick) / 20.0F);
-        setUniform(shader, "CirrusEndIntensity", CirrusConfig.END_SKY_INTENSITY.get().floatValue());
-        setUniform(shader, "CirrusEndAnimationSpeed", CirrusConfig.END_SKY_ANIMATION_SPEED.get().floatValue());
-        setUniform(shader, "CirrusEndMorphSpeed", CirrusConfig.END_SKY_MORPH_SPEED.get().floatValue());
-        setUniform(shader, "CirrusEndVoidCoverage", CirrusConfig.END_SKY_VOID_COVERAGE.get().floatValue());
-        setUniform(shader, "CirrusEndVoidDarkness", CirrusConfig.END_SKY_VOID_DARKNESS.get().floatValue());
-        setUniform(shader, "CirrusEndLightningFrequency", CirrusConfig.END_SKY_LIGHTNING_FREQUENCY.get().floatValue());
-        setUniform(shader, "CirrusEndLightningIntensity", CirrusConfig.END_SKY_LIGHTNING_INTENSITY.get().floatValue());
-        setUniform(shader, "CirrusEndSurgeFrequency", CirrusConfig.END_SKY_SURGE_FREQUENCY.get().floatValue());
-        setUniform(shader, "CirrusEndSurgeStrength", CirrusConfig.END_SKY_SURGE_STRENGTH.get().floatValue());
-        setUniform(shader, "CirrusEndPixelation", CirrusConfig.END_SKY_PIXELATION_ENABLED.get() ? 1.0F : 0.0F);
-        setUniform(shader, "CirrusEndPixelationResolution", CirrusConfig.END_SKY_PIXELATION_RESOLUTION.get().floatValue());
+        ToucanShaders.setUniform(shader, "CirrusEndTime", (ticks + partialTick) / 20.0F);
+        ToucanShaders.setUniform(shader, "CirrusEndIntensity", CirrusConfig.END_SKY_INTENSITY.get().floatValue());
+        ToucanShaders.setUniform(
+                shader, "CirrusEndAnimationSpeed", CirrusConfig.END_SKY_ANIMATION_SPEED.get().floatValue()
+        );
+        ToucanShaders.setUniform(shader, "CirrusEndMorphSpeed", CirrusConfig.END_SKY_MORPH_SPEED.get().floatValue());
+        ToucanShaders.setUniform(shader, "CirrusEndVoidCoverage", CirrusConfig.END_SKY_VOID_COVERAGE.get().floatValue());
+        ToucanShaders.setUniform(shader, "CirrusEndVoidDarkness", CirrusConfig.END_SKY_VOID_DARKNESS.get().floatValue());
+        ToucanShaders.setUniform(
+                shader, "CirrusEndLightningFrequency", CirrusConfig.END_SKY_LIGHTNING_FREQUENCY.get().floatValue()
+        );
+        ToucanShaders.setUniform(
+                shader, "CirrusEndLightningIntensity", CirrusConfig.END_SKY_LIGHTNING_INTENSITY.get().floatValue()
+        );
+        ToucanShaders.setUniform(
+                shader, "CirrusEndSurgeFrequency", CirrusConfig.END_SKY_SURGE_FREQUENCY.get().floatValue()
+        );
+        ToucanShaders.setUniform(
+                shader, "CirrusEndSurgeStrength", CirrusConfig.END_SKY_SURGE_STRENGTH.get().floatValue()
+        );
+        ToucanShaders.setUniform(shader, "CirrusEndPixelation", CirrusConfig.END_SKY_PIXELATION_ENABLED.get());
+        ToucanShaders.setUniform(
+                shader, "CirrusEndPixelationResolution", CirrusConfig.END_SKY_PIXELATION_RESOLUTION.get().floatValue()
+        );
 
         PoseStack poseStack = new PoseStack();
         poseStack.mulPose(frustumMatrix);
@@ -65,58 +73,12 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
         }
     }
 
-    private static void setUniform(ShaderInstance shader, String name, float value) {
-        Uniform uniform = shader.getUniform(name);
-        if (uniform != null) {
-            uniform.set(value);
-        }
-    }
-
     private void prepareDome() {
-        if (domeBuffer != null) {
-            return;
-        }
-
-        BufferBuilder builder = Tesselator.getInstance().begin(
-                VertexFormat.Mode.QUADS,
-                DefaultVertexFormat.POSITION
-        );
-        for (int elevationIndex = 0; elevationIndex < ELEVATION_SEGMENTS; elevationIndex++) {
-            float elevation0 = Mth.lerp(
-                    elevationIndex / (float)ELEVATION_SEGMENTS,
-                    -Mth.HALF_PI,
-                    Mth.HALF_PI
+        if (domeBuffer == null) {
+            domeBuffer = ToucanSkyDome.create(
+                    DOME_RADIUS, AZIMUTH_SEGMENTS, ELEVATION_SEGMENTS, -Mth.HALF_PI, Mth.HALF_PI
             );
-            float elevation1 = Mth.lerp(
-                    (elevationIndex + 1) / (float)ELEVATION_SEGMENTS,
-                    -Mth.HALF_PI,
-                    Mth.HALF_PI
-            );
-            for (int azimuthIndex = 0; azimuthIndex < AZIMUTH_SEGMENTS; azimuthIndex++) {
-                float azimuth0 = azimuthIndex * Mth.TWO_PI / AZIMUTH_SEGMENTS;
-                float azimuth1 = (azimuthIndex + 1) * Mth.TWO_PI / AZIMUTH_SEGMENTS;
-
-                addDomeVertex(builder, azimuth0, elevation0);
-                addDomeVertex(builder, azimuth0, elevation1);
-                addDomeVertex(builder, azimuth1, elevation1);
-                addDomeVertex(builder, azimuth1, elevation0);
-            }
         }
-
-        MeshData mesh = builder.buildOrThrow();
-        domeBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
-        domeBuffer.bind();
-        domeBuffer.upload(mesh);
-        VertexBuffer.unbind();
-    }
-
-    private static void addDomeVertex(BufferBuilder builder, float azimuth, float elevation) {
-        float horizontal = Mth.cos(elevation) * DOME_RADIUS;
-        builder.addVertex(
-                Mth.sin(azimuth) * horizontal,
-                Mth.sin(elevation) * DOME_RADIUS,
-                Mth.cos(azimuth) * horizontal
-        );
     }
 
     @Override

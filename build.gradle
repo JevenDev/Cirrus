@@ -11,6 +11,10 @@ allprojects {
     group = rootProject.maven_group
 
     repositories {
+        if (rootProject.useLocalToucanLib.toBoolean()) {
+            mavenLocal()
+        }
+
         mavenCentral()
         maven {
             name = 'Xander Maven'
@@ -23,6 +27,16 @@ allprojects {
         maven {
             name = 'ParchmentMC'
             url = 'https://maven.parchmentmc.org/'
+        }
+        maven {
+            name = 'Architectury'
+            url = 'https://maven.architectury.dev/'
+        }
+        exclusiveContent {
+            forRepository {
+                maven { url = 'https://api.modrinth.com/maven' }
+            }
+            filter { includeGroup 'maven.modrinth' }
         }
     }
 }

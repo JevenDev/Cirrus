@@ -1,6 +1,8 @@
 package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.config.CirrusConfig;
+import com.jvn.toucanlib.client.ToucanEasing;
+import com.jvn.toucanlib.neoforge.client.ToucanShaders;
 import com.mojang.blaze3d.shaders.FogShape;
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -461,12 +463,11 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 0.0F,
                 1.0F
         );
-        return blend * blend * (3.0F - 2.0F * blend);
+        return ToucanEasing.smoothstep(blend);
     }
 
     private static float smoothWeatherLevel(float level) {
-        float clampedLevel = Mth.clamp(level, 0.0F, 1.0F);
-        return clampedLevel * clampedLevel * (3.0F - 2.0F * clampedLevel);
+        return ToucanEasing.smoothstep(level);
     }
 
     private LightningState lightningState(
@@ -542,55 +543,30 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             float thunderLevel,
             LightningState lightning
     ) {
-        Uniform enabled = shader.getUniform("CirrusEnabled");
-        if (enabled != null) {
-            enabled.set(1.0F);
-        }
+        ToucanShaders.setUniform(shader, "CirrusEnabled", true);
         Uniform lightDirection = shader.getUniform("CirrusLightDirection");
         if (lightDirection == null) {
             return;
         }
         lightDirection.set(-Mth.sin(celestialAngle), 0.0F);
-        Uniform lightColor = shader.getUniform("CirrusLightColor");
-        if (lightColor != null) {
-            lightColor.set(1.0F, 0.82F, 0.55F);
-        }
-        Uniform sunWeightUniform = shader.getUniform("CirrusSunWeight");
-        if (sunWeightUniform != null) {
-            sunWeightUniform.set(sunWeight);
-        }
-        Uniform viewDirection = shader.getUniform("CirrusLightViewDirection");
-        if (viewDirection != null) {
-            viewDirection.set(celestialViewDirection.x, celestialViewDirection.y, celestialViewDirection.z);
-        }
-        Uniform rainLevelUniform = shader.getUniform("CirrusRainLevel");
-        if (rainLevelUniform != null) {
-            rainLevelUniform.set(rainLevel);
-        }
-        Uniform thunderLevelUniform = shader.getUniform("CirrusThunderLevel");
-        if (thunderLevelUniform != null) {
-            thunderLevelUniform.set(thunderLevel);
-        }
-        Uniform lightningFlashUniform = shader.getUniform("CirrusLightningFlash");
-        if (lightningFlashUniform != null) {
-            lightningFlashUniform.set(lightning.intensity());
-        }
-        Uniform lightningPositionUniform = shader.getUniform("CirrusLightningViewPosition");
-        if (lightningPositionUniform != null) {
-            lightningPositionUniform.set(
-                    lightning.viewPosition().x,
-                    lightning.viewPosition().y,
-                    lightning.viewPosition().z
-            );
-        }
-        Uniform worldUpUniform = shader.getUniform("CirrusWorldUpViewDirection");
-        if (worldUpUniform != null) {
-            worldUpUniform.set(lightning.viewUp().x, lightning.viewUp().y, lightning.viewUp().z);
-        }
-        Uniform lightningRadiusUniform = shader.getUniform("CirrusLightningRadius");
-        if (lightningRadiusUniform != null) {
-            lightningRadiusUniform.set(lightning.radius());
-        }
+        ToucanShaders.setUniform(shader, "CirrusLightColor", 1.0F, 0.82F, 0.55F);
+        ToucanShaders.setUniform(shader, "CirrusSunWeight", sunWeight);
+        ToucanShaders.setUniform(
+                shader, "CirrusLightViewDirection",
+                celestialViewDirection.x, celestialViewDirection.y, celestialViewDirection.z
+        );
+        ToucanShaders.setUniform(shader, "CirrusRainLevel", rainLevel);
+        ToucanShaders.setUniform(shader, "CirrusThunderLevel", thunderLevel);
+        ToucanShaders.setUniform(shader, "CirrusLightningFlash", lightning.intensity());
+        ToucanShaders.setUniform(
+                shader, "CirrusLightningViewPosition",
+                lightning.viewPosition().x, lightning.viewPosition().y, lightning.viewPosition().z
+        );
+        ToucanShaders.setUniform(
+                shader, "CirrusWorldUpViewDirection",
+                lightning.viewUp().x, lightning.viewUp().y, lightning.viewUp().z
+        );
+        ToucanShaders.setUniform(shader, "CirrusLightningRadius", lightning.radius());
     }
 
     private MeshData buildMesh(int distanceChunks, int anchorX, int anchorZ) {
