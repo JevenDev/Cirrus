@@ -6,6 +6,8 @@
 
 </div>
 
+<br>
+
 <div align="center">
 
 <a href="https://github.com/JevenDev/Cirrus" target="_blank" rel="noopener noreferrer"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/cozy/supported/neoforge_64h.png" alt="Available for NeoForge"></a>
@@ -36,6 +38,7 @@ Cirrus is a skybox overhaul while staying close to the vanilla style. It adds la
 - Occasional shooting stars with customizable trails, speed, color, and glow
 - A rotating Milky Way and a subtle night-sky color palette
 - Animated northern lights that appear in cold biomes by default (configurable!)
+- A configurable End sky with moving clouds, lightning, and waves of spreading darkness
 
 Every major effect can be adjusted or turned off!!!
 
@@ -45,7 +48,7 @@ Every major effect can be adjusted or turned off!!!
 
 ## Compatibility
 
-- [ToucanLib](https://modrinth.com/mod/toucan), [Architectury API](https://modrinth.com/mod/architectury-api), and [YetAnotherConfigLib](https://modrinth.com/mod/yacl) are required.
+- [ToucanLib](https://modrinth.com/mod/toucan) and [YetAnotherConfigLib](https://modrinth.com/mod/yacl) are required.
 - Shader packs and mods that replace cloud or sky rendering may override Cirrus or cause visual conflicts.
 
 <p align="center"><img src="https://cdn.modrinth.com/data/cached_images/5fd3ad80e342e6985dd6ebda1f7afd9c48749fce.png" alt="Credits and license" width="900"></p>
