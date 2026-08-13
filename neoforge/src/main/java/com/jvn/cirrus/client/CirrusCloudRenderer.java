@@ -32,6 +32,8 @@ import org.joml.Vector3f;
 public final class CirrusCloudRenderer implements AutoCloseable {
     private static final float WORLD_SCALE = 12.0F;
     private static final int TILE_SIZE = 8;
+    private static final float FANCY_CLOUD_THICKNESS = 4.0F;
+    private static final float SURFACE_EPSILON = 9.765625E-4F;
     private static final float UV_SCALE = 1.0F / 256.0F;
     private static final float TWILIGHT_TRANSITION = (float)Math.toRadians(12.0);
     private static final ResourceLocation CLOUDS_LOCATION =
@@ -327,6 +329,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             double cameraSampleZ,
             double windSample
     ) {
+        CirrusConfig.CloudStyle style = definition.style();
         double sampleX = sampleX(definition, cameraSampleX, windSample);
         double sampleZ = sampleZ(definition, cameraSampleZ);
         int anchorX = Mth.floor(sampleX / TILE_SIZE) * TILE_SIZE;
@@ -334,19 +337,21 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         if (mesh.buffer != null
                 && mesh.cachedLevel == level
                 && mesh.cachedDistanceChunks == distanceChunks
+                && mesh.cachedStyle == style
                 && mesh.cachedAnchorX == anchorX
                 && mesh.cachedAnchorZ == anchorZ) {
             return;
         }
 
         mesh.closeBuffer();
-        MeshData builtMesh = buildMesh(distanceChunks, anchorX, anchorZ);
+        MeshData builtMesh = buildMesh(distanceChunks, anchorX, anchorZ, style);
         mesh.buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
         mesh.buffer.bind();
         mesh.buffer.upload(builtMesh);
         VertexBuffer.unbind();
         mesh.cachedLevel = level;
         mesh.cachedDistanceChunks = distanceChunks;
+        mesh.cachedStyle = style;
         mesh.cachedAnchorX = anchorX;
         mesh.cachedAnchorZ = anchorZ;
     }
@@ -391,6 +396,25 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             );
 
             mesh.buffer.bind();
+            if (definition.style() == CirrusConfig.CloudStyle.FANCY) {
+                RenderType depthOnly = RenderType.cloudsDepthOnly();
+                depthOnly.setupRenderState();
+                try {
+                    ShaderInstance shader = CirrusShaders.clouds();
+                    setCloudEnvironment(
+                            shader,
+                            celestialAngle,
+                            sunWeight,
+                            celestialViewDirection,
+                            rainLevel,
+                            thunderLevel,
+                            lightning
+                    );
+                    mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
+                } finally {
+                    depthOnly.clearRenderState();
+                }
+            }
             RenderType clouds = RenderType.clouds();
             clouds.setupRenderState();
             try {
@@ -569,7 +593,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         ToucanShaders.setUniform(shader, "CirrusLightningRadius", lightning.radius());
     }
 
-    private MeshData buildMesh(int distanceChunks, int anchorX, int anchorZ) {
+    private MeshData buildMesh(
+            int distanceChunks, int anchorX, int anchorZ, CirrusConfig.CloudStyle style
+    ) {
         BufferBuilder builder = Tesselator.getInstance().begin(
                 VertexFormat.Mode.QUADS,
                 DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
@@ -588,13 +614,17 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 }
                 float x = tileX * TILE_SIZE;
                 float z = tileZ * TILE_SIZE;
-                addTile(builder, x, z, anchorX, anchorZ);
+                if (style == CirrusConfig.CloudStyle.FANCY) {
+                    addFancyTile(builder, tileX, tileZ, x, z, anchorX, anchorZ);
+                } else {
+                    addFastTile(builder, x, z, anchorX, anchorZ);
+                }
             }
         }
         return builder.buildOrThrow();
     }
 
-    private static void addTile(
+    private static void addFastTile(
             BufferBuilder builder,
             float x,
             float z,
@@ -603,25 +633,143 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     ) {
         float x1 = x + TILE_SIZE;
         float z1 = z + TILE_SIZE;
-        vertex(builder, x, z, x, z, anchorX, anchorZ);
-        vertex(builder, x, z1, x, z1, anchorX, anchorZ);
-        vertex(builder, x1, z1, x1, z1, anchorX, anchorZ);
-        vertex(builder, x1, z, x1, z, anchorX, anchorZ);
+        vertex(builder, x, 0.0F, z, x, z, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);
+        vertex(builder, x, 0.0F, z1, x, z1, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);
+        vertex(builder, x1, 0.0F, z1, x1, z1, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);
+        vertex(builder, x1, 0.0F, z, x1, z, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);
+    }
+
+    private static void addFancyTile(
+            BufferBuilder builder,
+            int tileX,
+            int tileZ,
+            float x,
+            float z,
+            int anchorX,
+            int anchorZ
+    ) {
+        float x1 = x + TILE_SIZE;
+        float z1 = z + TILE_SIZE;
+        float top = FANCY_CLOUD_THICKNESS - SURFACE_EPSILON;
+
+        vertex(builder, x, 0.0F, z1, x, z1, anchorX, anchorZ, 0.70F, 0.0F, -1.0F, 0.0F);
+        vertex(builder, x1, 0.0F, z1, x1, z1, anchorX, anchorZ, 0.70F, 0.0F, -1.0F, 0.0F);
+        vertex(builder, x1, 0.0F, z, x1, z, anchorX, anchorZ, 0.70F, 0.0F, -1.0F, 0.0F);
+        vertex(builder, x, 0.0F, z, x, z, anchorX, anchorZ, 0.70F, 0.0F, -1.0F, 0.0F);
+
+        vertex(builder, x, top, z1, x, z1, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);
+        vertex(builder, x1, top, z1, x1, z1, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);
+        vertex(builder, x1, top, z, x1, z, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);
+        vertex(builder, x, top, z, x, z, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);
+
+        if (tileX >= 0) {
+            for (int cell = 0; cell < TILE_SIZE; cell++) {
+                float sideX = x + cell;
+                float sampleX = x + cell + 0.5F;
+                vertex(
+                        builder, sideX, 0.0F, z1, sampleX, z1, anchorX, anchorZ,
+                        0.90F, -1.0F, 0.0F, 0.0F
+                );
+                vertex(
+                        builder, sideX, FANCY_CLOUD_THICKNESS, z1, sampleX, z1, anchorX, anchorZ,
+                        0.90F, -1.0F, 0.0F, 0.0F
+                );
+                vertex(
+                        builder, sideX, FANCY_CLOUD_THICKNESS, z, sampleX, z, anchorX, anchorZ,
+                        0.90F, -1.0F, 0.0F, 0.0F
+                );
+                vertex(
+                        builder, sideX, 0.0F, z, sampleX, z, anchorX, anchorZ,
+                        0.90F, -1.0F, 0.0F, 0.0F
+                );
+            }
+        }
+        if (tileX <= 1) {
+            for (int cell = 0; cell < TILE_SIZE; cell++) {
+                float sideX = x + cell + 1.0F - SURFACE_EPSILON;
+                float sampleX = x + cell + 0.5F;
+                vertex(
+                        builder, sideX, 0.0F, z1, sampleX, z1, anchorX, anchorZ,
+                        0.90F, 1.0F, 0.0F, 0.0F
+                );
+                vertex(
+                        builder, sideX, FANCY_CLOUD_THICKNESS, z1, sampleX, z1, anchorX, anchorZ,
+                        0.90F, 1.0F, 0.0F, 0.0F
+                );
+                vertex(
+                        builder, sideX, FANCY_CLOUD_THICKNESS, z, sampleX, z, anchorX, anchorZ,
+                        0.90F, 1.0F, 0.0F, 0.0F
+                );
+                vertex(
+                        builder, sideX, 0.0F, z, sampleX, z, anchorX, anchorZ,
+                        0.90F, 1.0F, 0.0F, 0.0F
+                );
+            }
+        }
+        if (tileZ >= 0) {
+            for (int cell = 0; cell < TILE_SIZE; cell++) {
+                float sideZ = z + cell;
+                float sampleZ = z + cell + 0.5F;
+                vertex(
+                        builder, x, FANCY_CLOUD_THICKNESS, sideZ, x, sampleZ, anchorX, anchorZ,
+                        0.80F, 0.0F, 0.0F, -1.0F
+                );
+                vertex(
+                        builder, x1, FANCY_CLOUD_THICKNESS, sideZ, x1, sampleZ, anchorX, anchorZ,
+                        0.80F, 0.0F, 0.0F, -1.0F
+                );
+                vertex(
+                        builder, x1, 0.0F, sideZ, x1, sampleZ, anchorX, anchorZ,
+                        0.80F, 0.0F, 0.0F, -1.0F
+                );
+                vertex(
+                        builder, x, 0.0F, sideZ, x, sampleZ, anchorX, anchorZ,
+                        0.80F, 0.0F, 0.0F, -1.0F
+                );
+            }
+        }
+        if (tileZ <= 1) {
+            for (int cell = 0; cell < TILE_SIZE; cell++) {
+                float sideZ = z + cell + 1.0F - SURFACE_EPSILON;
+                float sampleZ = z + cell + 0.5F;
+                vertex(
+                        builder, x, FANCY_CLOUD_THICKNESS, sideZ, x, sampleZ, anchorX, anchorZ,
+                        0.80F, 0.0F, 0.0F, 1.0F
+                );
+                vertex(
+                        builder, x1, FANCY_CLOUD_THICKNESS, sideZ, x1, sampleZ, anchorX, anchorZ,
+                        0.80F, 0.0F, 0.0F, 1.0F
+                );
+                vertex(
+                        builder, x1, 0.0F, sideZ, x1, sampleZ, anchorX, anchorZ,
+                        0.80F, 0.0F, 0.0F, 1.0F
+                );
+                vertex(
+                        builder, x, 0.0F, sideZ, x, sampleZ, anchorX, anchorZ,
+                        0.80F, 0.0F, 0.0F, 1.0F
+                );
+            }
+        }
     }
 
     private static void vertex(
             BufferBuilder builder,
             float x,
+            float y,
             float z,
             float sampleX,
             float sampleZ,
             int anchorX,
-            int anchorZ
+            int anchorZ,
+            float shade,
+            float normalX,
+            float normalY,
+            float normalZ
     ) {
-        builder.addVertex(x, 0.0F, z)
+        builder.addVertex(x, y, z)
                 .setUv((sampleX + anchorX) * UV_SCALE, (sampleZ + anchorZ) * UV_SCALE)
-                .setColor(1.0F, 1.0F, 1.0F, 1.0F)
-                .setNormal(0.0F, 1.0F, 0.0F);
+                .setColor(shade, shade, shade, 1.0F)
+                .setNormal(normalX, normalY, normalZ);
     }
 
     public void invalidate() {
@@ -644,6 +792,14 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 case LOWER -> CirrusConfig.LOWER_LAYER_SPEED.get();
                 case UPPER -> CirrusConfig.UPPER_LAYER_SPEED.get();
                 case TOP -> CirrusConfig.TOP_LAYER_SPEED.get();
+            };
+        }
+
+        private CirrusConfig.CloudStyle style() {
+            return switch (kind) {
+                case LOWER -> CirrusConfig.LOWER_LAYER_STYLE.get();
+                case UPPER -> CirrusConfig.UPPER_LAYER_STYLE.get();
+                case TOP -> CirrusConfig.TOP_LAYER_STYLE.get();
             };
         }
 
@@ -680,6 +836,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         private VertexBuffer buffer;
         private ClientLevel cachedLevel;
         private int cachedDistanceChunks = -1;
+        private CirrusConfig.CloudStyle cachedStyle;
         private int cachedAnchorX = Integer.MIN_VALUE;
         private int cachedAnchorZ = Integer.MIN_VALUE;
 
@@ -687,6 +844,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             closeBuffer();
             cachedLevel = null;
             cachedDistanceChunks = -1;
+            cachedStyle = null;
             cachedAnchorX = Integer.MIN_VALUE;
             cachedAnchorZ = Integer.MIN_VALUE;
         }

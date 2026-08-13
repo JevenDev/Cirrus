@@ -8,6 +8,7 @@ import dev.isxander.yacl3.api.OptionGroup;
 import dev.isxander.yacl3.api.YetAnotherConfigLib;
 import dev.isxander.yacl3.api.controller.ColorControllerBuilder;
 import dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder;
+import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import java.awt.Color;
@@ -69,6 +70,12 @@ public final class CirrusConfigScreen {
                         .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.lowerLayer"))
+                        .option(enumOption(
+                                "cirrus.config.clouds.lowerLayerStyle",
+                                CirrusConfig.LOWER_LAYER_STYLE,
+                                CirrusConfig.CloudStyle.class,
+                                style -> Component.translatable("options.clouds." + style.name().toLowerCase(Locale.ROOT))
+                        ))
                         .option(doubleOption(
                                 "cirrus.config.clouds.lowerLayerHeightOffset",
                                 CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET,
@@ -90,6 +97,12 @@ public final class CirrusConfigScreen {
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.upperLayer"))
                         .option(booleanOption("cirrus.config.clouds.upperLayerEnabled", CirrusConfig.UPPER_LAYER_ENABLED))
+                        .option(enumOption(
+                                "cirrus.config.clouds.upperLayerStyle",
+                                CirrusConfig.UPPER_LAYER_STYLE,
+                                CirrusConfig.CloudStyle.class,
+                                style -> Component.translatable("options.clouds." + style.name().toLowerCase(Locale.ROOT))
+                        ))
                         .option(doubleOption(
                                 "cirrus.config.clouds.upperLayerHeightOffset",
                                 CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET,
@@ -111,6 +124,12 @@ public final class CirrusConfigScreen {
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.topLayer"))
                         .option(booleanOption("cirrus.config.clouds.topLayerEnabled", CirrusConfig.TOP_LAYER_ENABLED))
+                        .option(enumOption(
+                                "cirrus.config.clouds.topLayerStyle",
+                                CirrusConfig.TOP_LAYER_STYLE,
+                                CirrusConfig.CloudStyle.class,
+                                style -> Component.translatable("options.clouds." + style.name().toLowerCase(Locale.ROOT))
+                        ))
                         .option(doubleOption(
                                 "cirrus.config.clouds.topLayerHeightOffset",
                                 CirrusConfig.TOP_LAYER_HEIGHT_OFFSET,
@@ -477,6 +496,22 @@ public final class CirrusConfigScreen {
                 .description(description(key))
                 .binding(value.getDefault(), value::get, value::set)
                 .controller(TickBoxControllerBuilder::create)
+                .build();
+    }
+
+    private static <E extends Enum<E>> Option<E> enumOption(
+            String key,
+            ModConfigSpec.EnumValue<E> value,
+            Class<E> enumClass,
+            dev.isxander.yacl3.api.controller.ValueFormatter<E> formatter
+    ) {
+        return Option.<E>createBuilder()
+                .name(text(key))
+                .description(description(key))
+                .binding(value.getDefault(), value::get, value::set)
+                .controller(option -> EnumControllerBuilder.create(option)
+                        .enumClass(enumClass)
+                        .formatValue(formatter))
                 .build();
     }
 

@@ -69,14 +69,17 @@ public final class CirrusConfig {
     public static final ModConfigSpec.DoubleValue LIGHTNING_BOLT_INTENSITY;
     public static final ModConfigSpec.BooleanValue HIDE_LIGHTNING_CLOUD_FLASHES;
     public static final ModConfigSpec.DoubleValue LIGHTNING_CLOUD_FLASH_OPACITY;
+    public static final ModConfigSpec.EnumValue<CloudStyle> LOWER_LAYER_STYLE;
     public static final ModConfigSpec.DoubleValue LOWER_LAYER_HEIGHT_OFFSET;
     public static final ModConfigSpec.DoubleValue LOWER_LAYER_SPEED;
     public static final ModConfigSpec.DoubleValue LOWER_LAYER_OPACITY;
     public static final ModConfigSpec.BooleanValue UPPER_LAYER_ENABLED;
+    public static final ModConfigSpec.EnumValue<CloudStyle> UPPER_LAYER_STYLE;
     public static final ModConfigSpec.DoubleValue UPPER_LAYER_HEIGHT_OFFSET;
     public static final ModConfigSpec.DoubleValue UPPER_LAYER_SPEED;
     public static final ModConfigSpec.DoubleValue UPPER_LAYER_OPACITY;
     public static final ModConfigSpec.BooleanValue TOP_LAYER_ENABLED;
+    public static final ModConfigSpec.EnumValue<CloudStyle> TOP_LAYER_STYLE;
     public static final ModConfigSpec.DoubleValue TOP_LAYER_HEIGHT_OFFSET;
     public static final ModConfigSpec.DoubleValue TOP_LAYER_SPEED;
     public static final ModConfigSpec.DoubleValue TOP_LAYER_OPACITY;
@@ -172,6 +175,9 @@ public final class CirrusConfig {
                 "lightningCloudFlashOpacity",
                 "Maximum opacity of lightning illumination on nearby clouds."
         );
+        LOWER_LAYER_STYLE = builder
+                .comment("Cloud geometry used by the lower layer. Fast is a flat plane; Fancy has four-block thickness.")
+                .defineEnum("lowerLayerStyle", CloudStyle.FAST);
         LOWER_LAYER_HEIGHT_OFFSET = LOWER_LAYER_HEIGHT_SETTING.define(
                 builder,
                 "lowerLayerHeightOffset",
@@ -190,6 +196,9 @@ public final class CirrusConfig {
         UPPER_LAYER_ENABLED = builder
                 .comment("Render a second, independently sampled cloud layer above the dimension's normal clouds.")
                 .define("upperLayerEnabled", true);
+        UPPER_LAYER_STYLE = builder
+                .comment("Cloud geometry used by the upper layer. Fast is a flat plane; Fancy has four-block thickness.")
+                .defineEnum("upperLayerStyle", CloudStyle.FAST);
         UPPER_LAYER_HEIGHT_OFFSET = UPPER_LAYER_HEIGHT_SETTING.define(
                 builder,
                 "upperLayerHeightOffset",
@@ -208,6 +217,9 @@ public final class CirrusConfig {
         TOP_LAYER_ENABLED = builder
                 .comment("Render a third, independently sampled cloud layer above the upper cloud layer.")
                 .define("topLayerEnabled", true);
+        TOP_LAYER_STYLE = builder
+                .comment("Cloud geometry used by the top layer. Fast is a flat plane; Fancy has four-block thickness.")
+                .defineEnum("topLayerStyle", CloudStyle.FAST);
         TOP_LAYER_HEIGHT_OFFSET = TOP_LAYER_HEIGHT_SETTING.define(
                 builder,
                 "topLayerHeightOffset",
@@ -490,6 +502,11 @@ public final class CirrusConfig {
         );
         builder.pop();
         SPEC = builder.build();
+    }
+
+    public enum CloudStyle {
+        FAST,
+        FANCY
     }
 
     private CirrusConfig() {
