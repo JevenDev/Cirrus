@@ -48,6 +48,16 @@ public final class CirrusConfigScreen {
                         .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.cloudWeather"))
+                        .option(percentageOption(
+                                "cirrus.config.clouds.rainCloudCoverage",
+                                CirrusConfig.RAIN_CLOUD_COVERAGE,
+                                CirrusConfig.RAIN_CLOUD_COVERAGE_SETTING
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.clouds.thunderCloudCoverage",
+                                CirrusConfig.THUNDER_CLOUD_COVERAGE,
+                                CirrusConfig.THUNDER_CLOUD_COVERAGE_SETTING
+                        ))
                         .option(booleanOption(
                                 "cirrus.config.clouds.customLightningEnabled",
                                 CirrusConfig.CUSTOM_LIGHTNING_ENABLED

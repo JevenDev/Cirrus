@@ -81,6 +81,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         double cameraSampleX = cameraX / WORLD_SCALE;
         double cameraSampleZ = cameraZ / WORLD_SCALE;
         double windSample = (ticks + partialTick) * 0.03 / WORLD_SCALE;
+        float rainLevel = smoothWeatherLevel(level.getRainLevel(partialTick));
+        float thunderLevel = smoothWeatherLevel(level.getThunderLevel(partialTick));
         prepareLayer(lowerMesh, LOWER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
         boolean upperEnabled = CirrusConfig.UPPER_LAYER_ENABLED.get();
         boolean topEnabled = CirrusConfig.TOP_LAYER_ENABLED.get();
@@ -100,19 +102,19 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         try {
             drawMaskLayer(lowerMesh, LOWER_LAYER, frustumMatrix, projectionMatrix,
                     cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
-                    cameraSampleX, cameraSampleZ, windSample);
+                    cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
             if (upperEnabled) {
                 drawMaskLayer(upperMesh, UPPER_LAYER, frustumMatrix, projectionMatrix,
                         cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                                 + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
-                        cameraSampleX, cameraSampleZ, windSample);
+                        cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
             }
             if (topEnabled) {
                 drawMaskLayer(topMesh, TOP_LAYER, frustumMatrix, projectionMatrix,
                         cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                                 + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
                                 + CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
-                        cameraSampleX, cameraSampleZ, windSample);
+                        cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
             }
         } finally {
             VertexBuffer.unbind();
@@ -131,7 +133,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             double relativeHeight,
             double cameraSampleX,
             double cameraSampleZ,
-            double windSample
+            double windSample,
+            float rainLevel,
+            float thunderLevel
     ) {
         if (mesh.buffer == null) {
             return;
@@ -143,7 +147,19 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         poseStack.scale(WORLD_SCALE, 1.0F, WORLD_SCALE);
         poseStack.translate(-(sampleX - mesh.cachedAnchorX), relativeHeight, -(sampleZ - mesh.cachedAnchorZ));
         mesh.buffer.bind();
-        mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, CirrusShaders.cloudMask());
+        ShaderInstance shader = CirrusShaders.cloudMask();
+        ToucanShaders.setUniform(
+                shader,
+                "CirrusRainCloudCoverage",
+                rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue()
+        );
+        ToucanShaders.setUniform(
+                shader,
+                "CirrusThunderCloudCoverage",
+                thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue()
+        );
+        ToucanShaders.setUniform(shader, "CirrusLayerOpacity", definition.opacity(rainLevel, thunderLevel));
+        mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
     }
 
     public void render(
@@ -581,6 +597,16 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         );
         ToucanShaders.setUniform(shader, "CirrusRainLevel", rainLevel);
         ToucanShaders.setUniform(shader, "CirrusThunderLevel", thunderLevel);
+        ToucanShaders.setUniform(
+                shader,
+                "CirrusRainCloudCoverage",
+                rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue()
+        );
+        ToucanShaders.setUniform(
+                shader,
+                "CirrusThunderCloudCoverage",
+                thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue()
+        );
         ToucanShaders.setUniform(shader, "CirrusLightningFlash", lightning.intensity());
         ToucanShaders.setUniform(
                 shader, "CirrusLightningViewPosition",

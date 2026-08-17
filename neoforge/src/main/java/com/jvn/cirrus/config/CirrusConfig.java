@@ -4,6 +4,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class CirrusConfig {
     public static final IntSetting CLOUD_RENDER_DISTANCE_SETTING = new IntSetting(64, 2, 128, 1);
+    public static final DoubleSetting RAIN_CLOUD_COVERAGE_SETTING = new DoubleSetting(0.55, 0.0, 1.0, 0.05);
+    public static final DoubleSetting THUNDER_CLOUD_COVERAGE_SETTING = new DoubleSetting(0.75, 0.0, 1.0, 0.05);
     public static final DoubleSetting LIGHTNING_BOLT_INTENSITY_SETTING =
             new DoubleSetting(1.0, 0.25, 2.0, 0.05);
     public static final DoubleSetting LIGHTNING_CLOUD_FLASH_OPACITY_SETTING =
@@ -66,6 +68,8 @@ public final class CirrusConfig {
 
     public static final ModConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
     public static final ModConfigSpec.IntValue CLOUD_RENDER_DISTANCE;
+    public static final ModConfigSpec.DoubleValue RAIN_CLOUD_COVERAGE;
+    public static final ModConfigSpec.DoubleValue THUNDER_CLOUD_COVERAGE;
     public static final ModConfigSpec.BooleanValue CUSTOM_LIGHTNING_ENABLED;
     public static final ModConfigSpec.DoubleValue LIGHTNING_BOLT_INTENSITY;
     public static final ModConfigSpec.BooleanValue HIDE_LIGHTNING_CLOUD_FLASHES;
@@ -161,6 +165,16 @@ public final class CirrusConfig {
                 builder,
                 "renderDistanceChunks",
                 "Cloud render distance in chunks, independent of terrain render distance."
+        );
+        RAIN_CLOUD_COVERAGE = RAIN_CLOUD_COVERAGE_SETTING.define(
+                builder,
+                "rainCloudCoverage",
+                "Strength of the additional cloud pattern blended into every layer at full rain."
+        );
+        THUNDER_CLOUD_COVERAGE = THUNDER_CLOUD_COVERAGE_SETTING.define(
+                builder,
+                "thunderCloudCoverage",
+                "Strength of a second additional cloud pattern blended into every layer at full thunder."
         );
         CUSTOM_LIGHTNING_ENABLED = builder
                 .comment("Replace vanilla lightning bolts with Cirrus' branching, layered renderer.")

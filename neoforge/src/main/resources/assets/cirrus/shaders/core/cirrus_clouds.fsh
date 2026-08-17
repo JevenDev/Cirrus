@@ -15,6 +15,8 @@ uniform float CirrusSunWeight;
 uniform vec3 CirrusLightViewDirection;
 uniform float CirrusRainLevel;
 uniform float CirrusThunderLevel;
+uniform float CirrusRainCloudCoverage;
+uniform float CirrusThunderCloudCoverage;
 uniform float CirrusLightningFlash;
 uniform vec3 CirrusLightningViewPosition;
 uniform vec3 CirrusWorldUpViewDirection;
@@ -33,23 +35,77 @@ const float COS_7_DEGREES = 0.9925462;
 const float COS_30_DEGREES = 0.8660254;
 const float COS_38_DEGREES = 0.7880108;
 
+const vec2 RAIN_CLOUD_PATTERN_OFFSET = vec2(83.0, 47.0);
+const vec2 THUNDER_CLOUD_PATTERN_OFFSET = vec2(157.0, 109.0);
+
+float weatherCloudAlpha(
+    vec2 coordinates,
+    vec2 texelSize,
+    float rainCoverage,
+    float thunderCoverage
+) {
+    float baseAlpha = texture(Sampler0, coordinates).a;
+    float rainAlpha = rainCoverage > 0.001
+        ? texture(Sampler0, coordinates + RAIN_CLOUD_PATTERN_OFFSET * texelSize).a * rainCoverage
+        : 0.0;
+    float thunderAlpha = thunderCoverage > 0.001
+        ? texture(Sampler0, coordinates + THUNDER_CLOUD_PATTERN_OFFSET * texelSize).a * thunderCoverage
+        : 0.0;
+    return 1.0 - (1.0 - baseAlpha) * (1.0 - rainAlpha) * (1.0 - thunderAlpha);
+}
+
 void main() {
     float rainLevel = clamp(CirrusRainLevel, 0.0, 1.0);
     float thunderLevel = clamp(CirrusThunderLevel, 0.0, 1.0);
+    float rainCoverage = clamp(CirrusRainCloudCoverage, 0.0, 1.0);
+    float thunderCoverage = clamp(CirrusThunderCloudCoverage, 0.0, 1.0);
+    vec2 textureSizePixels = vec2(textureSize(Sampler0, 0));
+    vec2 texelSize = 1.0 / textureSizePixels;
     vec4 cloudSample = texture(Sampler0, texCoord0);
+    vec4 rainCloudSample = vec4(0.0);
+    vec4 thunderCloudSample = vec4(0.0);
+    if (rainCoverage > 0.001) {
+        rainCloudSample = texture(Sampler0, texCoord0 + RAIN_CLOUD_PATTERN_OFFSET * texelSize);
+    }
+    if (thunderCoverage > 0.001) {
+        thunderCloudSample = texture(Sampler0, texCoord0 + THUNDER_CLOUD_PATTERN_OFFSET * texelSize);
+    }
+    float baseCloudAlpha = cloudSample.a;
+    float rainCloudAlpha = rainCloudSample.a * rainCoverage;
+    float thunderCloudAlpha = thunderCloudSample.a * thunderCoverage;
+    float supplementalCloudAlpha =
+        1.0 - (1.0 - rainCloudAlpha) * (1.0 - thunderCloudAlpha);
+    vec4 dominantWeatherSample =
+        rainCloudAlpha >= thunderCloudAlpha ? rainCloudSample : thunderCloudSample;
+    if (supplementalCloudAlpha > baseCloudAlpha) {
+        cloudSample.rgb = dominantWeatherSample.rgb;
+    }
+    cloudSample.a =
+        1.0 - (1.0 - baseCloudAlpha) * (1.0 - supplementalCloudAlpha);
     vec4 color = cloudSample * vertexColor * ColorModulator;
     if (color.a < 0.1) {
         discard;
     }
 
     if (CirrusEnabled > 0.5) {
-        vec2 textureSizePixels = vec2(textureSize(Sampler0, 0));
         vec2 positionInTexel = fract(texCoord0 * textureSizePixels);
 
-        float emptyLeft = 1.0 - step(0.1, textureOffset(Sampler0, texCoord0, ivec2(-1, 0)).a);
-        float emptyRight = 1.0 - step(0.1, textureOffset(Sampler0, texCoord0, ivec2(1, 0)).a);
-        float emptyBottom = 1.0 - step(0.1, textureOffset(Sampler0, texCoord0, ivec2(0, -1)).a);
-        float emptyTop = 1.0 - step(0.1, textureOffset(Sampler0, texCoord0, ivec2(0, 1)).a);
+        float emptyLeft = 1.0 - step(
+            0.1,
+            weatherCloudAlpha(texCoord0 + vec2(-1.0, 0.0) * texelSize, texelSize, rainCoverage, thunderCoverage)
+        );
+        float emptyRight = 1.0 - step(
+            0.1,
+            weatherCloudAlpha(texCoord0 + vec2(1.0, 0.0) * texelSize, texelSize, rainCoverage, thunderCoverage)
+        );
+        float emptyBottom = 1.0 - step(
+            0.1,
+            weatherCloudAlpha(texCoord0 + vec2(0.0, -1.0) * texelSize, texelSize, rainCoverage, thunderCoverage)
+        );
+        float emptyTop = 1.0 - step(
+            0.1,
+            weatherCloudAlpha(texCoord0 + vec2(0.0, 1.0) * texelSize, texelSize, rainCoverage, thunderCoverage)
+        );
 
         float lightStrength = length(CirrusLightDirection);
         float horizonAmount = smoothstep(0.05, 1.0, lightStrength);
