@@ -30,8 +30,9 @@ public final class CirrusConfig {
     public static final DoubleSetting SHOOTING_STAR_OPACITY_SETTING = new DoubleSetting(0.85, 0.0, 1.0, 0.05);
     public static final DoubleSetting SHOOTING_STAR_MIN_SIZE_SETTING = new DoubleSetting(0.75, 0.25, 4.0, 0.05);
     public static final DoubleSetting SHOOTING_STAR_MAX_SIZE_SETTING = new DoubleSetting(1.5, 0.25, 4.0, 0.05);
-    public static final DoubleSetting SHOOTING_STAR_MIN_SPEED_SETTING = new DoubleSetting(0.65, 0.25, 3.0, 0.05);
-    public static final DoubleSetting SHOOTING_STAR_MAX_SPEED_SETTING = new DoubleSetting(1.35, 0.25, 3.0, 0.05);
+    public static final DoubleSetting SHOOTING_STAR_MIN_SPEED_SETTING = new DoubleSetting(0.80, 0.25, 3.0, 0.05);
+    public static final DoubleSetting SHOOTING_STAR_MAX_SPEED_SETTING = new DoubleSetting(1.80, 0.25, 3.0, 0.05);
+    public static final DoubleSetting SHOOTING_STAR_SPEED_VARIATION_SETTING = new DoubleSetting(0.65, 0.0, 1.0, 0.05);
     public static final DoubleSetting SHOOTING_STAR_TRAIL_LENGTH_SETTING = new DoubleSetting(3.0, 0.25, 3.0, 0.05);
     public static final DoubleSetting SHOOTING_STAR_BLOOM_SETTING = new DoubleSetting(2.0, 0.0, 2.0, 0.05);
     public static final DoubleSetting SHOOTING_STAR_COLOR_VARIATION_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
@@ -95,12 +96,14 @@ public final class CirrusConfig {
     public static final ModConfigSpec.DoubleValue STAR_TWINKLE_SPEED;
     public static final ModConfigSpec.DoubleValue STAR_COLOR_VARIATION;
     public static final ModConfigSpec.BooleanValue SHOOTING_STARS_ENABLED;
+    public static final ModConfigSpec.BooleanValue SHOOTING_STAR_PIXELATED_TRAIL;
     public static final ModConfigSpec.DoubleValue SHOOTING_STAR_FREQUENCY;
     public static final ModConfigSpec.DoubleValue SHOOTING_STAR_OPACITY;
     public static final ModConfigSpec.DoubleValue SHOOTING_STAR_MIN_SIZE;
     public static final ModConfigSpec.DoubleValue SHOOTING_STAR_MAX_SIZE;
     public static final ModConfigSpec.DoubleValue SHOOTING_STAR_MIN_SPEED;
     public static final ModConfigSpec.DoubleValue SHOOTING_STAR_MAX_SPEED;
+    public static final ModConfigSpec.DoubleValue SHOOTING_STAR_SPEED_VARIATION;
     public static final ModConfigSpec.DoubleValue SHOOTING_STAR_TRAIL_LENGTH;
     public static final ModConfigSpec.DoubleValue SHOOTING_STAR_BLOOM;
     public static final ModConfigSpec.DoubleValue SHOOTING_STAR_COLOR_VARIATION;
@@ -292,6 +295,9 @@ public final class CirrusConfig {
         SHOOTING_STARS_ENABLED = builder
                 .comment("Occasionally render shader-animated shooting stars at night.")
                 .define("shootingStarsEnabled", true);
+        SHOOTING_STAR_PIXELATED_TRAIL = builder
+                .comment("Render shooting-star trails as a chain of crisp, block-like light fragments.")
+                .define("shootingStarPixelatedTrail", true);
         SHOOTING_STAR_FREQUENCY = SHOOTING_STAR_FREQUENCY_SETTING.define(
                 builder,
                 "shootingStarFrequency",
@@ -321,6 +327,11 @@ public final class CirrusConfig {
                 builder,
                 "shootingStarMaximumSpeed",
                 "Speed multiplier used by the fastest shooting stars."
+        );
+        SHOOTING_STAR_SPEED_VARIATION = SHOOTING_STAR_SPEED_VARIATION_SETTING.define(
+                builder,
+                "shootingStarSpeedVariation",
+                "Strength of per-event acceleration and deceleration. Zero keeps motion at a constant speed."
         );
         SHOOTING_STAR_TRAIL_LENGTH = SHOOTING_STAR_TRAIL_LENGTH_SETTING.define(
                 builder,

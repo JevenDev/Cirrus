@@ -10,6 +10,7 @@ uniform mat4 ProjMat;
 uniform vec4 CirrusStarAnimation;
 uniform vec4 CirrusShootingStarAppearance;
 uniform vec4 CirrusShootingStarAnimation;
+uniform vec2 CirrusShootingStarDynamics;
 uniform vec4 CirrusShootingStarVisual;
 uniform float CirrusStarRenderMode;
 
@@ -62,7 +63,12 @@ void main() {
             speedRandom
         );
         float duration = 1.25 / shootingSpeed;
-        shootingProgress = clamp(eventElapsed / duration, 0.0, 1.0);
+        float linearProgress = clamp(eventElapsed / duration, 0.0, 1.0);
+        float motionRandom = starHash(
+            direction + vec3(Color.a * 7.0, Color.b * 11.0, eventIndex * 0.031)
+        );
+        float speedCurve = exp2((motionRandom * 2.0 - 1.0) * CirrusShootingStarDynamics.x * 0.85);
+        shootingProgress = pow(linearProgress, speedCurve);
 
         float selectedSlot = mod(eventIndex, 32.0) / 31.0;
         float slotMatch = 1.0 - step(0.5 / 31.0, abs(Color.a - selectedSlot));
@@ -86,8 +92,8 @@ void main() {
             -direction * sin(sampleAngle) + tangent * cos(sampleAngle)
         );
         vec3 widthTangent = normalize(cross(travelTangent, pathDirection));
-        float widthTaper = mix(0.38, 1.0, pow(alongTrail, 0.55));
-        float halfWidth = 0.30 * shootingSize * widthTaper;
+        float widthTaper = mix(0.20, 1.0, pow(alongTrail, 0.62));
+        float halfWidth = 0.34 * shootingSize * widthTaper;
         expandedPosition = pathDirection * length(Position)
                 + widthTangent * UV0.y * halfWidth;
     }

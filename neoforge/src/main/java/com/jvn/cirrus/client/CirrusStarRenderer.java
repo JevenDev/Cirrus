@@ -124,13 +124,21 @@ public final class CirrusStarRenderer implements AutoCloseable {
             );
         }
 
+        Uniform shootingDynamics = shader.getUniform("CirrusShootingStarDynamics");
+        if (shootingDynamics != null) {
+            shootingDynamics.set(
+                    CirrusConfig.SHOOTING_STAR_SPEED_VARIATION.get().floatValue(),
+                    0.0F
+            );
+        }
+
         Uniform shootingVisual = shader.getUniform("CirrusShootingStarVisual");
         if (shootingVisual != null) {
             shootingVisual.set(
                     CirrusConfig.SHOOTING_STAR_TRAIL_LENGTH.get().floatValue(),
                     CirrusConfig.SHOOTING_STAR_BLOOM.get().floatValue(),
                     CirrusConfig.SHOOTING_STAR_COLOR_VARIATION.get().floatValue(),
-                    0.0F
+                    CirrusConfig.SHOOTING_STAR_PIXELATED_TRAIL.get() ? 1.0F : 0.0F
             );
         }
 

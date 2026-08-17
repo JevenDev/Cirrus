@@ -34,42 +34,89 @@ void main() {
         float revealStart = 1.0 - trailGrowth;
         float revealWidth = max(min(0.08, trailGrowth * 0.35), 0.002);
         float trailReveal = smoothstep(revealStart, revealStart + revealWidth, alongTrail);
-        float trailEnvelope = trailReveal
-                * smoothstep(0.0, 0.06, alongTrail)
-                * pow(alongTrail, 0.82);
-        float coreWidth = 1.0 - smoothstep(0.0, 0.18, acrossTrail);
-        float haloWidth = 1.0 - smoothstep(0.05, 1.0, acrossTrail);
+        float tailFade = smoothstep(0.0, 0.075, alongTrail) * pow(alongTrail, 0.86);
+        float trailEnvelope = trailReveal * tailFade;
+
+        float smoothCore = (1.0 - smoothstep(0.08, 0.24, acrossTrail))
+                * trailEnvelope;
+        float smoothHalo = (1.0 - smoothstep(0.12, 1.0, acrossTrail))
+                * trailEnvelope;
+
+        float pixelatedTrail = step(0.5, CirrusShootingStarVisual.w);
+        float trailCellCount = 20.0;
+        float trailCell = floor(alongTrail * trailCellCount);
+        float cellCenter = (trailCell + 0.5) / trailCellCount;
+        float withinCell = abs(fract(alongTrail * trailCellCount) - 0.5) * 2.0;
+        float cellGap = 1.0 - smoothstep(0.76, 0.96, withinCell);
+        float cellWidth = mix(0.15, 0.34, floor(cellCenter * 5.0) / 5.0);
+        float pixelCore = (1.0 - smoothstep(cellWidth, cellWidth + 0.055, acrossTrail))
+                * cellGap
+                * trailReveal
+                * smoothstep(0.0, 0.10, cellCenter)
+                * pow(cellCenter, 0.78);
+        float pixelHalo = (1.0 - smoothstep(cellWidth + 0.08, 0.95, acrossTrail))
+                * mix(0.38, 1.0, cellGap)
+                * trailReveal
+                * smoothstep(0.0, 0.08, cellCenter)
+                * pow(cellCenter, 0.88);
+
+        float breakupAlong = mix(floor(alongTrail * 28.0), trailCell, pixelatedTrail);
+        vec2 breakupCell = floor(vec2(breakupAlong, (starCoordinate.y + 1.0) * 4.0));
+        float breakupNoise = fract(sin(
+            dot(breakupCell, vec2(17.17, 91.73)) + starData.b * 37.0
+        ) * 43758.5453);
+        float breakupThreshold = 0.10 + breakupNoise * 0.62 + alongTrail * 0.18;
+        float burnout = smoothstep(0.62, 0.995, shootingProgress);
+        float fragmentSurvival = 1.0 - smoothstep(
+            breakupThreshold,
+            breakupThreshold + 0.10,
+            burnout
+        );
+        float burnFlare = smoothstep(0.46, 0.68, shootingProgress)
+                * (1.0 - smoothstep(0.80, 0.94, shootingProgress));
+        float emberFlicker = mix(1.0, 0.76 + breakupNoise * 0.24, burnout);
+
         vec2 headCoordinate = vec2(
-            (1.0 - alongTrail) * 5.5,
-            starCoordinate.y * 0.78
+            (1.0 - alongTrail) * 6.4,
+            starCoordinate.y * 0.94
         );
         float headDistance = length(headCoordinate);
-        float headCore = 1.0 - smoothstep(0.0, 0.32, headDistance);
-        float headHalo = 1.0 - smoothstep(0.05, 1.25, headDistance);
-        float core = max(coreWidth * pow(alongTrail, 1.05), headCore) * trailReveal;
-        float halo = max(haloWidth * trailEnvelope * 0.78, headHalo * trailReveal);
+        float headCore = 1.0 - smoothstep(0.06, 0.34, headDistance);
+        float headHalo = 1.0 - smoothstep(0.08, 1.30, headDistance);
+        float trailCore = mix(smoothCore, pixelCore, pixelatedTrail);
+        float trailHalo = mix(smoothHalo, pixelHalo, pixelatedTrail);
+        float core = max(trailCore, headCore * trailReveal);
+        float halo = max(trailHalo * 0.74, headHalo * trailReveal);
         float bloom = CirrusShootingStarVisual.y;
-        float shapeAlpha = core * 0.92 + halo * (0.14 + bloom * 0.20);
-        float fade = smoothstep(0.0, 0.08, shootingProgress)
-                * (1.0 - smoothstep(0.76, 1.0, shootingProgress));
-        float alpha = shapeAlpha * fade
+        float shapeAlpha = core * (0.92 + bloom * 0.04)
+                + halo * (0.11 + bloom * 0.17);
+        float ignition = smoothstep(0.0, 0.018, shootingProgress);
+        float alpha = shapeAlpha
+                * ignition
+                * fragmentSurvival
+                * emberFlicker
+                * (1.0 + burnFlare * 0.55)
                 * CirrusShootingStarAppearance.w
                 * CirrusStarAtmosphere.x;
         if (alpha < 0.001) {
             discard;
         }
 
-        vec3 neutralGlow = vec3(0.84, 0.91, 1.0);
-        vec3 warmGlow = vec3(1.0, 0.64, 0.30);
-        vec3 coolGlow = vec3(0.38, 0.68, 1.0);
+        vec3 neutralGlow = vec3(0.79, 0.88, 1.0);
+        vec3 warmGlow = vec3(1.0, 0.58, 0.22);
+        vec3 coolGlow = vec3(0.34, 0.64, 1.0);
         float temperature = (starData.b * 2.0 - 1.0)
                 * CirrusShootingStarVisual.z;
         vec3 glowColor = temperature < 0.0
                 ? mix(neutralGlow, warmGlow, -temperature)
                 : mix(neutralGlow, coolGlow, temperature);
-        float coreMix = clamp(core / (core + halo * 0.70 + 0.001), 0.0, 1.0);
-        vec3 color = mix(glowColor, vec3(1.0, 0.985, 0.94), coreMix);
-        color *= 0.95 + min(bloom, 2.0) * 0.08;
+        float hotCenter = clamp(core / (core + halo * 0.82 + 0.001), 0.0, 1.0);
+        float headHeat = (1.0 - smoothstep(0.0, 0.85, headDistance)) * trailReveal;
+        float whiteHeat = max(hotCenter * 0.82, headHeat);
+        vec3 color = mix(glowColor, vec3(1.0, 0.99, 0.95), whiteHeat);
+        float emberAmount = burnout * (1.0 - hotCenter * 0.72);
+        color = mix(color, vec3(1.0, 0.29, 0.045), emberAmount * 0.78);
+        color *= 0.94 + min(bloom, 2.0) * 0.09 + burnFlare * 0.12;
         fragColor = vec4(color, min(alpha, 1.0));
         return;
     }

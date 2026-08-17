@@ -299,6 +299,10 @@ public final class CirrusConfigScreen {
                                 "cirrus.config.sky.shootingStarsEnabled",
                                 CirrusConfig.SHOOTING_STARS_ENABLED
                         ))
+                        .option(booleanOption(
+                                "cirrus.config.sky.shootingStarPixelatedTrail",
+                                CirrusConfig.SHOOTING_STAR_PIXELATED_TRAIL
+                        ))
                         .option(doubleOption(
                                 "cirrus.config.sky.shootingStarFrequency",
                                 CirrusConfig.SHOOTING_STAR_FREQUENCY,
@@ -333,6 +337,11 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.SHOOTING_STAR_MAX_SPEED,
                                 CirrusConfig.SHOOTING_STAR_MAX_SPEED_SETTING,
                                 value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.shootingStarSpeedVariation",
+                                CirrusConfig.SHOOTING_STAR_SPEED_VARIATION,
+                                CirrusConfig.SHOOTING_STAR_SPEED_VARIATION_SETTING
                         ))
                         .option(doubleOption(
                                 "cirrus.config.sky.shootingStarTrailLength",
