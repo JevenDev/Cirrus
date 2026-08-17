@@ -9,6 +9,7 @@
     "LevelRendererStarMixin",
     "LightningBoltMixin",
     "LightningBoltRendererMixin",
+    "compat.wherewindsblow.DesertStormRendererMixin",
     "compat.wherewindsblow.BlizzardRendererMixin",
     "compat.wherewindsblow.GpuSnowfallRendererMixin",
     "compat.wherewindsblow.SnowfallRendererMixin",
