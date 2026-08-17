@@ -445,6 +445,12 @@ public final class CirrusConfigScreen {
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.endSky"))
                         .option(booleanOption("cirrus.config.sky.endSkyEnabled", CirrusConfig.END_SKY_ENABLED))
+                        .option(enumOption(
+                                "cirrus.config.sky.endSkyQuality",
+                                CirrusConfig.END_SKY_QUALITY,
+                                CirrusConfig.EndSkyQuality.class,
+                                quality -> text("cirrus.config.sky.endSkyQuality." + quality.name().toLowerCase(Locale.ROOT))
+                        ))
                         .option(booleanOption(
                                 "cirrus.config.sky.endSkyPixelationEnabled",
                                 CirrusConfig.END_SKY_PIXELATION_ENABLED

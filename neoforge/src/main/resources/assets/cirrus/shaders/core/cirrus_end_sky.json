@@ -4,6 +4,7 @@
   "samplers": [],
   "uniforms": [
     { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "CirrusEndNoiseOctaves", "type": "float", "count": 1, "values": [ 3.0 ] },
     { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
     { "name": "CirrusEndTime", "type": "float", "count": 1, "values": [ 0.0 ] },
     { "name": "CirrusEndIntensity", "type": "float", "count": 1, "values": [ 1.0 ] },

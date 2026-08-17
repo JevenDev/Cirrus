@@ -1,6 +1,7 @@
 #version 150
 
 uniform float CirrusEndTime;
+uniform float CirrusEndNoiseOctaves;
 uniform float CirrusEndIntensity;
 uniform float CirrusEndAnimationSpeed;
 uniform float CirrusEndMorphSpeed;
@@ -62,6 +63,9 @@ float fbm(vec3 p) {
     );
     for (int octave = 0; octave < 4; octave++) {
         result += valueNoise(p) * weight;
+        if (float(octave + 1) >= CirrusEndNoiseOctaves) {
+            break;
+        }
         p = octaveRotation * p * 2.03 + vec3(7.1, 13.7, 19.3);
         weight *= 0.49;
     }
@@ -391,6 +395,8 @@ void main() {
     float surgeProgress = (surgeAge - surgeStart) / surgeDuration;
     float surgeGrowth = smoothstep(0.02, 0.54, surgeProgress);
 
+    float surgeEdge = 0.0;
+    if (surgeOccurs > 0.0 && surgeProgress > 0.0 && surgeProgress < 1.0) {
     float surgeY = mix(-0.20, 0.76, surgeAxisRandom.y);
     float surgeAzimuth = surgeAxisRandom.x * PI * 2.0;
     float surgeHorizontal = sqrt(max(1.0 - surgeY * surgeY, 0.0));
@@ -436,7 +442,7 @@ void main() {
     float surgeLife = smoothstep(0.0, 0.12, surgeProgress)
             * (1.0 - surgeDissolve);
     float surgeArea = surgeOuter * surgeLife * surgeOccurs;
-    float surgeEdge = max(surgeOuter - surgeInner, 0.0)
+    surgeEdge = max(surgeOuter - surgeInner, 0.0)
             * surgeLife
             * surgeOccurs;
     float atmosphereResistance = clamp(
@@ -458,6 +464,7 @@ void main() {
             * clamp(CirrusEndSurgeStrength, 0.0, 1.0)
             * 0.18
             * intensity;
+    }
 
     // Major strikes are narrow, forked, and partly hidden inside the clouds.
     float lightningFrequency = max(CirrusEndLightningFrequency, 0.0);
@@ -475,6 +482,7 @@ void main() {
     float lightningFlash = lightningOccurs * max(firstFlash, secondFlash * 0.70);
     float chainDecay = lightningOccurs
             * (1.0 - smoothstep(0.04, 1.55, lightningAge));
+    if (max(lightningFlash, chainDecay) > 0.0) {
     float lightningY = mix(-0.10, 0.70, lightningRandom.y);
     float lightningAzimuth = lightningRandom.x * PI * 2.0;
     float lightningHorizontal = sqrt(max(1.0 - lightningY * lightningY, 0.0));
@@ -528,6 +536,7 @@ void main() {
             * 1.28
             * intensity
             * lightningIntensity;
+    }
 
     // A separate, faster event clock creates small flashes behind the far and
     // middle banks. These are dimmer, shorter, and only expose distant depth.
@@ -542,6 +551,7 @@ void main() {
     float distantSecond = smoothstep(0.18, 0.21, distantAge)
             * (1.0 - smoothstep(0.21, 0.38, distantAge));
     float distantFlash = distantOccurs * max(distantFirst, distantSecond * 0.48);
+    if (distantFlash > 0.0) {
     float distantY = mix(0.02, 0.76, distantRandom.y);
     float distantAzimuth = distantRandom.x * PI * 2.0 + 1.7;
     float distantHorizontal = sqrt(max(1.0 - distantY * distantY, 0.0));
@@ -573,6 +583,7 @@ void main() {
             * 0.26
             * intensity
             * lightningIntensity;
+    }
 
 
     float softPulse = 0.975 + 0.025 * sin(time * 0.07);

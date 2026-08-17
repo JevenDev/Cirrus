@@ -142,6 +142,7 @@ public final class CirrusConfig {
     public static final ModConfigSpec.DoubleValue AURORA_HEIGHT_DEGREES;
     public static final ModConfigSpec.DoubleValue AURORA_NIGHTLY_VARIATION;
     public static final ModConfigSpec.BooleanValue END_SKY_ENABLED;
+    public static final ModConfigSpec.EnumValue<EndSkyQuality> END_SKY_QUALITY;
     public static final ModConfigSpec.BooleanValue END_SKY_PIXELATION_ENABLED;
     public static final ModConfigSpec.IntValue END_SKY_PIXELATION_RESOLUTION;
     public static final ModConfigSpec.DoubleValue END_SKY_INTENSITY;
@@ -479,6 +480,9 @@ public final class CirrusConfig {
         END_SKY_ENABLED = builder
                 .comment("Replace the vanilla End sky with moving clouds, lightning, and spreading darkness.")
                 .define("endSkyEnabled", true);
+        END_SKY_QUALITY = builder
+                .comment("Procedural End sky detail. Lower quality reduces fragment-shader noise octaves.")
+                .defineEnum("endSkyQuality", EndSkyQuality.BALANCED);
         END_SKY_PIXELATION_ENABLED = builder
                 .comment("Sample the End sky through a sky-fixed pixel grid for a Minecraft-native finish.")
                 .define("endSkyPixelationEnabled", true);
@@ -532,6 +536,22 @@ public final class CirrusConfig {
     public enum CloudStyle {
         FAST,
         FANCY
+    }
+
+    public enum EndSkyQuality {
+        LOW(2),
+        BALANCED(3),
+        HIGH(4);
+
+        private final int noiseOctaves;
+
+        EndSkyQuality(int noiseOctaves) {
+            this.noiseOctaves = noiseOctaves;
+        }
+
+        public int noiseOctaves() {
+            return noiseOctaves;
+        }
     }
 
     private CirrusConfig() {

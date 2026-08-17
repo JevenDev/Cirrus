@@ -26,6 +26,9 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
         prepareDome();
         ShaderInstance shader = CirrusShaders.endSky();
         ToucanShaders.setUniform(shader, "CirrusEndTime", (ticks + partialTick) / 20.0F);
+        ToucanShaders.setUniform(
+                shader, "CirrusEndNoiseOctaves", (float)CirrusConfig.END_SKY_QUALITY.get().noiseOctaves()
+        );
         ToucanShaders.setUniform(shader, "CirrusEndIntensity", CirrusConfig.END_SKY_INTENSITY.get().floatValue());
         ToucanShaders.setUniform(
                 shader, "CirrusEndAnimationSpeed", CirrusConfig.END_SKY_ANIMATION_SPEED.get().floatValue()

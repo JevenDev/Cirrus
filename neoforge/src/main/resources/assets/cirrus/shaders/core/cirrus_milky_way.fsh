@@ -102,6 +102,25 @@ vec3 pixelateDirection(vec3 direction) {
 
 void main() {
     vec3 viewDirection = normalize(worldDirection);
+    if (CirrusMilkyWayIntensity < 0.001) {
+        float elevation = clamp(viewDirection.y, 0.0, 1.0);
+        vec3 skyGradientColor = mix(
+            CirrusSkyHorizonColor,
+            CirrusSkyZenithColor,
+            smoothstep(0.015, max(CirrusSkyGradientHeight, 0.02), elevation)
+        );
+        float horizonColorBoost = 1.0 - smoothstep(0.02, 0.32, elevation);
+        float skyDomeFade = smoothstep(-0.18, 0.02, viewDirection.y);
+        float skyGradientAlpha = CirrusSkyGradientIntensity
+                * mix(0.22, 0.38, horizonColorBoost)
+                * skyDomeFade;
+        if (skyGradientAlpha < 0.001) {
+            discard;
+        }
+        fragColor = vec4(skyGradientColor, skyGradientAlpha);
+        return;
+    }
+
     vec3 smoothCelestialDirection = rotateX(viewDirection, -CirrusMilkyWayRotation);
     vec3 celestialDirection = mix(
         smoothCelestialDirection,
