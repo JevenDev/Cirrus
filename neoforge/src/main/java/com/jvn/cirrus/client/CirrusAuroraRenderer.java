@@ -24,6 +24,8 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
     private static final float MIN_ELEVATION = (float)Math.toRadians(-6.0);
     private static final float MAX_ELEVATION = (float)Math.toRadians(90.0);
     private static final int BIOME_SAMPLE_RADIUS = 24;
+    private static final int BIOME_SAMPLE_INTERVAL_TICKS = 20;
+    private static final int BIOME_SAMPLE_MOVEMENT_THRESHOLD = 8;
     private static final int[][] BIOME_SAMPLE_OFFSETS = {
             {0, 0},
             {BIOME_SAMPLE_RADIUS, 0},
@@ -41,6 +43,12 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
     private ClientLevel blendLevel;
     private float coldBiomeBlend;
     private float previousFrameTime = Float.NaN;
+    private ClientLevel sampledBiomeLevel;
+    private long nextBiomeSampleTick = Long.MIN_VALUE;
+    private int sampledBiomeX;
+    private int sampledBiomeY;
+    private int sampledBiomeZ;
+    private float sampledColdStrength;
     private ClientLevel animationLevel;
     private float animationTime;
     private double previousAnimationGameTime = Double.NaN;
@@ -67,17 +75,20 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
         }
 
         float shaderTime = updateAnimationTime(level, partialTick);
-        float coldStrength = CirrusConfig.AURORA_COLD_BIOMES_ONLY.get()
-                ? updateColdBiomeBlend(level, partialTick, camera)
-                : 1.0F;
         float nightStrength = Mth.clamp(level.getStarBrightness(partialTick) * 2.0F, 0.0F, 1.0F);
         float rain = Mth.clamp(level.getRainLevel(partialTick), 0.0F, 1.0F);
         float thunder = Mth.clamp(level.getThunderLevel(partialTick), 0.0F, 1.0F);
         float weatherVisibility = (1.0F - rain * 0.82F) * (1.0F - thunder * 0.18F);
-        float intensity = coldStrength
-                * nightStrength
+        float visibleIntensity = nightStrength
                 * weatherVisibility
                 * CirrusConfig.AURORA_OPACITY.get().floatValue();
+        if (visibleIntensity < 0.002F) {
+            return;
+        }
+        float coldStrength = CirrusConfig.AURORA_COLD_BIOMES_ONLY.get()
+                ? updateColdBiomeBlend(level, partialTick, camera)
+                : 1.0F;
+        float intensity = coldStrength * visibleIntensity;
         if (intensity < 0.002F) {
             return;
         }
@@ -134,29 +145,49 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
     }
 
     private float updateColdBiomeBlend(ClientLevel level, float partialTick, Camera camera) {
-        BlockPos center = BlockPos.containing(camera.getPosition());
-        float target = sampledColdStrength(level, center);
+        int centerX = Mth.floor(camera.getPosition().x);
+        int centerY = Mth.floor(camera.getPosition().y);
+        int centerZ = Mth.floor(camera.getPosition().z);
+        long gameTime = level.getGameTime();
+        boolean movedOutsideSampleArea = Math.abs(centerX - sampledBiomeX) >= BIOME_SAMPLE_MOVEMENT_THRESHOLD
+                || Math.abs(centerY - sampledBiomeY) >= BIOME_SAMPLE_MOVEMENT_THRESHOLD
+                || Math.abs(centerZ - sampledBiomeZ) >= BIOME_SAMPLE_MOVEMENT_THRESHOLD;
+        if (sampledBiomeLevel != level || gameTime >= nextBiomeSampleTick || movedOutsideSampleArea) {
+            sampledBiomeLevel = level;
+            sampledBiomeX = centerX;
+            sampledBiomeY = centerY;
+            sampledBiomeZ = centerZ;
+            sampledColdStrength = sampledColdStrength(level, centerX, centerY, centerZ);
+            nextBiomeSampleTick = gameTime + BIOME_SAMPLE_INTERVAL_TICKS;
+        }
+
         float frameTime = level.getGameTime() + partialTick;
         if (blendLevel != level || Float.isNaN(previousFrameTime)) {
             blendLevel = level;
-            coldBiomeBlend = target;
+            coldBiomeBlend = sampledColdStrength;
             previousFrameTime = frameTime;
             return coldBiomeBlend;
         }
 
-        float elapsedTicks = Mth.clamp(frameTime - previousFrameTime, 0.0F, 5.0F);
+        float elapsedTicks = Math.max(frameTime - previousFrameTime, 0.0F);
         previousFrameTime = frameTime;
+        if (elapsedTicks > BIOME_SAMPLE_INTERVAL_TICKS) {
+            coldBiomeBlend = sampledColdStrength;
+            return coldBiomeBlend;
+        }
+        elapsedTicks = Math.min(elapsedTicks, 5.0F);
         float response = 1.0F - (float)Math.exp(-elapsedTicks / 20.0F);
-        coldBiomeBlend = Mth.lerp(response, coldBiomeBlend, target);
+        coldBiomeBlend = Mth.lerp(response, coldBiomeBlend, sampledColdStrength);
         return coldBiomeBlend;
     }
 
-    private static float sampledColdStrength(ClientLevel level, BlockPos center) {
+    private static float sampledColdStrength(ClientLevel level, int centerX, int centerY, int centerZ) {
         float total = 0.0F;
         int totalWeight = 0;
+        BlockPos.MutableBlockPos samplePos = new BlockPos.MutableBlockPos();
         for (int index = 0; index < BIOME_SAMPLE_OFFSETS.length; index++) {
             int[] offset = BIOME_SAMPLE_OFFSETS[index];
-            BlockPos samplePos = center.offset(offset[0], 0, offset[1]);
+            samplePos.set(centerX + offset[0], centerY, centerZ + offset[1]);
             Biome biome = level.getBiome(samplePos).value();
             float cold = Mth.clamp((0.15F - biome.getBaseTemperature()) / 0.15F, 0.0F, 1.0F);
             cold = ToucanEasing.smoothstep(cold);
@@ -277,6 +308,8 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
         blendLevel = null;
         coldBiomeBlend = 0.0F;
         previousFrameTime = Float.NaN;
+        sampledBiomeLevel = null;
+        nextBiomeSampleTick = Long.MIN_VALUE;
         animationLevel = null;
         animationTime = 0.0F;
         previousAnimationGameTime = Double.NaN;
