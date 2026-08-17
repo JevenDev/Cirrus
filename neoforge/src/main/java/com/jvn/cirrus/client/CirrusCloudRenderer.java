@@ -42,7 +42,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private static final int UPPER_PATTERN_OFFSET_Z = 91;
     private static final int TOP_PATTERN_OFFSET_X = 113;
     private static final int TOP_PATTERN_OFFSET_Z = 173;
-    private static final int LIGHTNING_TARGET_CACHE_TICKS = 4;
     private static final LayerDefinition LOWER_LAYER = new LayerDefinition(LayerKind.LOWER, 0, 0);
     private static final LayerDefinition UPPER_LAYER = new LayerDefinition(
             LayerKind.UPPER,
@@ -58,9 +57,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private final LayerMesh lowerMesh = new LayerMesh();
     private final LayerMesh upperMesh = new LayerMesh();
     private final LayerMesh topMesh = new LayerMesh();
-    private ClientLevel cachedLightningLevel;
-    private LightningBolt cachedNearestLightning;
-    private int nextLightningTargetScanTick = Integer.MIN_VALUE;
 
     public void renderCelestialMask(
             ClientLevel level,
@@ -531,7 +527,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             return new LightningState(0.0F, new Vector3f(), viewUp, radius);
         }
 
-        LightningBolt nearestLightning = nearestLightning(level, ticks, cameraX, cameraZ);
+        LightningBolt nearestLightning = CirrusLightningLocator.nearestHorizontal(
+                level, cameraX, cameraZ
+        );
         if (nearestLightning == null) {
             return new LightningState(0.0F, new Vector3f(), viewUp, radius);
         }
@@ -544,34 +542,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         );
         frustumMatrix.transformPosition(viewPosition);
         return new LightningState(intensity, viewPosition, viewUp, radius);
-    }
-
-    /**
-     * Entity iteration is relatively expensive and cloud rendering runs every frame. Re-evaluate
-     * the closest bolt only every few game ticks, while using its latest position each frame.
-     */
-    private LightningBolt nearestLightning(ClientLevel level, int ticks, double cameraX, double cameraZ) {
-        if (cachedLightningLevel != level || ticks >= nextLightningTargetScanTick
-                || (cachedNearestLightning == null && level.getSkyFlashTime() > 0)
-                || (cachedNearestLightning != null && cachedNearestLightning.isRemoved())) {
-            cachedLightningLevel = level;
-            cachedNearestLightning = null;
-            double nearestDistanceSquared = Double.POSITIVE_INFINITY;
-            for (Entity entity : level.entitiesForRendering()) {
-                if (!(entity instanceof LightningBolt lightningBolt)) {
-                    continue;
-                }
-                double offsetX = lightningBolt.getX() - cameraX;
-                double offsetZ = lightningBolt.getZ() - cameraZ;
-                double distanceSquared = offsetX * offsetX + offsetZ * offsetZ;
-                if (distanceSquared < nearestDistanceSquared) {
-                    cachedNearestLightning = lightningBolt;
-                    nearestDistanceSquared = distanceSquared;
-                }
-            }
-            nextLightningTargetScanTick = ticks + LIGHTNING_TARGET_CACHE_TICKS;
-        }
-        return cachedNearestLightning;
     }
 
     private static void setCloudEnvironment(
@@ -802,9 +772,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         lowerMesh.invalidate();
         upperMesh.invalidate();
         topMesh.invalidate();
-        cachedLightningLevel = null;
-        cachedNearestLightning = null;
-        nextLightningTargetScanTick = Integer.MIN_VALUE;
     }
 
     @Override

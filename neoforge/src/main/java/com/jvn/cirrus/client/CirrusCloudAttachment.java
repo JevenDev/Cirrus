@@ -13,7 +13,9 @@ import net.minecraft.world.phys.Vec3;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public final class CirrusCloudAttachment {
@@ -27,11 +29,22 @@ public final class CirrusCloudAttachment {
     private static CloudPattern cloudPattern;
     private static boolean patternLoadAttempted;
     private static int cloudRenderTicks;
+    private static final Map<LightningBolt, Vec3> ATTACHMENT_CACHE = new IdentityHashMap<>();
 
     private CirrusCloudAttachment() {
     }
 
     public static Vec3 findVisualOrigin(LightningBolt lightning, float partialTick) {
+        Vec3 cached = ATTACHMENT_CACHE.get(lightning);
+        if (cached != null) {
+            return cached;
+        }
+        Vec3 attachment = findVisualOriginUncached(lightning, partialTick);
+        ATTACHMENT_CACHE.put(lightning, attachment);
+        return attachment;
+    }
+
+    private static Vec3 findVisualOriginUncached(LightningBolt lightning, float partialTick) {
         Minecraft minecraft = Minecraft.getInstance();
         if (!(lightning.level() instanceof ClientLevel level)
                 || !CirrusCloudMode.isActive(minecraft.options.getCloudsType())) {
@@ -152,12 +165,16 @@ public final class CirrusCloudAttachment {
     }
 
     public static void updateRenderTicks(int ticks) {
+        if (cloudRenderTicks != ticks) {
+            ATTACHMENT_CACHE.clear();
+        }
         cloudRenderTicks = ticks;
     }
 
     public static void invalidate() {
         cloudPattern = null;
         patternLoadAttempted = false;
+        ATTACHMENT_CACHE.clear();
     }
 
     private record Layer(double height, double speed, int patternOffsetX, int patternOffsetZ) {

@@ -6,6 +6,7 @@ import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusCloudAttachment;
 import com.jvn.cirrus.client.CirrusEndSkyRenderer;
 import com.jvn.cirrus.client.CirrusMilkyWayRenderer;
+import com.jvn.cirrus.client.CirrusLightningLocator;
 import com.jvn.cirrus.client.CirrusLightningSkyRenderer;
 import com.jvn.cirrus.client.CirrusPrecipitationCeiling;
 import com.jvn.cirrus.client.CirrusShaders;
@@ -232,6 +233,7 @@ public abstract class LevelRendererCloudMixin {
     private void cirrus$releaseCloudsOnWorldChange(ClientLevel newLevel, CallbackInfo ci) {
         cirrus$cloudRenderer.invalidate();
         cirrus$auroraRenderer.invalidate();
+        CirrusLightningLocator.invalidate();
     }
 
     @Inject(method = "onResourceManagerReload", at = @At("HEAD"))
@@ -248,5 +250,6 @@ public abstract class LevelRendererCloudMixin {
         cirrus$lightningSkyRenderer.close();
         cirrus$endSkyRenderer.close();
         CirrusCloudAttachment.invalidate();
+        CirrusLightningLocator.invalidate();
     }
 }

@@ -18,11 +18,14 @@ import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 public final class CirrusLightningRenderer {
     private static final int TRUNK_STEPS = 24;
     private static final Vec3 WORLD_UP = new Vec3(0.0, 1.0, 0.0);
     private static final Vec3 WORLD_EAST = new Vec3(1.0, 0.0, 0.0);
+    private static final Map<LightningBolt, CachedGeometry> GEOMETRY_CACHE = new WeakHashMap<>();
     private static final RenderType GLOW_RENDER_TYPE = RenderType.create(
             "cirrus_lightning_glow",
             DefaultVertexFormat.POSITION_COLOR,
@@ -65,11 +68,17 @@ public final class CirrusLightningRenderer {
             PoseStack poseStack,
             MultiBufferSource buffers
     ) {
-        RandomSource random = RandomSource.create(lightning.seed);
-        List<Segment> segments = new ArrayList<>(128);
         Vec3 visualOrigin = CirrusCloudAttachment.findVisualOrigin(lightning, partialTick);
-        Vec3[] trunk = buildTrunk(random, segments, visualOrigin);
-        buildBranches(random, trunk, segments);
+        CachedGeometry geometry = GEOMETRY_CACHE.get(lightning);
+        if (geometry == null || !geometry.visualOrigin().equals(visualOrigin)) {
+            RandomSource random = RandomSource.create(lightning.seed);
+            List<Segment> builtSegments = new ArrayList<>(128);
+            Vec3[] trunk = buildTrunk(random, builtSegments, visualOrigin);
+            buildBranches(random, trunk, builtSegments);
+            geometry = new CachedGeometry(visualOrigin, List.copyOf(builtSegments));
+            GEOMETRY_CACHE.put(lightning, geometry);
+        }
+        List<Segment> segments = geometry.segments();
 
         float configuredIntensity = CirrusConfig.LIGHTNING_BOLT_INTENSITY.get().floatValue();
         float age = lightning.tickCount + partialTick;
@@ -376,5 +385,7 @@ public final class CirrusLightningRenderer {
     ) {
     }
 
+    private record CachedGeometry(Vec3 visualOrigin, List<Segment> segments) {
+    }
 
 }

@@ -11,7 +11,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -41,7 +40,7 @@ public final class CirrusLightningSkyRenderer implements AutoCloseable {
             return;
         }
 
-        LightningBolt lightning = nearestLightning(level, camera.getPosition());
+        LightningBolt lightning = CirrusLightningLocator.nearest(level, camera.getPosition());
         if (lightning == null) {
             return;
         }
@@ -84,22 +83,6 @@ public final class CirrusLightningSkyRenderer implements AutoCloseable {
             );
             RenderSystem.defaultBlendFunc();
         }
-    }
-
-    private static LightningBolt nearestLightning(ClientLevel level, Vec3 cameraPosition) {
-        LightningBolt nearest = null;
-        double nearestDistanceSquared = Double.POSITIVE_INFINITY;
-        for (Entity entity : level.entitiesForRendering()) {
-            if (!(entity instanceof LightningBolt lightning)) {
-                continue;
-            }
-            double distanceSquared = lightning.distanceToSqr(cameraPosition);
-            if (distanceSquared < nearestDistanceSquared) {
-                nearest = lightning;
-                nearestDistanceSquared = distanceSquared;
-            }
-        }
-        return nearest;
     }
 
     private void prepareDome() {
