@@ -5,46 +5,65 @@ import com.seibel.distanthorizons.api.interfaces.config.IDhApiConfig;
 import com.seibel.distanthorizons.api.interfaces.config.IDhApiConfigValue;
 
 final class DistantHorizonsApiCompat {
+    private static IDhApiConfig configs;
     private static IDhApiConfigValue<Boolean> cloudRendering;
+    private static IDhApiConfigValue<Integer> chunkRenderDistance;
+    private static Boolean lastCloudOverrideRequest;
     private static boolean overrideApplied;
 
     private DistantHorizonsApiCompat() {
     }
 
-    static void updateCloudOverride(boolean disableDistantClouds) {
-        IDhApiConfig configs = DhApi.Delayed.configs;
-        if (configs == null) {
+    static int beginFrame(
+            boolean disableDistantClouds,
+            boolean syncCloudDistance,
+            int fallbackDistance
+    ) {
+        refreshConfigHandles();
+        updateCloudOverride(disableDistantClouds);
+        if (!syncCloudDistance || chunkRenderDistance == null) {
+            return fallbackDistance;
+        }
+
+        Integer distance = chunkRenderDistance.getValue();
+        return distance != null && distance > 0 ? distance : fallbackDistance;
+    }
+
+    private static void refreshConfigHandles() {
+        IDhApiConfig currentConfigs = DhApi.Delayed.configs;
+        if (currentConfigs == configs) {
             return;
         }
 
-        IDhApiConfigValue<Boolean> currentCloudRendering =
-                configs.graphics().genericRendering().cloudRenderingEnabled();
-        if (currentCloudRendering != cloudRendering) {
-            cloudRendering = currentCloudRendering;
-            overrideApplied = false;
-        }
-
-        if (disableDistantClouds) {
-            if (!Boolean.FALSE.equals(cloudRendering.getApiValue())) {
-                overrideApplied = cloudRendering.setValue(false);
-            }
-        } else if (overrideApplied) {
+        if (overrideApplied && cloudRendering != null) {
             cloudRendering.clearValue();
-            overrideApplied = false;
+        }
+        configs = currentConfigs;
+        cloudRendering = null;
+        chunkRenderDistance = null;
+        lastCloudOverrideRequest = null;
+        overrideApplied = false;
+
+        if (configs != null) {
+            cloudRendering = configs.graphics().genericRendering().cloudRenderingEnabled();
+            chunkRenderDistance = configs.graphics().chunkRenderDistance();
         }
     }
 
-    static int cloudRenderDistanceChunks(int fallbackDistance) {
-        IDhApiConfig configs = DhApi.Delayed.configs;
-        if (configs == null) {
-            return fallbackDistance;
+    private static void updateCloudOverride(boolean disableDistantClouds) {
+        if (cloudRendering == null
+                || Boolean.valueOf(disableDistantClouds).equals(lastCloudOverrideRequest)) {
+            return;
         }
 
-        Integer distance = configs.graphics().chunkRenderDistance().getValue();
-        if (distance == null || distance <= 0) {
-            return fallbackDistance;
+        if (overrideApplied) {
+            cloudRendering.clearValue();
+            overrideApplied = false;
         }
 
-        return distance;
+        if (disableDistantClouds && !Boolean.FALSE.equals(cloudRendering.getApiValue())) {
+            overrideApplied = cloudRendering.setValue(false);
+        }
+        lastCloudOverrideRequest = disableDistantClouds;
     }
 }

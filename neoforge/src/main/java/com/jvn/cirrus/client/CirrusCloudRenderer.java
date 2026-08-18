@@ -33,6 +33,7 @@ import org.joml.Vector3f;
 public final class CirrusCloudRenderer implements AutoCloseable {
     private static final float WORLD_SCALE = 12.0F;
     private static final int TILE_SIZE = 8;
+    private static final int DISTANT_RING_SEGMENTS = 256;
     private static final float FANCY_CLOUD_THICKNESS = 4.0F;
     private static final float SURFACE_EPSILON = 9.765625E-4F;
     private static final float UV_SCALE = 1.0F / 256.0F;
@@ -598,8 +599,12 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
         );
         float radius = distanceChunks * 16.0F / WORLD_SCALE;
-        int tileRadius = Mth.ceil(radius / TILE_SIZE) + 1;
-        float inclusionRadius = radius + TILE_SIZE * 0.7072F;
+        float detailedRadius = Math.min(
+                radius,
+                CirrusConfig.CLOUD_RENDER_DISTANCE_SETTING.maximum() * 16.0F / WORLD_SCALE
+        );
+        int tileRadius = Mth.ceil(detailedRadius / TILE_SIZE) + 1;
+        float inclusionRadius = detailedRadius + TILE_SIZE * 0.7072F;
         float inclusionRadiusSquared = inclusionRadius * inclusionRadius;
 
         for (int tileX = -tileRadius; tileX <= tileRadius; tileX++) {
@@ -618,7 +623,50 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 }
             }
         }
+        if (radius > detailedRadius) {
+            addDistantCloudRing(builder, detailedRadius, radius, style, anchorX, anchorZ);
+        }
         return builder.buildOrThrow();
+    }
+
+    private static void addDistantCloudRing(
+            BufferBuilder builder,
+            float innerRadius,
+            float outerRadius,
+            CirrusConfig.CloudStyle style,
+            int anchorX,
+            int anchorZ
+    ) {
+        float surfaceHeight = style == CirrusConfig.CloudStyle.FANCY
+                ? FANCY_CLOUD_THICKNESS - SURFACE_EPSILON * 2.0F
+                : -SURFACE_EPSILON;
+        float innerX0 = innerRadius;
+        float innerZ0 = 0.0F;
+        float outerX0 = outerRadius;
+        float outerZ0 = 0.0F;
+        for (int segment = 1; segment <= DISTANT_RING_SEGMENTS; segment++) {
+            float angle = (float)(Math.PI * 2.0 * segment / DISTANT_RING_SEGMENTS);
+            float cosine = Mth.cos(angle);
+            float sine = Mth.sin(angle);
+            float innerX1 = cosine * innerRadius;
+            float innerZ1 = sine * innerRadius;
+            float outerX1 = cosine * outerRadius;
+            float outerZ1 = sine * outerRadius;
+
+            vertex(builder, innerX0, surfaceHeight, innerZ0,
+                    innerX0, innerZ0, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);
+            vertex(builder, innerX1, surfaceHeight, innerZ1,
+                    innerX1, innerZ1, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);
+            vertex(builder, outerX1, surfaceHeight, outerZ1,
+                    outerX1, outerZ1, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);
+            vertex(builder, outerX0, surfaceHeight, outerZ0,
+                    outerX0, outerZ0, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);
+
+            innerX0 = innerX1;
+            innerZ0 = innerZ1;
+            outerX0 = outerX1;
+            outerZ0 = outerZ1;
+        }
     }
 
     private static void addFastTile(

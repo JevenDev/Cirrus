@@ -3,6 +3,7 @@ package com.jvn.cirrus.mixin;
 import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.CirrusTimeTransition;
+import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -17,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class GameRendererMixin {
     @Inject(method = "renderLevel", at = @At("HEAD"))
     private void cirrus$beginTimeTransitionFrame(DeltaTracker deltaTracker, CallbackInfo ci) {
+        DistantHorizonsCompat.beginFrame();
         ClientLevel level = Minecraft.getInstance().level;
         if (level != null) {
             CirrusTimeTransition.beginFrame(level);

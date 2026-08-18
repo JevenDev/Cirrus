@@ -9,7 +9,6 @@ import com.jvn.cirrus.client.CirrusMilkyWayRenderer;
 import com.jvn.cirrus.client.CirrusLightningLocator;
 import com.jvn.cirrus.client.CirrusLightningSkyRenderer;
 import com.jvn.cirrus.client.CirrusPrecipitationCeiling;
-import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.client.CirrusShaders;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -61,7 +60,6 @@ public abstract class LevelRendererCloudMixin {
             CallbackInfo ci
     ) {
         CirrusCloudAttachment.updateRenderTicks(ticks);
-        DistantHorizonsCompat.updateCloudOverride();
         CloudStatus mode = Minecraft.getInstance().options.getCloudsType();
         if (mode != cirrus$lastCloudMode) {
             if (!CirrusCloudMode.isActive(mode)) {

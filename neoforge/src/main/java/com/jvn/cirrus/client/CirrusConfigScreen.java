@@ -13,6 +13,7 @@ import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import java.awt.Color;
 import java.util.Locale;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -45,7 +46,8 @@ public final class CirrusConfigScreen {
                         ))
                         .option(booleanOption(
                                 "cirrus.config.clouds.syncCloudDistanceWithDistantHorizons",
-                                CirrusConfig.SYNC_CLOUD_DISTANCE_WITH_DISTANT_HORIZONS
+                                CirrusConfig.SYNC_CLOUD_DISTANCE_WITH_DISTANT_HORIZONS,
+                                warningDescription("cirrus.config.clouds.syncCloudDistanceWithDistantHorizons")
                         ))
                         .option(integerOption(
                                 "cirrus.config.clouds.renderDistanceChunks",
@@ -524,9 +526,17 @@ public final class CirrusConfigScreen {
     }
 
     private static Option<Boolean> booleanOption(String key, ModConfigSpec.BooleanValue value) {
+        return booleanOption(key, value, description(key));
+    }
+
+    private static Option<Boolean> booleanOption(
+            String key,
+            ModConfigSpec.BooleanValue value,
+            OptionDescription optionDescription
+    ) {
         return Option.<Boolean>createBuilder()
                 .name(text(key))
-                .description(description(key))
+                .description(optionDescription)
                 .binding(value.getDefault(), value::get, value::set)
                 .controller(TickBoxControllerBuilder::create)
                 .build();
@@ -610,6 +620,13 @@ public final class CirrusConfigScreen {
 
     private static OptionDescription description(String key) {
         return OptionDescription.of(text(key + ".description"));
+    }
+
+    private static OptionDescription warningDescription(String key) {
+        return OptionDescription.createBuilder()
+                .text(text(key + ".description"))
+                .text(text(key + ".warning").copy().withStyle(ChatFormatting.RED))
+                .build();
     }
 
     private static Component text(String key) {
