@@ -9,6 +9,7 @@ import com.jvn.cirrus.client.CirrusMilkyWayRenderer;
 import com.jvn.cirrus.client.CirrusLightningLocator;
 import com.jvn.cirrus.client.CirrusLightningSkyRenderer;
 import com.jvn.cirrus.client.CirrusPrecipitationCeiling;
+import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.client.CirrusShaders;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -17,6 +18,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -30,6 +32,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LevelRenderer.class)
@@ -58,6 +61,7 @@ public abstract class LevelRendererCloudMixin {
             CallbackInfo ci
     ) {
         CirrusCloudAttachment.updateRenderTicks(ticks);
+        DistantHorizonsCompat.updateCloudOverride();
         CloudStatus mode = Minecraft.getInstance().options.getCloudsType();
         if (mode != cirrus$lastCloudMode) {
             if (!CirrusCloudMode.isActive(mode)) {
@@ -65,6 +69,18 @@ public abstract class LevelRendererCloudMixin {
             }
             cirrus$lastCloudMode = mode;
         }
+    }
+
+    @Redirect(
+            method = "renderLevel",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/Options;getCloudsType()Lnet/minecraft/client/CloudStatus;"
+            )
+    )
+    private CloudStatus cirrus$keepCloudPassEnabled(Options options) {
+        CloudStatus cloudStatus = options.getCloudsType();
+        return CirrusCloudMode.isActive(cloudStatus) ? CloudStatus.FAST : cloudStatus;
     }
 
     @Inject(method = "renderClouds", at = @At("HEAD"), cancellable = true)

@@ -1,5 +1,6 @@
 package com.jvn.cirrus.client;
 
+import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.toucanlib.client.ToucanEasing;
 import com.jvn.toucanlib.neoforge.client.ToucanShaders;
@@ -73,7 +74,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             return;
         }
 
-        int distanceChunks = CirrusConfig.CLOUD_RENDER_DISTANCE.get();
+        int distanceChunks = DistantHorizonsCompat.cloudRenderDistanceChunks();
         double cameraSampleX = cameraX / WORLD_SCALE;
         double cameraSampleZ = cameraZ / WORLD_SCALE;
         double windSample = (ticks + partialTick) * 0.03 / WORLD_SCALE;
@@ -174,7 +175,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             return;
         }
 
-        int distanceChunks = CirrusConfig.CLOUD_RENDER_DISTANCE.get();
+        int distanceChunks = DistantHorizonsCompat.cloudRenderDistanceChunks();
         double cameraSampleX = cameraX / WORLD_SCALE;
         double cameraSampleZ = cameraZ / WORLD_SCALE;
         double cloudTime = ticks + partialTick;

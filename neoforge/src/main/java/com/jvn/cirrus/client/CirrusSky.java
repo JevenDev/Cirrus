@@ -1,5 +1,6 @@
 package com.jvn.cirrus.client;
 
+import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.config.CirrusConfig;
 
 public final class CirrusSky {
@@ -13,7 +14,7 @@ public final class CirrusSky {
             return 0.0F;
         }
 
-        float cloudDistance = CirrusConfig.CLOUD_RENDER_DISTANCE.get() * 16.0F;
+        float cloudDistance = DistantHorizonsCompat.cloudRenderDistanceChunks() * 16.0F;
         float lowerOffset = Math.abs(CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get().floatValue());
         boolean topEnabled = CirrusConfig.TOP_LAYER_ENABLED.get();
         float upperOffset = CirrusConfig.UPPER_LAYER_ENABLED.get() || topEnabled

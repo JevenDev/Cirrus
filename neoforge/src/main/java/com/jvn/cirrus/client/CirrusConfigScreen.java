@@ -39,6 +39,14 @@ public final class CirrusConfigScreen {
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.cloudGeneral"))
                         .option(booleanOption("cirrus.config.clouds.enabled", CirrusConfig.CUSTOM_CLOUDS_ENABLED))
+                        .option(booleanOption(
+                                "cirrus.config.clouds.distantHorizonsCompatibility",
+                                CirrusConfig.DISTANT_HORIZONS_COMPATIBILITY
+                        ))
+                        .option(booleanOption(
+                                "cirrus.config.clouds.syncCloudDistanceWithDistantHorizons",
+                                CirrusConfig.SYNC_CLOUD_DISTANCE_WITH_DISTANT_HORIZONS
+                        ))
                         .option(integerOption(
                                 "cirrus.config.clouds.renderDistanceChunks",
                                 CirrusConfig.CLOUD_RENDER_DISTANCE,

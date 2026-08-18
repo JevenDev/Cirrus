@@ -9,6 +9,7 @@ dependencies {
     neoForge "net.neoforged:neoforge:${rootProject.neo_version}"
     modImplementation "dev.isxander:yet-another-config-lib:${rootProject.yacl_version}"
     modApi "dev.architectury:architectury-neoforge:${rootProject.architectury_version}"
+    compileOnly "maven.modrinth:DistantHorizonsApi:${rootProject.distant_horizons_api_version}"
     if (rootProject.useLocalToucanLib.toBoolean()) {
         modImplementation "com.jvn.toucanlib:toucanlib-neoforge-${rootProject.minecraft_version}:${rootProject.toucanlib_version}"
     } else {

@@ -47,6 +47,13 @@ ordering="AFTER"
 side="CLIENT"
 
 [[dependencies."${mod_id}"]]
+modId="distanthorizons"
+type="optional"
+versionRange="[2.3.0,)"
+ordering="AFTER"
+side="CLIENT"
+
+[[dependencies."${mod_id}"]]
 modId="where_winds_blow"
 type="optional"
 versionRange="[1.0.0,)"

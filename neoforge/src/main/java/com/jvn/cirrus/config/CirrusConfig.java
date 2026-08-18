@@ -67,6 +67,8 @@ public final class CirrusConfig {
     public static final DoubleSetting END_SKY_SURGE_STRENGTH_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
 
     public static final ModConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
+    public static final ModConfigSpec.BooleanValue DISTANT_HORIZONS_COMPATIBILITY;
+    public static final ModConfigSpec.BooleanValue SYNC_CLOUD_DISTANCE_WITH_DISTANT_HORIZONS;
     public static final ModConfigSpec.IntValue CLOUD_RENDER_DISTANCE;
     public static final ModConfigSpec.DoubleValue RAIN_CLOUD_COVERAGE;
     public static final ModConfigSpec.DoubleValue THUNDER_CLOUD_COVERAGE;
@@ -160,8 +162,16 @@ public final class CirrusConfig {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
         builder.comment("Cloud rendering").push("clouds");
         CUSTOM_CLOUDS_ENABLED = builder
-                .comment("Replace vanilla clouds with Cirrus clouds. The vanilla Clouds: Off setting still hides clouds.")
+                .comment("Replace vanilla clouds with Cirrus clouds.")
                 .define("enabled", true);
+        DISTANT_HORIZONS_COMPATIBILITY = builder
+                .comment("When Distant Horizons is installed, disable its overlapping LOD clouds and keep Cirrus"
+                        + " clouds visible when DH turns Minecraft clouds off.")
+                .define("distantHorizonsCompatibility", true);
+        SYNC_CLOUD_DISTANCE_WITH_DISTANT_HORIZONS = builder
+                .comment("Use Distant Horizons' LOD render distance for Cirrus clouds while compatibility is enabled."
+                        + " Very large distances can increase cloud mesh memory and rebuild time.")
+                .define("syncCloudDistanceWithDistantHorizons", false);
         CLOUD_RENDER_DISTANCE = CLOUD_RENDER_DISTANCE_SETTING.define(
                 builder,
                 "renderDistanceChunks",
