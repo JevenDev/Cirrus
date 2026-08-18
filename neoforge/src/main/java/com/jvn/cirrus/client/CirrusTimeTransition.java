@@ -29,6 +29,7 @@ public final class CirrusTimeTransition {
     private static double transitionProgress = 1.0;
     private static boolean transitionActive;
     private static boolean rendering;
+    private static boolean awaitingInitialTime;
 
     private CirrusTimeTransition() {
     }
@@ -62,6 +63,25 @@ public final class CirrusTimeTransition {
 
     public static void endFrame() {
         rendering = false;
+    }
+
+    /**
+     * Marks the time sync following a login or respawn as a new visual baseline.
+     */
+    public static void beginLevelLoad() {
+        trackedLevel = null;
+        transitionActive = false;
+        rendering = false;
+        awaitingInitialTime = true;
+    }
+
+    public static void acceptInitialTime(ClientLevel level) {
+        if (!awaitingInitialTime) {
+            return;
+        }
+
+        awaitingInitialTime = false;
+        reset(level, level.getLevelData().getDayTime(), level.getGameTime());
     }
 
     public static boolean isRenderingWith(ClientLevel.ClientLevelData levelData) {
