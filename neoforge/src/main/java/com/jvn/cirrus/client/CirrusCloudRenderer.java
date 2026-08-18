@@ -60,7 +60,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private final LayerMesh upperMesh = new LayerMesh();
     private final LayerMesh topMesh = new LayerMesh();
 
-    public void renderCelestialMask(
+    public void renderSunMask(
             ClientLevel level,
             Matrix4f frustumMatrix,
             Matrix4f projectionMatrix,
@@ -96,6 +96,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         RenderSystem.depthMask(true);
         RenderSystem.colorMask(false, false, false, false);
         RenderSystem.disableBlend();
+        RenderSystem.disableCull();
         RenderSystem.setShaderTexture(0, CLOUDS_LOCATION);
         try {
             drawMaskLayer(lowerMesh, LOWER_LAYER, frustumMatrix, projectionMatrix,
@@ -120,6 +121,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             RenderSystem.colorMask(true, true, true, true);
             RenderSystem.depthMask(false);
             RenderSystem.enableBlend();
+            RenderSystem.enableCull();
         }
     }
 
@@ -229,6 +231,21 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         float distanceBlocks = distanceChunks * 16.0F;
         float fadeLength = Math.max(32.0F, distanceBlocks * 0.15F);
         Vec3 cloudColor = level.getCloudColor(partialTick);
+        double lowerHeight = cloudHeight
+                + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
+                - cameraY
+                + 0.33;
+        double upperHeight = lowerHeight + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get();
+        double topHeight = upperHeight + CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get();
+        boolean translucentLayerOverlap = CirrusConfig.TRANSLUCENT_LAYER_OVERLAP.get();
+        double lowerDistance = translucentLayerOverlap ? Math.abs(lowerHeight) : 3.0;
+        double upperDistance = upperEnabled
+                ? (translucentLayerOverlap ? Math.abs(upperHeight) : 2.0)
+                : -1.0;
+        double topDistance = topEnabled
+                ? (translucentLayerOverlap ? Math.abs(topHeight) : 1.0)
+                : -1.0;
+        int enabledLayerCount = 1 + (upperEnabled ? 1 : 0) + (topEnabled ? 1 : 0);
         boolean preserveVanillaFog = hasVisibilityLimitingFog(level, cameraX, cameraZ);
 
         try {
@@ -240,63 +257,33 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             }
             RenderSystem.setShaderColor((float)cloudColor.x, (float)cloudColor.y, (float)cloudColor.z, 1.0F);
 
-            drawLayer(
-                    lowerMesh,
-                    LOWER_LAYER,
-                    poseStack,
-                    frustumMatrix,
-                    projectionMatrix,
-                    cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
-                    cameraSampleX,
-                    cameraSampleZ,
-                    windSample,
-                    cloudColor,
-                    celestialAngle,
-                    sunWeight,
-                    celestialViewDirection,
-                    rainLevel,
-                    thunderLevel,
-                    lightning
-            );
-            if (upperEnabled) {
-                double upperHeight = cloudHeight
-                        + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
-                        + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
-                        - cameraY
-                        + 0.33;
+            for (int layerIndex = 0; layerIndex < enabledLayerCount; layerIndex++) {
+                LayerMesh mesh;
+                LayerDefinition definition;
+                double relativeHeight;
+                if (lowerDistance >= upperDistance && lowerDistance >= topDistance) {
+                    mesh = lowerMesh;
+                    definition = LOWER_LAYER;
+                    relativeHeight = lowerHeight;
+                    lowerDistance = -1.0;
+                } else if (upperDistance >= topDistance) {
+                    mesh = upperMesh;
+                    definition = UPPER_LAYER;
+                    relativeHeight = upperHeight;
+                    upperDistance = -1.0;
+                } else {
+                    mesh = topMesh;
+                    definition = TOP_LAYER;
+                    relativeHeight = topHeight;
+                    topDistance = -1.0;
+                }
                 drawLayer(
-                        upperMesh,
-                        UPPER_LAYER,
+                        mesh,
+                        definition,
                         poseStack,
                         frustumMatrix,
                         projectionMatrix,
-                        upperHeight,
-                        cameraSampleX,
-                        cameraSampleZ,
-                        windSample,
-                        cloudColor,
-                        celestialAngle,
-                        sunWeight,
-                        celestialViewDirection,
-                        rainLevel,
-                        thunderLevel,
-                        lightning
-                );
-            }
-            if (topEnabled) {
-                double topHeight = cloudHeight
-                        + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
-                        + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
-                        + CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get()
-                        - cameraY
-                        + 0.33;
-                drawLayer(
-                        topMesh,
-                        TOP_LAYER,
-                        poseStack,
-                        frustumMatrix,
-                        projectionMatrix,
-                        topHeight,
+                        relativeHeight,
                         cameraSampleX,
                         cameraSampleZ,
                         windSample,
@@ -561,7 +548,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             return;
         }
         lightDirection.set(-Mth.sin(celestialAngle), 0.0F);
-        ToucanShaders.setUniform(shader, "CirrusLightColor", 1.0F, 0.82F, 0.55F);
         ToucanShaders.setUniform(shader, "CirrusSunWeight", sunWeight);
         ToucanShaders.setUniform(
                 shader, "CirrusLightViewDirection",
@@ -697,10 +683,10 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         float z1 = z + TILE_SIZE;
         float top = FANCY_CLOUD_THICKNESS - SURFACE_EPSILON;
 
-        vertex(builder, x, 0.0F, z1, x, z1, anchorX, anchorZ, 0.70F, 0.0F, -1.0F, 0.0F);
-        vertex(builder, x1, 0.0F, z1, x1, z1, anchorX, anchorZ, 0.70F, 0.0F, -1.0F, 0.0F);
-        vertex(builder, x1, 0.0F, z, x1, z, anchorX, anchorZ, 0.70F, 0.0F, -1.0F, 0.0F);
-        vertex(builder, x, 0.0F, z, x, z, anchorX, anchorZ, 0.70F, 0.0F, -1.0F, 0.0F);
+        vertex(builder, x, 0.0F, z1, x, z1, anchorX, anchorZ, 1.0F, 0.0F, -1.0F, 0.0F);
+        vertex(builder, x1, 0.0F, z1, x1, z1, anchorX, anchorZ, 1.0F, 0.0F, -1.0F, 0.0F);
+        vertex(builder, x1, 0.0F, z, x1, z, anchorX, anchorZ, 1.0F, 0.0F, -1.0F, 0.0F);
+        vertex(builder, x, 0.0F, z, x, z, anchorX, anchorZ, 1.0F, 0.0F, -1.0F, 0.0F);
 
         vertex(builder, x, top, z1, x, z1, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);
         vertex(builder, x1, top, z1, x1, z1, anchorX, anchorZ, 1.0F, 0.0F, 1.0F, 0.0F);

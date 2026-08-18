@@ -166,6 +166,8 @@
   "cirrus.config.clouds.syncCloudDistanceWithDistantHorizons.warning": "Warning: Very large distances can increase cloud rendering cost, especially with Fancy clouds.",
   "cirrus.config.clouds.renderDistanceChunks": "Cloud Render Distance (chunks)",
   "cirrus.config.clouds.renderDistanceChunks.description": "Cloud distance in chunks, independent of terrain render distance.",
+  "cirrus.config.clouds.translucentLayerOverlap": "See Through Cloud Layers",
+  "cirrus.config.clouds.translucentLayerOverlap.description": "Lets farther cloud layers remain visible through nearer translucent clouds. Disabled preserves the denser depth-occluded look.",
   "cirrus.config.clouds.rainCloudCoverage": "Rain Cloud Density",
   "cirrus.config.clouds.rainCloudCoverage.description": "Blends an additional cloud pattern into every enabled layer as rain strengthens. Zero disables the extra rain coverage.",
   "cirrus.config.clouds.thunderCloudCoverage": "Thunderstorm Cloud Density",

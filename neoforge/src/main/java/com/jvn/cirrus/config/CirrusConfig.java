@@ -69,6 +69,7 @@ public final class CirrusConfig {
     public static final ModConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
     public static final ModConfigSpec.BooleanValue DISTANT_HORIZONS_COMPATIBILITY;
     public static final ModConfigSpec.BooleanValue SYNC_CLOUD_DISTANCE_WITH_DISTANT_HORIZONS;
+    public static final ModConfigSpec.BooleanValue TRANSLUCENT_LAYER_OVERLAP;
     public static final ModConfigSpec.IntValue CLOUD_RENDER_DISTANCE;
     public static final ModConfigSpec.DoubleValue RAIN_CLOUD_COVERAGE;
     public static final ModConfigSpec.DoubleValue THUNDER_CLOUD_COVERAGE;
@@ -172,6 +173,10 @@ public final class CirrusConfig {
                 .comment("Use Distant Horizons' LOD render distance for Cirrus clouds while compatibility is enabled."
                         + " Very large distances can increase cloud mesh memory and rebuild time.")
                 .define("syncCloudDistanceWithDistantHorizons", false);
+        TRANSLUCENT_LAYER_OVERLAP = builder
+                .comment("Allow farther cloud layers to remain visible through nearer translucent layers."
+                        + " Disabled preserves the denser depth-occluded appearance.")
+                .define("translucentLayerOverlap", true);
         CLOUD_RENDER_DISTANCE = CLOUD_RENDER_DISTANCE_SETTING.define(
                 builder,
                 "renderDistanceChunks",

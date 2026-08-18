@@ -14,7 +14,7 @@ import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 public final class CirrusShaders {
     private static ShaderInstance clouds;
     private static ShaderInstance cloudMask;
-    private static ShaderInstance moonOcclusion;
+    private static ShaderInstance sunOcclusion;
     private static ShaderInstance aurora;
     private static ShaderInstance milkyWay;
     private static ShaderInstance stars;
@@ -35,8 +35,8 @@ public final class CirrusShaders {
                 DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL, shader -> cloudMask = shader
         );
         ToucanShaders.register(
-                event, Cirrus.IDS.id("cirrus_moon_occlusion"),
-                DefaultVertexFormat.POSITION_TEX, shader -> moonOcclusion = shader
+                event, Cirrus.IDS.id("cirrus_sun_occlusion"),
+                DefaultVertexFormat.POSITION_TEX, shader -> sunOcclusion = shader
         );
         ToucanShaders.register(
                 event, Cirrus.IDS.id("cirrus_aurora"),
@@ -68,8 +68,8 @@ public final class CirrusShaders {
         return Objects.requireNonNull(cloudMask, "Cirrus cloud mask shader has not finished loading");
     }
 
-    public static ShaderInstance moonOcclusion() {
-        return Objects.requireNonNull(moonOcclusion, "Cirrus moon occlusion shader has not finished loading");
+    public static ShaderInstance sunOcclusion() {
+        return Objects.requireNonNull(sunOcclusion, "Cirrus sun occlusion shader has not finished loading");
     }
 
     public static ShaderInstance aurora() {

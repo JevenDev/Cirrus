@@ -10,7 +10,6 @@ uniform float FogEnd;
 uniform vec4 FogColor;
 uniform float CirrusEnabled;
 uniform vec2 CirrusLightDirection;
-uniform vec3 CirrusLightColor;
 uniform float CirrusSunWeight;
 uniform vec3 CirrusLightViewDirection;
 uniform float CirrusRainLevel;
@@ -26,33 +25,14 @@ in vec2 texCoord0;
 in float vertexDistance;
 in vec4 vertexColor;
 in vec3 viewDirection;
-in vec3 viewNormal;
 
 out vec4 fragColor;
 
-const float COS_5_DEGREES = 0.9961947;
 const float COS_7_DEGREES = 0.9925462;
 const float COS_30_DEGREES = 0.8660254;
-const float COS_38_DEGREES = 0.7880108;
 
 const vec2 RAIN_CLOUD_PATTERN_OFFSET = vec2(83.0, 47.0);
 const vec2 THUNDER_CLOUD_PATTERN_OFFSET = vec2(157.0, 109.0);
-
-float weatherCloudAlpha(
-    vec2 coordinates,
-    vec2 texelSize,
-    float rainCoverage,
-    float thunderCoverage
-) {
-    float baseAlpha = texture(Sampler0, coordinates).a;
-    float rainAlpha = rainCoverage > 0.001
-        ? texture(Sampler0, coordinates + RAIN_CLOUD_PATTERN_OFFSET * texelSize).a * rainCoverage
-        : 0.0;
-    float thunderAlpha = thunderCoverage > 0.001
-        ? texture(Sampler0, coordinates + THUNDER_CLOUD_PATTERN_OFFSET * texelSize).a * thunderCoverage
-        : 0.0;
-    return 1.0 - (1.0 - baseAlpha) * (1.0 - rainAlpha) * (1.0 - thunderAlpha);
-}
 
 void main() {
     float rainLevel = clamp(CirrusRainLevel, 0.0, 1.0);
@@ -88,61 +68,19 @@ void main() {
     }
 
     if (CirrusEnabled > 0.5) {
-        vec2 positionInTexel = fract(texCoord0 * textureSizePixels);
-
-        float emptyLeft = 1.0 - step(
-            0.1,
-            weatherCloudAlpha(texCoord0 + vec2(-1.0, 0.0) * texelSize, texelSize, rainCoverage, thunderCoverage)
-        );
-        float emptyRight = 1.0 - step(
-            0.1,
-            weatherCloudAlpha(texCoord0 + vec2(1.0, 0.0) * texelSize, texelSize, rainCoverage, thunderCoverage)
-        );
-        float emptyBottom = 1.0 - step(
-            0.1,
-            weatherCloudAlpha(texCoord0 + vec2(0.0, -1.0) * texelSize, texelSize, rainCoverage, thunderCoverage)
-        );
-        float emptyTop = 1.0 - step(
-            0.1,
-            weatherCloudAlpha(texCoord0 + vec2(0.0, 1.0) * texelSize, texelSize, rainCoverage, thunderCoverage)
-        );
-
         float lightStrength = length(CirrusLightDirection);
         float horizonAmount = smoothstep(0.05, 1.0, lightStrength);
-        float fadeWidth = mix(0.32, 0.62, horizonAmount);
-        float fadeLeft = emptyLeft * (1.0 - smoothstep(0.0, fadeWidth, positionInTexel.x));
-        float fadeRight = emptyRight * (1.0 - smoothstep(0.0, fadeWidth, 1.0 - positionInTexel.x));
-        float fadeBottom = emptyBottom * (1.0 - smoothstep(0.0, fadeWidth, positionInTexel.y));
-        float fadeTop = emptyTop * (1.0 - smoothstep(0.0, fadeWidth, 1.0 - positionInTexel.y));
-
-        vec2 lightAxis = lightStrength > 0.001 ? normalize(CirrusLightDirection) : vec2(0.0);
-        float sunEdgeFade = max(
-            max(
-                fadeLeft * max(0.0, dot(vec2(-1.0, 0.0), lightAxis)),
-                fadeRight * max(0.0, dot(vec2(1.0, 0.0), lightAxis))
-            ),
-            max(
-                fadeBottom * max(0.0, dot(vec2(0.0, -1.0), lightAxis)),
-                fadeTop * max(0.0, dot(vec2(0.0, 1.0), lightAxis))
-            )
-        );
 
         vec3 normalizedViewDirection = normalize(viewDirection);
         vec3 sunViewDirection = normalize(CirrusLightViewDirection);
         float sunAlignment = dot(normalizedViewDirection, sunViewDirection);
-        float sunProximity = smoothstep(COS_38_DEGREES, COS_5_DEGREES, sunAlignment);
+        float moonAlignment = dot(normalizedViewDirection, -sunViewDirection);
+        vec3 worldUpViewDirection = normalize(CirrusWorldUpViewDirection);
 
-        float sunOcclusion = smoothstep(COS_30_DEGREES, COS_7_DEGREES, sunAlignment);
-        color.a = mix(color.a, 1.0, sunOcclusion * CirrusSunWeight);
-
-        // Keep the pixel silhouette untouched. Only the lighting fades inward from
-        // square exposed edges, with a restrained lift instead of an opaque halo.
-        float sunHighlight = sunEdgeFade * horizonAmount * CirrusSunWeight * sunProximity * 0.20;
-        vec3 sunEdgeColor = mix(color.rgb, CirrusLightColor, 0.35);
-        color.rgb = mix(color.rgb, sunEdgeColor, sunHighlight);
+        float sunIllumination = smoothstep(COS_30_DEGREES, COS_7_DEGREES, sunAlignment);
+        color.a = mix(color.a, 1.0, sunIllumination * CirrusSunWeight);
 
         // Recolor the whole cloudscape as the sun crosses the horizon
-        vec3 worldUpViewDirection = normalize(CirrusWorldUpViewDirection);
         float viewHeight = abs(dot(normalizedViewDirection, worldUpViewDirection));
         float horizonBand = 1.0 - smoothstep(0.12, 0.72, viewHeight);
         float twilightAmount = smoothstep(0.82, 0.995, horizonAmount);
@@ -167,7 +105,6 @@ void main() {
         float daylightStrength = daylightAmount * daySunward * clearSkyAmount * 0.18;
         color.rgb = mix(color.rgb, color.rgb * vec3(1.05, 1.015, 0.94), daylightStrength);
 
-        float moonAlignment = dot(normalizedViewDirection, -sunViewDirection);
         float moonward = smoothstep(0.05, 0.96, moonAlignment);
         float nightAmount = (1.0 - CirrusSunWeight) * (1.0 - twilightAmount * 0.72);
         float nightStrength = nightAmount * clearSkyAmount * mix(0.20, 0.36, moonward);

@@ -48,7 +48,7 @@ public abstract class LevelRendererCloudMixin {
             new CirrusLightningSkyRenderer();
     @Unique private final CirrusEndSkyRenderer cirrus$endSkyRenderer = new CirrusEndSkyRenderer();
     @Unique private CloudStatus cirrus$lastCloudMode;
-    @Unique private boolean cirrus$celestialMaskActive;
+    @Unique private boolean cirrus$sunMaskActive;
     @Unique private float cirrus$precipitationCeiling = Float.POSITIVE_INFINITY;
     @Unique private final Consumer<float[]> cirrus$renderCloudsIntoDistantHorizons =
             this::cirrus$renderCloudsIntoDistantHorizons;
@@ -229,6 +229,31 @@ public abstract class LevelRendererCloudMixin {
             method = "renderSky",
             at = @At(
                     value = "INVOKE",
+                    target = "Lcom/mojang/blaze3d/vertex/VertexBuffer;drawWithShader(" +
+                            "Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;" +
+                            "Lnet/minecraft/client/renderer/ShaderInstance;)V",
+                    ordinal = 0,
+                    shift = At.Shift.AFTER
+            )
+    )
+    private void cirrus$renderMilkyWayBehindCelestials(
+            Matrix4f frustumMatrix,
+            Matrix4f projectionMatrix,
+            float partialTick,
+            Camera camera,
+            boolean isFoggy,
+            Runnable skyFogSetup,
+            CallbackInfo ci
+    ) {
+        if (level != null) {
+            cirrus$milkyWayRenderer.render(level, frustumMatrix, projectionMatrix, partialTick);
+        }
+    }
+
+    @Inject(
+            method = "renderSky",
+            at = @At(
+                    value = "INVOKE",
                     target = "Lcom/mojang/blaze3d/systems/RenderSystem;blendFuncSeparate(" +
                             "Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;" +
                             "Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;" +
@@ -246,7 +271,6 @@ public abstract class LevelRendererCloudMixin {
             CallbackInfo ci
     ) {
         if (level != null) {
-            cirrus$milkyWayRenderer.render(level, frustumMatrix, projectionMatrix, partialTick);
             cirrus$lightningSkyRenderer.render(level, frustumMatrix, projectionMatrix, partialTick, camera);
             cirrus$auroraRenderer.render(level, frustumMatrix, projectionMatrix, partialTick, ticks, camera);
         }
@@ -257,11 +281,11 @@ public abstract class LevelRendererCloudMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V",
-                    ordinal = 1,
+                    ordinal = 0,
                     shift = At.Shift.AFTER
             )
     )
-    private void cirrus$maskMoonHaloBehindClouds(
+    private void cirrus$maskSunBehindClouds(
             Matrix4f frustumMatrix,
             Matrix4f projectionMatrix,
             float partialTick,
@@ -273,7 +297,7 @@ public abstract class LevelRendererCloudMixin {
         if (level == null || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
             return;
         }
-        cirrus$cloudRenderer.renderCelestialMask(
+        cirrus$cloudRenderer.renderSunMask(
                 level,
                 frustumMatrix,
                 projectionMatrix,
@@ -283,12 +307,20 @@ public abstract class LevelRendererCloudMixin {
                 camera.getPosition().y,
                 camera.getPosition().z
         );
-        RenderSystem.setShader(CirrusShaders::moonOcclusion);
-        cirrus$celestialMaskActive = true;
+        RenderSystem.setShader(CirrusShaders::sunOcclusion);
+        cirrus$sunMaskActive = true;
     }
 
-    @Inject(method = "renderSky", at = @At("TAIL"))
-    private void cirrus$clearCelestialCloudMask(
+    @Inject(
+            method = "renderSky",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V",
+                    ordinal = 1,
+                    shift = At.Shift.BEFORE
+            )
+    )
+    private void cirrus$restoreTransparentMoonAndStars(
             Matrix4f frustumMatrix,
             Matrix4f projectionMatrix,
             float partialTick,
@@ -297,10 +329,32 @@ public abstract class LevelRendererCloudMixin {
             Runnable skyFogSetup,
             CallbackInfo ci
     ) {
-        if (cirrus$celestialMaskActive) {
+        if (cirrus$sunMaskActive) {
+            cirrus$clearSunMask();
+            RenderSystem.depthMask(false);
+            RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        }
+    }
+
+    @Inject(method = "renderSky", at = @At("TAIL"))
+    private void cirrus$clearSunCloudMask(
+            Matrix4f frustumMatrix,
+            Matrix4f projectionMatrix,
+            float partialTick,
+            Camera camera,
+            boolean isFoggy,
+            Runnable skyFogSetup,
+            CallbackInfo ci
+    ) {
+        cirrus$clearSunMask();
+    }
+
+    @Unique
+    private void cirrus$clearSunMask() {
+        if (cirrus$sunMaskActive) {
             RenderSystem.depthMask(true);
             RenderSystem.clear(256, Minecraft.ON_OSX);
-            cirrus$celestialMaskActive = false;
+            cirrus$sunMaskActive = false;
         }
     }
 

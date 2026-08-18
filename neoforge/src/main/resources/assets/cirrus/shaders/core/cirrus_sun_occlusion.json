@@ -1,6 +1,6 @@
 {
-  "vertex": "cirrus:cirrus_moon_occlusion",
-  "fragment": "cirrus:cirrus_moon_occlusion",
+  "vertex": "cirrus:cirrus_sun_occlusion",
+  "fragment": "cirrus:cirrus_sun_occlusion",
   "samplers": [
     { "name": "Sampler0" }
   ],
