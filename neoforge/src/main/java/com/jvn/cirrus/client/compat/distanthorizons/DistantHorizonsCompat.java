@@ -3,6 +3,8 @@ package com.jvn.cirrus.client.compat.distanthorizons;
 import com.jvn.cirrus.config.CirrusConfig;
 import net.neoforged.fml.ModList;
 
+import java.util.function.Consumer;
+
 public final class DistantHorizonsCompat {
     private static final String MOD_ID = "distanthorizons";
     private static final boolean LOADED = ModList.get().isLoaded(MOD_ID);
@@ -44,6 +46,12 @@ public final class DistantHorizonsCompat {
                 syncDistance,
                 configuredDistance
         );
+    }
+
+    public static void setBeforeApplyShaderCallback(Consumer<float[]> callback) {
+        if (LOADED) {
+            DistantHorizonsApiCompat.setBeforeApplyShaderCallback(callback);
+        }
     }
 
     private static void ensureInitialized() {

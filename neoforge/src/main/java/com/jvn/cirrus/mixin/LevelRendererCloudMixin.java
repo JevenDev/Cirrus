@@ -9,6 +9,7 @@ import com.jvn.cirrus.client.CirrusMilkyWayRenderer;
 import com.jvn.cirrus.client.CirrusLightningLocator;
 import com.jvn.cirrus.client.CirrusLightningSkyRenderer;
 import com.jvn.cirrus.client.CirrusPrecipitationCeiling;
+import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.client.CirrusShaders;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -34,6 +35,8 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.function.Consumer;
+
 @Mixin(LevelRenderer.class)
 public abstract class LevelRendererCloudMixin {
     @Shadow private ClientLevel level;
@@ -47,6 +50,15 @@ public abstract class LevelRendererCloudMixin {
     @Unique private CloudStatus cirrus$lastCloudMode;
     @Unique private boolean cirrus$celestialMaskActive;
     @Unique private float cirrus$precipitationCeiling = Float.POSITIVE_INFINITY;
+    @Unique private final Consumer<float[]> cirrus$renderCloudsIntoDistantHorizons =
+            this::cirrus$renderCloudsIntoDistantHorizons;
+    @Unique private Matrix4f cirrus$frameFrustumMatrix;
+    @Unique private final Matrix4f cirrus$dhProjectionMatrix = new Matrix4f();
+    @Unique private float cirrus$framePartialTick;
+    @Unique private double cirrus$frameCameraX;
+    @Unique private double cirrus$frameCameraY;
+    @Unique private double cirrus$frameCameraZ;
+    @Unique private boolean cirrus$cloudsRenderedIntoDistantHorizons;
 
     @Inject(method = "renderLevel", at = @At("HEAD"))
     private void cirrus$noticeCloudModeChange(
@@ -60,6 +72,17 @@ public abstract class LevelRendererCloudMixin {
             CallbackInfo ci
     ) {
         CirrusCloudAttachment.updateRenderTicks(ticks);
+        cirrus$cloudsRenderedIntoDistantHorizons = false;
+        cirrus$frameFrustumMatrix = frustumMatrix;
+        cirrus$framePartialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
+        cirrus$frameCameraX = camera.getPosition().x;
+        cirrus$frameCameraY = camera.getPosition().y;
+        cirrus$frameCameraZ = camera.getPosition().z;
+        DistantHorizonsCompat.setBeforeApplyShaderCallback(
+                DistantHorizonsCompat.shouldPrioritizeCirrusClouds()
+                        ? cirrus$renderCloudsIntoDistantHorizons
+                        : null
+        );
         CloudStatus mode = Minecraft.getInstance().options.getCloudsType();
         if (mode != cirrus$lastCloudMode) {
             if (!CirrusCloudMode.isActive(mode)) {
@@ -67,6 +90,20 @@ public abstract class LevelRendererCloudMixin {
             }
             cirrus$lastCloudMode = mode;
         }
+    }
+
+    @Inject(method = "renderLevel", at = @At("RETURN"))
+    private void cirrus$clearDistantHorizonsRenderCallback(
+            DeltaTracker deltaTracker,
+            boolean renderBlockOutline,
+            Camera camera,
+            GameRenderer gameRenderer,
+            LightTexture lightTexture,
+            Matrix4f frustumMatrix,
+            Matrix4f projectionMatrix,
+            CallbackInfo ci
+    ) {
+        DistantHorizonsCompat.setBeforeApplyShaderCallback(null);
     }
 
     @Redirect(
@@ -96,7 +133,7 @@ public abstract class LevelRendererCloudMixin {
             return;
         }
         ci.cancel();
-        if (level != null) {
+        if (level != null && !cirrus$cloudsRenderedIntoDistantHorizons) {
             cirrus$cloudRenderer.render(
                     level,
                     poseStack,
@@ -109,6 +146,30 @@ public abstract class LevelRendererCloudMixin {
                     cameraZ
             );
         }
+    }
+
+    @Unique
+    private void cirrus$renderCloudsIntoDistantHorizons(float[] dhProjectionMatrix) {
+        if (dhProjectionMatrix == null || dhProjectionMatrix.length != 16
+                || cirrus$cloudsRenderedIntoDistantHorizons
+                || level == null
+                || cirrus$frameFrustumMatrix == null
+                || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
+            return;
+        }
+
+        cirrus$cloudsRenderedIntoDistantHorizons = true;
+        cirrus$cloudRenderer.render(
+                level,
+                new PoseStack(),
+                cirrus$frameFrustumMatrix,
+                cirrus$dhProjectionMatrix.set(dhProjectionMatrix).transpose(),
+                cirrus$framePartialTick,
+                ticks,
+                cirrus$frameCameraX,
+                cirrus$frameCameraY,
+                cirrus$frameCameraZ
+        );
     }
 
     @Inject(method = "renderSnowAndRain", at = @At("HEAD"))
