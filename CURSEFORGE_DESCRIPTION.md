@@ -11,6 +11,7 @@ _Cirrus is designed to be used without Iris or shader packs._
 
 
 <br>
+
 ![Cirrus features](https://cdn.modrinth.com/data/cached_images/ec0e4dc78ec1a652eb11b233dd2926f7461fe770.png)
 
 ![Cirrus sky transition](https://i.imgur.com/HwMik3Q.gif)
@@ -41,6 +42,7 @@ Every major effect can be adjusted or turned off.
 ## Requirements and compatibility
 
 *   Made for **Minecraft 1.21.1** on **NeoForge**
+*   [Distant Horizons](https://modrinth.com/mod/distanthorizons) is supported for version 3.2+
 *   [ToucanLib](https://www.curseforge.com/minecraft/mc-mods/toucanlib), [Architectury API](https://www.curseforge.com/minecraft/mc-mods/architectury-api), and [YetAnotherConfigLib](https://www.curseforge.com/minecraft/mc-mods/yacl) are required
 *   Shader packs and mods that replace cloud or sky rendering may override Cirrus or cause visual conflicts
 

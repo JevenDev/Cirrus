@@ -49,6 +49,7 @@ Every major effect can be adjusted or turned off!!!
 ## Compatibility
 
 - [ToucanLib](https://modrinth.com/mod/toucan) and [YetAnotherConfigLib](https://modrinth.com/mod/yacl) are required.
+- [Distant Horizons](https://modrinth.com/mod/distanthorizons) is supported for version 3.2+
 - Shader packs and mods that replace cloud or sky rendering may override Cirrus or cause visual conflicts.
 
 <p align="center"><img src="https://cdn.modrinth.com/data/cached_images/5fd3ad80e342e6985dd6ebda1f7afd9c48749fce.png" alt="Credits and license" width="900"></p>
