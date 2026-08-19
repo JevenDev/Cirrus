@@ -1,46 +1,20 @@
-apply plugin: 'java-library'
-apply plugin: 'maven-publish'
-apply plugin: 'architectury-plugin'
-apply plugin: 'dev.architectury.loom'
-apply plugin: 'com.gradleup.shadow'
-
-architectury {
-    platformSetupLoomIde()
-    fabric()
-}
-
-configurations {
-    common {
-        canBeResolved = true
-        canBeConsumed = false
-    }
-    shadowCommon {
-        canBeResolved = true
-        canBeConsumed = false
-    }
-    compileClasspath.extendsFrom common
-    runtimeClasspath.extendsFrom common
-    developmentFabric.extendsFrom common
-}
-
-sourceSets.main.resources {
-    srcDir project(':common').file('src/main/resources')
+plugins {
+    id 'fabric-loom'
 }
 
 dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${rootProject.parchment_minecraft_version}:${rootProject.parchment_mappings_version}@zip")
+    }
+
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
     modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
-    modApi "dev.architectury:architectury-fabric:${rootProject.architectury_version}"
     modImplementation "dev.isxander:yet-another-config-lib:${rootProject.yacl_version}-fabric"
     modCompileOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
     modRuntimeOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
-
-    common(project(path: ':common', configuration: 'namedElements')) {
-        transitive = false
-    }
-    shadowCommon(project(path: ':common', configuration: 'transformProductionFabric')) {
-        transitive = false
-    }
+    modCompileOnly "maven.modrinth:DistantHorizonsApi:${rootProject.distant_horizons_api_version}"
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -49,7 +23,6 @@ tasks.named('processResources', ProcessResources).configure {
             minecraft_version     : rootProject.minecraft_version,
             fabric_loader_version : rootProject.fabric_loader_version,
             fabric_api_version    : rootProject.fabric_api_version,
-            architectury_version  : rootProject.architectury_version,
             modmenu_version       : rootProject.modmenu_version,
             mod_id                : rootProject.mod_id,
             mod_name              : rootProject.mod_name,
@@ -68,26 +41,6 @@ tasks.named('processResources', ProcessResources).configure {
     }
 }
 
-tasks.named('shadowJar').configure {
-    archiveClassifier = 'dev-shadow'
-    configurations = [project.configurations.shadowCommon]
-    exclude 'META-INF/neoforge.mods.toml'
-}
-
-tasks.named('remapJar').configure {
-    inputFile = tasks.named('shadowJar').flatMap { it.archiveFile }
-    dependsOn tasks.named('shadowJar')
-}
-
 tasks.named('sourcesJar', Jar).configure {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    def commonSources = project(':common').tasks.named('sourcesJar', Jar)
-    dependsOn commonSources
-    from commonSources.map { zipTree(it.archiveFile.get().asFile) }
-}
-
-components.java {
-    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
-        skip()
-    }
 }

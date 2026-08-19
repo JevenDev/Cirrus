@@ -1,0 +1,26 @@
+{
+  "required": true,
+  "package": "com.jvn.cirrus.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ClientLevelMixin",
+    "ClientLevelDataMixin",
+    "ClientPacketListenerMixin",
+    "GameRendererMixin",
+    "LevelRendererCloudMixin",
+    "CloudRendererMixin",
+    "SkyRendererMixin",
+    "LightningBoltMixin",
+    "LightningBoltRendererMixin",
+    "LightningBoltRenderStateMixin",
+    "compat.wherewindsblow.DesertStormRendererMixin",
+    "compat.wherewindsblow.BlizzardRendererMixin",
+    "compat.wherewindsblow.GpuSnowfallRendererMixin",
+    "compat.wherewindsblow.SnowfallRendererMixin",
+    "compat.wherewindsblow.WindReactivePrecipitationRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "minVersion": "0.8"
+}
