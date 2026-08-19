@@ -1,9 +1,15 @@
 plugins {
+    id 'architectury-plugin' version '3.5.166'
     id 'dev.architectury.loom' version '1.14.473' apply false
+    id 'com.gradleup.shadow' version '9.4.1' apply false
 }
 
 tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
+}
+
+architectury {
+    minecraft = rootProject.minecraft_version
 }
 
 allprojects {
@@ -11,14 +17,22 @@ allprojects {
     group = rootProject.maven_group
 
     repositories {
-        if (rootProject.useLocalToucanLib.toBoolean()) {
-            mavenLocal()
-        }
-
         mavenCentral()
         maven {
             name = 'Xander Maven'
             url = 'https://maven.isxander.dev/releases'
+        }
+        maven {
+            name = 'Architectury'
+            url = 'https://maven.architectury.dev/'
+        }
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        maven {
+            name = 'TerraformersMC'
+            url = 'https://maven.terraformersmc.com/releases/'
         }
         maven {
             name = 'NeoForge'
@@ -27,10 +41,6 @@ allprojects {
         maven {
             name = 'ParchmentMC'
             url = 'https://maven.parchmentmc.org/'
-        }
-        maven {
-            name = 'Architectury'
-            url = 'https://maven.architectury.dev/'
         }
         exclusiveContent {
             forRepository {
@@ -43,6 +53,7 @@ allprojects {
 
 subprojects {
     apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
     apply plugin: 'dev.architectury.loom'
 
     base {
@@ -71,4 +82,16 @@ subprojects {
         options.release = rootProject.java_version.toInteger()
     }
 
+    publishing {
+        publications {
+            register('mavenJava', MavenPublication) {
+                from components.java
+            }
+        }
+        repositories {
+            maven {
+                url = rootProject.file('repo').toURI()
+            }
+        }
+    }
 }

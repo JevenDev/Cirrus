@@ -13,4 +13,6 @@ plugins {
 
 rootProject.name = 'cirrus'
 
+include 'common'
+include 'fabric'
 include 'neoforge'

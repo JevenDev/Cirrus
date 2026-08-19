@@ -7,7 +7,7 @@ Cirrus is a client-side skybox overhaul that stays close to Minecraft's vanilla 
 
 _Cirrus is designed to be used without Iris or shader packs._
 
-<div style="text-align:center"><a href="https://github.com/JevenDev/Cirrus" rel="nofollow"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/cozy/supported/neoforge_64h.png" alt="Available for NeoForge"></a><br><a href="https://github.com/JevenDev/Cirrus" rel="nofollow"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/compact-minimal/available/github_46h.png" alt="Available on GitHub"></a> <a href="https://modrinth.com/mod/cirrus" rel="nofollow"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/compact-minimal/available/modrinth_46h.png" alt="Available on Modrinth"></a> <a href="https://www.curseforge.com/minecraft/mc-mods/cirrus" rel="nofollow"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/compact-minimal/available/curseforge_46h.png" alt="Available on CurseForge"></a></div>
+<div style="text-align:center"><a href="https://github.com/JevenDev/Cirrus" rel="nofollow"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/cozy/supported/neoforge_64h.png" alt="Available for NeoForge"></a> <a href="https://github.com/JevenDev/Cirrus" rel="nofollow"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/cozy/supported/fabric_64h.png" alt="Available for Fabric"></a><br><a href="https://github.com/JevenDev/Cirrus" rel="nofollow"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/compact-minimal/available/github_46h.png" alt="Available on GitHub"></a> <a href="https://modrinth.com/mod/cirrus" rel="nofollow"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/compact-minimal/available/modrinth_46h.png" alt="Available on Modrinth"></a> <a href="https://www.curseforge.com/minecraft/mc-mods/cirrus" rel="nofollow"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/compact-minimal/available/curseforge_46h.png" alt="Available on CurseForge"></a></div>
 
 
 <br>
@@ -41,9 +41,9 @@ Every major effect can be adjusted or turned off.
 
 ## Requirements and compatibility
 
-*   Made for **Minecraft 1.21.1** on **NeoForge**
+*   Made for **Minecraft 1.21.1** on **Fabric or NeoForge**
 *   [Distant Horizons](https://modrinth.com/mod/distanthorizons) is supported for version 3.2+
-*   [ToucanLib](https://www.curseforge.com/minecraft/mc-mods/toucanlib), [Architectury API](https://www.curseforge.com/minecraft/mc-mods/architectury-api), and [YetAnotherConfigLib](https://www.curseforge.com/minecraft/mc-mods/yacl) are required
+*   [Architectury API](https://www.curseforge.com/minecraft/mc-mods/architectury-api) and [YetAnotherConfigLib](https://www.curseforge.com/minecraft/mc-mods/yacl) are required; Fabric builds also require [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api)
 *   Shader packs and mods that replace cloud or sky rendering may override Cirrus or cause visual conflicts
 
 ![Credits and license](https://cdn.modrinth.com/data/cached_images/5fd3ad80e342e6985dd6ebda1f7afd9c48749fce.png)

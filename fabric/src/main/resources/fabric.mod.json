@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${mod_version}",
+  "name": "${mod_name}",
+  "description": "${mod_description}",
+  "authors": [
+    "${mod_authors}"
+  ],
+  "contact": {
+    "homepage": "${mod_display_url}",
+    "issues": "${mod_issue_tracker}"
+  },
+  "license": "${mod_license}",
+  "icon": "logo.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "${mod_package}.fabric.CirrusFabric"
+    ],
+    "modmenu": [
+      "${mod_package}.fabric.CirrusModMenu"
+    ]
+  },
+  "mixins": [
+    "cirrus.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": ">=${fabric_api_version}",
+    "minecraft": "${minecraft_version}",
+    "java": ">=21",
+    "architectury": ">=${architectury_version}",
+    "yet_another_config_lib_v3": ">=3.8.1"
+  },
+  "suggests": {
+    "modmenu": ">=${modmenu_version}",
+    "distanthorizons": "*",
+    "where_winds_blow": "*"
+  }
+}

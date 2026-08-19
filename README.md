@@ -11,6 +11,7 @@
 <div align="center">
 
 <a href="https://github.com/JevenDev/Cirrus" target="_blank" rel="noopener noreferrer"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/cozy/supported/neoforge_64h.png" alt="Available for NeoForge"></a>
+<a href="https://github.com/JevenDev/Cirrus" target="_blank" rel="noopener noreferrer"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/cozy/supported/fabric_64h.png" alt="Available for Fabric"></a>
 <br>
 <a href="https://github.com/JevenDev/Cirrus" target="_blank" rel="noopener noreferrer"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/compact-minimal/available/github_46h.png" alt="Available on GitHub"></a>
 <a href="https://modrinth.com/mod/cirrus" target="_blank" rel="noopener noreferrer"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/compact-minimal/available/modrinth_46h.png" alt="Available on Modrinth"></a>
@@ -48,7 +49,7 @@ Every major effect can be adjusted or turned off!!!
 
 ## Compatibility
 
-- [ToucanLib](https://modrinth.com/mod/toucan) and [YetAnotherConfigLib](https://modrinth.com/mod/yacl) are required.
+- [Architectury API](https://modrinth.com/mod/architectury-api) and [YetAnotherConfigLib](https://modrinth.com/mod/yacl) are required. Fabric builds also require [Fabric API](https://modrinth.com/mod/fabric-api).
 - [Distant Horizons](https://modrinth.com/mod/distanthorizons) is supported for version 3.2+
 - Shader packs and mods that replace cloud or sky rendering may override Cirrus or cause visual conflicts.
 

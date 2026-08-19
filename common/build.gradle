@@ -1,0 +1,19 @@
+apply plugin: 'java-library'
+apply plugin: 'maven-publish'
+apply plugin: 'architectury-plugin'
+apply plugin: 'dev.architectury.loom'
+
+architectury {
+    common(rootProject.enabled_platforms.split(','))
+}
+
+dependencies {
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    modApi "dev.architectury:architectury:${rootProject.architectury_version}"
+    modCompileOnly "dev.isxander:yet-another-config-lib:${rootProject.yacl_version}-fabric"
+    modCompileOnly "maven.modrinth:DistantHorizonsApi:${rootProject.distant_horizons_api_version}"
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
