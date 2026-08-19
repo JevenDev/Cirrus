@@ -37,7 +37,6 @@ public abstract class LevelRendererCloudMixin {
     @Unique private final Consumer<float[]> cirrus$renderCloudsIntoDistantHorizons =
             this::cirrus$renderCloudsIntoDistantHorizons;
     @Unique private final Matrix4f cirrus$dhProjectionMatrix = new Matrix4f();
-    @Unique private boolean cirrus$cloudsRenderedIntoDistantHorizons;
 
     @Inject(method = "renderLevel", at = @At("HEAD"))
     private void cirrus$beginFrame(
@@ -59,7 +58,6 @@ public abstract class LevelRendererCloudMixin {
                 level, camera, frustumMatrix, projectionMatrix, fogColor, partialTick, ticks
         );
         CirrusCloudAttachment.updateRenderTicks(ticks);
-        cirrus$cloudsRenderedIntoDistantHorizons = false;
         DistantHorizonsCompat.setBeforeApplyShaderCallback(
                 DistantHorizonsCompat.shouldPrioritizeCirrusClouds()
                         ? cirrus$renderCloudsIntoDistantHorizons
@@ -109,24 +107,29 @@ public abstract class LevelRendererCloudMixin {
     private void cirrus$renderCloudsIntoDistantHorizons(float[] dhProjectionMatrix) {
         if (dhProjectionMatrix == null
                 || dhProjectionMatrix.length != 16
-                || cirrus$cloudsRenderedIntoDistantHorizons
+                || CirrusRenderContext.cloudsRenderedIntoDistantHorizons()
                 || !CirrusRenderContext.isReady()
                 || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
             return;
         }
 
-        cirrus$cloudsRenderedIntoDistantHorizons = true;
-        CirrusRenderers.clouds().render(
-                level,
-                new com.mojang.blaze3d.vertex.PoseStack(),
-                CirrusRenderContext.frustumMatrix(),
-                cirrus$dhProjectionMatrix.set(dhProjectionMatrix).transpose(),
-                CirrusRenderContext.partialTick(),
-                ticks,
-                CirrusRenderContext.camera().position().x,
-                CirrusRenderContext.camera().position().y,
-                CirrusRenderContext.camera().position().z
-        );
+        CirrusRenderContext.markCloudsRenderedIntoDistantHorizons();
+        CirrusRenderContext.beginRenderingCloudsForDistantHorizons();
+        try {
+            CirrusRenderers.clouds().render(
+                    level,
+                    new com.mojang.blaze3d.vertex.PoseStack(),
+                    CirrusRenderContext.frustumMatrix(),
+                    cirrus$dhProjectionMatrix.set(dhProjectionMatrix).transpose(),
+                    CirrusRenderContext.partialTick(),
+                    ticks,
+                    CirrusRenderContext.camera().position().x,
+                    CirrusRenderContext.camera().position().y,
+                    CirrusRenderContext.camera().position().z
+            );
+        } finally {
+            CirrusRenderContext.endRenderingCloudsForDistantHorizons();
+        }
     }
 
     @Inject(method = "setLevel", at = @At("HEAD"))

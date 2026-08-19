@@ -356,6 +356,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     thunderLevel,
                     lightning
             );
+            boolean renderingForDistantHorizons =
+                    CirrusRenderContext.renderingCloudsForDistantHorizons();
             if (definition.style() == CirrusConfig.CloudStyle.FANCY) {
                 mesh.buffer.drawWithShader(
                         poseStack.last().pose(),
@@ -365,7 +367,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 );
             }
             mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
-            if (Minecraft.useShaderTransparency()) {
+            if (Minecraft.useShaderTransparency()
+                    && !renderingForDistantHorizons) {
                 mesh.buffer.drawWithShader(
                         poseStack.last().pose(),
                         projectionMatrix,

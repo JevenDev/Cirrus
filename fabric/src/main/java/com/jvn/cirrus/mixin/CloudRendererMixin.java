@@ -31,6 +31,9 @@ public abstract class CloudRendererMixin {
         }
 
         ci.cancel();
+        if (CirrusRenderContext.cloudsRenderedIntoDistantHorizons()) {
+            return;
+        }
         CirrusRenderers.clouds().render(
                 CirrusRenderContext.level(),
                 new PoseStack(),

@@ -18,6 +18,8 @@ public final class CirrusRenderContext {
     private static float partialTick;
     private static int ticks;
     private static float cloudHeight = Float.NaN;
+    private static boolean cloudsRenderedIntoDistantHorizons;
+    private static boolean renderingCloudsForDistantHorizons;
 
     private CirrusRenderContext() {
     }
@@ -38,6 +40,8 @@ public final class CirrusRenderContext {
         fogColor = new Vector4f(capturedFogColor);
         partialTick = capturedPartialTick;
         ticks = capturedTicks;
+        cloudsRenderedIntoDistantHorizons = false;
+        renderingCloudsForDistantHorizons = false;
         cloudHeight = capturedCamera.attributeProbe()
                 .getValue(EnvironmentAttributes.CLOUD_HEIGHT, capturedPartialTick);
     }
@@ -72,6 +76,26 @@ public final class CirrusRenderContext {
 
     public static int ticks() {
         return ticks;
+    }
+
+    public static boolean cloudsRenderedIntoDistantHorizons() {
+        return cloudsRenderedIntoDistantHorizons;
+    }
+
+    public static void markCloudsRenderedIntoDistantHorizons() {
+        cloudsRenderedIntoDistantHorizons = true;
+    }
+
+    public static boolean renderingCloudsForDistantHorizons() {
+        return renderingCloudsForDistantHorizons;
+    }
+
+    public static void beginRenderingCloudsForDistantHorizons() {
+        renderingCloudsForDistantHorizons = true;
+    }
+
+    public static void endRenderingCloudsForDistantHorizons() {
+        renderingCloudsForDistantHorizons = false;
     }
 
     public static float sunAngle(float requestedPartialTick) {
@@ -112,5 +136,7 @@ public final class CirrusRenderContext {
         projectionMatrix = null;
         fogColor = null;
         cloudHeight = Float.NaN;
+        renderingCloudsForDistantHorizons = false;
+        cloudsRenderedIntoDistantHorizons = false;
     }
 }
