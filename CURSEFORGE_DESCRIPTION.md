@@ -14,7 +14,7 @@ _Cirrus is designed to be used without Iris or shader packs._
 
 ![Cirrus features](https://cdn.modrinth.com/data/cached_images/ec0e4dc78ec1a652eb11b233dd2926f7461fe770.png)
 
-![Cirrus sky transition](https://i.imgur.com/HwMik3Q.gif)
+<div style="text-align:center"><img src="https://i.imgur.com/HwMik3Q.gif" alt="Cirrus sky transition" width="900"></div>
 
 
 
@@ -41,9 +41,18 @@ Every major effect can be adjusted or turned off.
 
 ## Requirements and compatibility
 
-*   Made for **Minecraft 1.21.1** on **Fabric or NeoForge**
-*   [Distant Horizons](https://modrinth.com/mod/distanthorizons) is supported for version 3.2+
-*   [Architectury API](https://www.curseforge.com/minecraft/mc-mods/architectury-api) and [YetAnotherConfigLib](https://www.curseforge.com/minecraft/mc-mods/yacl) are required; Fabric builds also require [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api)
+*   **Minecraft 1.21.1 - NeoForge**
+    *   Requires [Architectury API](https://www.curseforge.com/minecraft/mc-mods/architectury-api) and [YetAnotherConfigLib](https://www.curseforge.com/minecraft/mc-mods/yacl)
+*   **Minecraft 1.21.1 - Fabric**
+    *   Requires [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api), [Architectury API](https://www.curseforge.com/minecraft/mc-mods/architectury-api), and [YetAnotherConfigLib](https://www.curseforge.com/minecraft/mc-mods/yacl)
+*   **Minecraft 1.21.11 - Fabric**
+    *   Requires [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api) and [YetAnotherConfigLib](https://www.curseforge.com/minecraft/mc-mods/yacl)
+
+### Optional mod compatibility
+
+*   [Distant Horizons](https://modrinth.com/mod/distanthorizons) 3.2+ is supported on all listed versions above
+*   [Caelum](https://modrinth.com/mod/caelum) compatibility is available only on **Minecraft 1.21.1 NeoForge**
+*   [Where Winds Blow](https://github.com/JevenDev/Where-Winds-Blow) compatibility is available only on **Minecraft 1.21.1 NeoForge**
 *   Shader packs and mods that replace cloud or sky rendering may override Cirrus or cause visual conflicts
 
 ![Credits and license](https://cdn.modrinth.com/data/cached_images/5fd3ad80e342e6985dd6ebda1f7afd9c48749fce.png)
