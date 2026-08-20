@@ -13,11 +13,14 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Options;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
+import net.minecraft.client.renderer.state.OptionsRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -43,19 +46,20 @@ public abstract class LevelRendererCloudMixin {
             GraphicsResourceAllocator allocator,
             DeltaTracker deltaTracker,
             boolean renderBlockOutline,
-            Camera camera,
-            Matrix4f frustumMatrix,
-            Matrix4f projectionMatrix,
-            Matrix4f cullingProjectionMatrix,
+            CameraRenderState cameraState,
+            Matrix4fc modelViewMatrix,
             GpuBufferSlice shaderFog,
             Vector4f fogColor,
             boolean renderSky,
+            ChunkSectionsToRender chunkSectionsToRender,
             CallbackInfo ci
     ) {
         CirrusShaders.preloadSamplerTextures(Minecraft.getInstance());
         float partialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
+        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         CirrusRenderContext.capture(
-                level, camera, frustumMatrix, projectionMatrix, fogColor, partialTick, ticks
+                level, camera, new Matrix4f(modelViewMatrix),
+                cameraState.projectionMatrix, fogColor, partialTick, ticks
         );
         CirrusCloudAttachment.updateRenderTicks(ticks);
         DistantHorizonsCompat.setBeforeApplyShaderCallback(
@@ -64,7 +68,7 @@ public abstract class LevelRendererCloudMixin {
                         : null
         );
 
-        CloudStatus mode = Minecraft.getInstance().options.getCloudsType();
+        CloudStatus mode = Minecraft.getInstance().options.getCloudStatus();
         if (mode != cirrus$lastCloudMode) {
             if (!CirrusCloudMode.isActive(mode)) {
                 CirrusRenderers.clouds().invalidate();
@@ -78,13 +82,12 @@ public abstract class LevelRendererCloudMixin {
             GraphicsResourceAllocator allocator,
             DeltaTracker deltaTracker,
             boolean renderBlockOutline,
-            Camera camera,
-            Matrix4f frustumMatrix,
-            Matrix4f projectionMatrix,
-            Matrix4f cullingProjectionMatrix,
+            CameraRenderState cameraState,
+            Matrix4fc modelViewMatrix,
             GpuBufferSlice shaderFog,
             Vector4f fogColor,
             boolean renderSky,
+            ChunkSectionsToRender chunkSectionsToRender,
             CallbackInfo ci
     ) {
         DistantHorizonsCompat.setBeforeApplyShaderCallback(null);
@@ -94,12 +97,12 @@ public abstract class LevelRendererCloudMixin {
     @Redirect(
             method = "renderLevel",
             at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/Options;getCloudsType()Lnet/minecraft/client/CloudStatus;"
+                    value = "FIELD",
+                    target = "Lnet/minecraft/client/renderer/state/OptionsRenderState;cloudStatus:Lnet/minecraft/client/CloudStatus;"
             )
     )
-    private CloudStatus cirrus$keepCloudPassEnabled(Options options) {
-        CloudStatus status = options.getCloudsType();
+    private CloudStatus cirrus$keepCloudPassEnabled(OptionsRenderState options) {
+        CloudStatus status = options.cloudStatus;
         return CirrusCloudMode.isActive(status) ? CloudStatus.FAST : status;
     }
 
@@ -109,7 +112,7 @@ public abstract class LevelRendererCloudMixin {
                 || dhProjectionMatrix.length != 16
                 || CirrusRenderContext.cloudsRenderedIntoDistantHorizons()
                 || !CirrusRenderContext.isReady()
-                || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
+                || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudStatus())) {
             return;
         }
 

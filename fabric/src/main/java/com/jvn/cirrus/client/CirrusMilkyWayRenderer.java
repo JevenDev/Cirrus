@@ -80,7 +80,7 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
         // Use the same smoothed celestial angle as Minecraft's sun, moon,
         // and stars so the galactic band remains attached to the sky.
         CirrusShaderUniforms.setUniform(
-                shader, "CirrusMilkyWayRotation", ((level.getDayTime() % 24000L) / 24000.0F) * Mth.TWO_PI
+                shader, "CirrusMilkyWayRotation", ((level.getDefaultClockTime() % 24000L) / 24000.0F) * Mth.TWO_PI
         );
 
         PoseStack poseStack = new PoseStack();

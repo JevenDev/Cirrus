@@ -4,8 +4,10 @@ import com.jvn.cirrus.Cirrus;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -13,6 +15,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
@@ -123,10 +126,7 @@ public final class CirrusShader {
                 .withVertexShader(Cirrus.id("core/" + name))
                 .withFragmentShader(Cirrus.id("core/" + name))
                 .withUniform("CirrusMatrices", UniformType.UNIFORM_BUFFER)
-                .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
                 .withCull(false)
-                .withColorWrite(colorWrite)
-                .withDepthWrite(depthWrite)
                 .withVertexFormat(vertexFormat, VertexFormat.Mode.QUADS);
         if (!uniforms.isEmpty()) {
             builder.withUniform("CirrusParams", UniformType.UNIFORM_BUFFER);
@@ -134,13 +134,20 @@ public final class CirrusShader {
         if (textured) {
             builder.withSampler("Sampler0");
         }
+
+        BlendFunction blendFunction = null;
         if (!depthVariant) {
             if (blend == Blend.TRANSLUCENT) {
-                builder.withBlend(BlendFunction.TRANSLUCENT);
+                blendFunction = BlendFunction.TRANSLUCENT;
             } else if (blend == Blend.ADDITIVE) {
-                builder.withBlend(BlendFunction.OVERLAY);
+                blendFunction = BlendFunction.OVERLAY;
             }
         }
+        builder.withColorTargetState(new ColorTargetState(
+                Optional.ofNullable(blendFunction),
+                colorWrite ? ColorTargetState.WRITE_ALL : ColorTargetState.WRITE_NONE
+        ));
+        builder.withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, depthWrite));
         return RenderPipelines.register(builder.build());
     }
 

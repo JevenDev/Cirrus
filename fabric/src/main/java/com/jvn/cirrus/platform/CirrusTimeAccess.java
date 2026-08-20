@@ -1,7 +1,7 @@
 package com.jvn.cirrus.platform;
 
+import com.jvn.cirrus.client.CirrusClientClockAccess;
 import net.minecraft.client.multiplayer.ClientLevel;
-import com.jvn.cirrus.client.CirrusClientLevelAccess;
 
 public final class CirrusTimeAccess {
     private CirrusTimeAccess() {
@@ -12,6 +12,8 @@ public final class CirrusTimeAccess {
     }
 
     public static float dayTimePerTick(ClientLevel level) {
-        return ((CirrusClientLevelAccess)level).cirrus$tickDayTime() ? 1.0F : 0.0F;
+        return level.dimensionType().defaultClock()
+                .map(clock -> ((CirrusClientClockAccess)level.clockManager()).cirrus$rate(clock))
+                .orElse(0.0F);
     }
 }

@@ -5,7 +5,10 @@ import static com.jvn.cirrus.client.util.CirrusRandom.signedDouble;
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -34,9 +37,9 @@ public final class CirrusLightningRenderer {
                     .withLocation(Cirrus.id("pipeline/lightning_glow"))
                     .withVertexShader("core/rendertype_lightning")
                     .withFragmentShader("core/rendertype_lightning")
-                    .withBlend(BlendFunction.TRANSLUCENT)
+                    .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
                     .withCull(false)
-                    .withDepthWrite(false)
+                    .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false))
                     .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS)
                     .build()
     );
@@ -45,8 +48,9 @@ public final class CirrusLightningRenderer {
                     .withLocation(Cirrus.id("pipeline/lightning_core"))
                     .withVertexShader("core/rendertype_lightning")
                     .withFragmentShader("core/rendertype_lightning")
-                    .withBlend(BlendFunction.TRANSLUCENT)
+                    .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
                     .withCull(false)
+                    .withDepthStencilState(DepthStencilState.DEFAULT)
                     .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS)
                     .build()
     );

@@ -1,20 +1,16 @@
 plugins {
-    id 'fabric-loom'
+    id 'net.fabricmc.fabric-loom'
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-    mappings loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${rootProject.parchment_minecraft_version}:${rootProject.parchment_mappings_version}@zip")
-    }
 
-    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
-    modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
-    modImplementation "dev.isxander:yet-another-config-lib:${rootProject.yacl_version}-fabric"
-    modCompileOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
-    modRuntimeOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
-    modCompileOnly "maven.modrinth:DistantHorizonsApi:${rootProject.distant_horizons_api_version}"
+    implementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    api "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+    implementation "dev.isxander:yet-another-config-lib:${rootProject.yacl_version}-fabric"
+    compileOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
+    runtimeOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
+    compileOnly "maven.modrinth:DistantHorizonsApi:${rootProject.distant_horizons_api_version}"
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -24,6 +20,7 @@ tasks.named('processResources', ProcessResources).configure {
             fabric_loader_version : rootProject.fabric_loader_version,
             fabric_api_version    : rootProject.fabric_api_version,
             modmenu_version       : rootProject.modmenu_version,
+            yacl_version          : rootProject.yacl_version,
             mod_id                : rootProject.mod_id,
             mod_name              : rootProject.mod_name,
             mod_license           : rootProject.mod_license,

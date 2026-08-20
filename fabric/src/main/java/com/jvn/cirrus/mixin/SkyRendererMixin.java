@@ -120,7 +120,7 @@ public abstract class SkyRendererMixin {
     @Inject(method = "renderSun", at = @At("HEAD"))
     private void cirrus$maskSun(float rainBrightness, PoseStack poseStack, CallbackInfo ci) {
         if (!CirrusRenderContext.isReady()
-                || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
+                || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudStatus())) {
             return;
         }
 

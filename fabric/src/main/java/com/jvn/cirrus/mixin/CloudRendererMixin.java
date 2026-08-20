@@ -20,13 +20,14 @@ public abstract class CloudRendererMixin {
             int color,
             CloudStatus status,
             float cloudHeight,
+            int cloudRange,
             Vec3 cameraPosition,
             long ticks,
             float partialTick,
             CallbackInfo ci
     ) {
         if (!CirrusRenderContext.isReady()
-                || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
+                || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudStatus())) {
             return;
         }
 

@@ -4,6 +4,8 @@ import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.platform.CirrusTimeAccess;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.Holder;
+import net.minecraft.world.clock.WorldClock;
 
 /**
  * Smooths abrupt client-side day-time corrections for rendering without delaying
@@ -38,7 +40,7 @@ public final class CirrusTimeTransition {
     public static void beginFrame(ClientLevel level) {
         rendering = false;
 
-        long actualDayTime = level.getLevelData().getDayTime();
+        long actualDayTime = level.getDefaultClockTime();
         long gameTime = level.getGameTime();
         long now = System.nanoTime();
         if (!CirrusConfig.SMOOTH_TIME_TRANSITIONS.get() || trackedLevel != level) {
@@ -82,13 +84,13 @@ public final class CirrusTimeTransition {
         }
 
         awaitingInitialTime = false;
-        reset(level, level.getLevelData().getDayTime(), level.getGameTime());
+        reset(level, level.getDefaultClockTime(), level.getGameTime());
     }
 
-    public static boolean isRenderingWith(ClientLevel.ClientLevelData levelData) {
+    public static boolean isRenderingWith(Holder<WorldClock> clock) {
         return rendering
                 && trackedLevel != null
-                && trackedLevel.getLevelData() == levelData;
+                && trackedLevel.dimensionType().defaultClock().filter(clock::equals).isPresent();
     }
 
     public static long visualDayTime() {
