@@ -23,7 +23,8 @@
     ]
   },
   "mixins": [
-    "cirrus.mixins.json"
+    "cirrus.mixins.json",
+    "cirrus.fabric.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${fabric_loader_version}",

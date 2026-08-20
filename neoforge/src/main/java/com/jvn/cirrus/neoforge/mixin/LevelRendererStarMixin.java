@@ -1,4 +1,4 @@
-package com.jvn.cirrus.mixin;
+package com.jvn.cirrus.neoforge.mixin;
 
 import com.jvn.cirrus.client.CirrusStarRenderer;
 import com.jvn.cirrus.config.CirrusConfig;

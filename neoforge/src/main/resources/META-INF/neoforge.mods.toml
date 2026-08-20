@@ -18,6 +18,9 @@ displayTest="IGNORE_ALL_VERSION"
 [[mixins]]
 config="cirrus.mixins.json"
 
+[[mixins]]
+config="cirrus.neoforge.mixins.json"
+
 [[dependencies."${mod_id}"]]
 modId="neoforge"
 type="required"

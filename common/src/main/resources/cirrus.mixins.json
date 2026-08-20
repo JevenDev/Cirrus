@@ -8,7 +8,6 @@
     "ClientPacketListenerMixin",
     "GameRendererMixin",
     "LevelRendererCloudMixin",
-    "LevelRendererStarMixin",
     "LightningBoltMixin",
     "LightningBoltRendererMixin",
     "compat.wherewindsblow.DesertStormRendererMixin",

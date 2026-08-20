@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "com.jvn.cirrus.neoforge.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "LevelRendererStarMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "minVersion": "0.8"
+}
