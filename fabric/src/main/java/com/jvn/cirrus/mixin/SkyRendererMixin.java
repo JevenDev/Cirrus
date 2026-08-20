@@ -142,7 +142,7 @@ public abstract class SkyRendererMixin {
         if (cirrus$sunMaskActive) {
             RenderSystem.getDevice()
                     .createCommandEncoder()
-                    .clearDepthTexture(Minecraft.getInstance().getMainRenderTarget().getDepthTexture(), 1.0);
+                    .clearDepthTexture(Minecraft.getInstance().gameRenderer.mainRenderTarget().getDepthTexture(), 0.0);
             cirrus$sunMaskActive = false;
         }
     }

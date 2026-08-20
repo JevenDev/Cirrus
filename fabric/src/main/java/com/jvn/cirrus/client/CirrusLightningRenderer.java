@@ -4,6 +4,7 @@ import static com.jvn.cirrus.client.util.CirrusRandom.signedDouble;
 
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
+import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
@@ -12,7 +13,6 @@ import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.OutputTarget;
@@ -39,8 +39,9 @@ public final class CirrusLightningRenderer {
                     .withFragmentShader("core/rendertype_lightning")
                     .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
                     .withCull(false)
-                    .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false))
-                    .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS)
+                    .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+                    .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
+                    .withPrimitiveTopology(PrimitiveTopology.QUADS)
                     .build()
     );
     private static final RenderPipeline CORE_PIPELINE = RenderPipelines.register(
@@ -51,7 +52,8 @@ public final class CirrusLightningRenderer {
                     .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
                     .withCull(false)
                     .withDepthStencilState(DepthStencilState.DEFAULT)
-                    .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS)
+                    .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
+                    .withPrimitiveTopology(PrimitiveTopology.QUADS)
                     .build()
     );
     private static final RenderType GLOW_RENDER_TYPE = RenderType.create(

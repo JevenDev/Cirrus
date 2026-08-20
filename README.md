@@ -57,6 +57,8 @@ Every major effect can be adjusted or turned off!!!
   - Requires [Fabric API](https://modrinth.com/mod/fabric-api) and [YetAnotherConfigLib](https://modrinth.com/mod/yacl)
 - **Minecraft 26.1 - Fabric**
   - Requires [Fabric API](https://modrinth.com/mod/fabric-api) and [YetAnotherConfigLib](https://modrinth.com/mod/yacl)
+- **Minecraft 26.2 - Fabric**
+  - Requires [Fabric API](https://modrinth.com/mod/fabric-api) and [YetAnotherConfigLib](https://modrinth.com/mod/yacl)
 
 ### Optional mod compatibility
 

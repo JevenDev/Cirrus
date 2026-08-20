@@ -5,9 +5,10 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.MeshData;
+import java.util.Optional;
 import java.util.OptionalDouble;
-import java.util.OptionalInt;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import org.joml.Matrix4f;
@@ -17,10 +18,10 @@ public final class CirrusVertexBuffer implements AutoCloseable {
     private GpuBuffer indexBuffer;
     private MeshData.DrawState drawState;
 
-    public void bind() {
-    }
-
-    public static void unbind() {
+    public void upload(MeshData mesh, ByteBufferBuilder sourceBuffer) {
+        try (sourceBuffer) {
+            upload(mesh);
+        }
     }
 
     public void upload(MeshData mesh) {
@@ -60,10 +61,10 @@ public final class CirrusVertexBuffer implements AutoCloseable {
         }
 
         Minecraft minecraft = Minecraft.getInstance();
-        RenderTarget target = minecraft.getMainRenderTarget();
+        RenderTarget target = minecraft.gameRenderer.mainRenderTarget();
         if (shader.target() == CirrusShader.Target.CLOUDS
                 && mode != CirrusShader.DrawMode.MAIN_DEPTH_ONLY) {
-            RenderTarget cloudsTarget = minecraft.levelRenderer.getCloudsTarget();
+            RenderTarget cloudsTarget = minecraft.levelRenderer.cloudsTarget();
             if (cloudsTarget != null) {
                 target = cloudsTarget;
             }
@@ -83,7 +84,7 @@ public final class CirrusVertexBuffer implements AutoCloseable {
                      .createRenderPass(
                              () -> "Cirrus custom sky",
                              color,
-                             OptionalInt.empty(),
+                             Optional.empty(),
                              depth,
                              OptionalDouble.empty()
                      )) {
@@ -96,14 +97,14 @@ public final class CirrusVertexBuffer implements AutoCloseable {
                 AbstractTexture texture = minecraft.getTextureManager().getTexture(shader.texture());
                 pass.bindTexture("Sampler0", texture.getTextureView(), texture.getSampler());
             }
-            pass.setVertexBuffer(0, vertexBuffer);
+            pass.setVertexBuffer(0, vertexBuffer.slice());
             if (indexBuffer != null) {
                 pass.setIndexBuffer(indexBuffer, drawState.indexType());
             } else {
-                RenderSystem.AutoStorageIndexBuffer sequential = RenderSystem.getSequentialBuffer(drawState.mode());
+                RenderSystem.AutoStorageIndexBuffer sequential = RenderSystem.getSequentialBuffer(drawState.primitiveTopology());
                 pass.setIndexBuffer(sequential.getBuffer(drawState.indexCount()), sequential.type());
             }
-            pass.drawIndexed(0, 0, drawState.indexCount(), 1);
+            pass.drawIndexed(drawState.indexCount(), 1, 0, 0, 0);
         }
     }
 

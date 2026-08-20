@@ -1,5 +1,7 @@
 package com.jvn.cirrus.mixin;
 
+import com.jvn.cirrus.client.CirrusLightningLocator;
+import com.jvn.cirrus.client.CirrusRenderers;
 import com.jvn.cirrus.client.CirrusTimeTransition;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import net.minecraft.client.DeltaTracker;
@@ -32,6 +34,13 @@ public abstract class GameRendererMixin {
             CallbackInfo ci
     ) {
         CirrusTimeTransition.endFrame();
+    }
+
+    @Inject(method = "setLevel", at = @At("HEAD"))
+    private void cirrus$releaseOnWorldChange(ClientLevel newLevel, CallbackInfo ci) {
+        CirrusRenderers.clouds().invalidate();
+        CirrusRenderers.aurora().invalidate();
+        CirrusLightningLocator.invalidate();
     }
 
     @Inject(method = "renderLevel", at = @At("HEAD"))

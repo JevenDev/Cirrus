@@ -1,5 +1,6 @@
 package com.jvn.cirrus.mixin;
 
+import com.jvn.cirrus.client.CirrusCloudAttachment;
 import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusRenderers;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
@@ -7,14 +8,29 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.CloudRenderer;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Optional;
+
 @Mixin(CloudRenderer.class)
 public abstract class CloudRendererMixin {
+    @Inject(method = "apply", at = @At("HEAD"))
+    private void cirrus$releaseOnReload(
+            Optional<CloudRenderer.TextureData> preparations,
+            ResourceManager resourceManager,
+            ProfilerFiller profiler,
+            CallbackInfo ci
+    ) {
+        CirrusRenderers.clouds().invalidate();
+        CirrusCloudAttachment.invalidate();
+    }
+
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void cirrus$renderClouds(
             int color,

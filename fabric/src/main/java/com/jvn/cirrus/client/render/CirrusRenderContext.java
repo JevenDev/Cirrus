@@ -78,6 +78,14 @@ public final class CirrusRenderContext {
         return ticks;
     }
 
+    public static boolean hasVisibleClouds() {
+        if (camera == null) {
+            return false;
+        }
+        int color = camera.attributeProbe().getValue(EnvironmentAttributes.CLOUD_COLOR, partialTick);
+        return ARGB.alpha(color) > 0;
+    }
+
     public static boolean cloudsRenderedIntoDistantHorizons() {
         return cloudsRenderedIntoDistantHorizons;
     }
@@ -99,14 +107,14 @@ public final class CirrusRenderContext {
     }
 
     public static float sunAngle(float requestedPartialTick) {
-        Camera activeCamera = camera != null ? camera : Minecraft.getInstance().gameRenderer.getMainCamera();
+        Camera activeCamera = camera != null ? camera : Minecraft.getInstance().gameRenderer.mainCamera();
         return (float)Math.toRadians(
                 activeCamera.attributeProbe().getValue(EnvironmentAttributes.SUN_ANGLE, requestedPartialTick)
         );
     }
 
     public static Vec3 cloudColor(float requestedPartialTick) {
-        Camera activeCamera = camera != null ? camera : Minecraft.getInstance().gameRenderer.getMainCamera();
+        Camera activeCamera = camera != null ? camera : Minecraft.getInstance().gameRenderer.mainCamera();
         int color = activeCamera.attributeProbe()
                 .getValue(EnvironmentAttributes.CLOUD_COLOR, requestedPartialTick);
         return new Vec3(ARGB.red(color) / 255.0, ARGB.green(color) / 255.0, ARGB.blue(color) / 255.0);
@@ -116,7 +124,7 @@ public final class CirrusRenderContext {
         if (requestedLevel == level && Float.isFinite(cloudHeight)) {
             return cloudHeight;
         }
-        Camera mainCamera = Minecraft.getInstance().gameRenderer.getMainCamera();
+        Camera mainCamera = Minecraft.getInstance().gameRenderer.mainCamera();
         Vec3 position = mainCamera.position();
         return requestedLevel.environmentAttributes().getValue(EnvironmentAttributes.CLOUD_HEIGHT, position);
     }
@@ -125,7 +133,7 @@ public final class CirrusRenderContext {
         if (requestedLevel == level && camera != null) {
             return camera.attributeProbe().getValue(EnvironmentAttributes.STAR_BRIGHTNESS, requestedPartialTick);
         }
-        return Minecraft.getInstance().gameRenderer.getMainCamera().attributeProbe()
+        return Minecraft.getInstance().gameRenderer.mainCamera().attributeProbe()
                 .getValue(EnvironmentAttributes.STAR_BRIGHTNESS, requestedPartialTick);
     }
 

@@ -15,33 +15,29 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.state.OptionsRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.minecraft.server.packs.resources.ResourceManager;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 @Mixin(LevelRenderer.class)
 public abstract class LevelRendererCloudMixin {
-    @Shadow private ClientLevel level;
-    @Shadow private int ticks;
     @Unique private CloudStatus cirrus$lastCloudMode;
-    @Unique private final Consumer<float[]> cirrus$renderCloudsIntoDistantHorizons =
+    @Unique private final BiConsumer<float[], float[]> cirrus$renderCloudsIntoDistantHorizons =
             this::cirrus$renderCloudsIntoDistantHorizons;
     @Unique private final Matrix4f cirrus$dhProjectionMatrix = new Matrix4f();
+    @Unique private final Matrix4f cirrus$dhModelViewMatrix = new Matrix4f();
 
-    @Inject(method = "renderLevel", at = @At("HEAD"))
+    @Inject(method = "render", at = @At("HEAD"))
     private void cirrus$beginFrame(
             GraphicsResourceAllocator allocator,
             DeltaTracker deltaTracker,
@@ -51,12 +47,16 @@ public abstract class LevelRendererCloudMixin {
             GpuBufferSlice shaderFog,
             Vector4f fogColor,
             boolean renderSky,
-            ChunkSectionsToRender chunkSectionsToRender,
             CallbackInfo ci
     ) {
         CirrusShaders.preloadSamplerTextures(Minecraft.getInstance());
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return;
+        }
+        int ticks = (int)level.getGameTime();
         float partialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
-        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+        Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
         CirrusRenderContext.capture(
                 level, camera, new Matrix4f(modelViewMatrix),
                 cameraState.projectionMatrix, fogColor, partialTick, ticks
@@ -64,7 +64,8 @@ public abstract class LevelRendererCloudMixin {
         CirrusCloudAttachment.updateRenderTicks(ticks);
         DistantHorizonsCompat.setBeforeApplyShaderCallback(
                 DistantHorizonsCompat.shouldPrioritizeCirrusClouds()
-                        ? cirrus$renderCloudsIntoDistantHorizons
+                        && CirrusRenderContext.hasVisibleClouds()
+                                ? cirrus$renderCloudsIntoDistantHorizons
                         : null
         );
 
@@ -77,7 +78,7 @@ public abstract class LevelRendererCloudMixin {
         }
     }
 
-    @Inject(method = "renderLevel", at = @At("RETURN"))
+    @Inject(method = "render", at = @At("RETURN"))
     private void cirrus$endFrame(
             GraphicsResourceAllocator allocator,
             DeltaTracker deltaTracker,
@@ -87,7 +88,6 @@ public abstract class LevelRendererCloudMixin {
             GpuBufferSlice shaderFog,
             Vector4f fogColor,
             boolean renderSky,
-            ChunkSectionsToRender chunkSectionsToRender,
             CallbackInfo ci
     ) {
         DistantHorizonsCompat.setBeforeApplyShaderCallback(null);
@@ -95,7 +95,7 @@ public abstract class LevelRendererCloudMixin {
     }
 
     @Redirect(
-            method = "renderLevel",
+            method = "render",
             at = @At(
                     value = "FIELD",
                     target = "Lnet/minecraft/client/renderer/state/OptionsRenderState;cloudStatus:Lnet/minecraft/client/CloudStatus;"
@@ -107,11 +107,17 @@ public abstract class LevelRendererCloudMixin {
     }
 
     @Unique
-    private void cirrus$renderCloudsIntoDistantHorizons(float[] dhProjectionMatrix) {
+    private void cirrus$renderCloudsIntoDistantHorizons(
+            float[] dhProjectionMatrix,
+            float[] dhModelViewMatrix
+    ) {
         if (dhProjectionMatrix == null
                 || dhProjectionMatrix.length != 16
                 || CirrusRenderContext.cloudsRenderedIntoDistantHorizons()
+                || dhModelViewMatrix == null
+                || dhModelViewMatrix.length != 16
                 || !CirrusRenderContext.isReady()
+                || !CirrusRenderContext.hasVisibleClouds()
                 || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudStatus())) {
             return;
         }
@@ -120,12 +126,12 @@ public abstract class LevelRendererCloudMixin {
         CirrusRenderContext.beginRenderingCloudsForDistantHorizons();
         try {
             CirrusRenderers.clouds().render(
-                    level,
+                    CirrusRenderContext.level(),
                     new com.mojang.blaze3d.vertex.PoseStack(),
-                    CirrusRenderContext.frustumMatrix(),
+                    cirrus$dhModelViewMatrix.set(dhModelViewMatrix).transpose(),
                     cirrus$dhProjectionMatrix.set(dhProjectionMatrix).transpose(),
                     CirrusRenderContext.partialTick(),
-                    ticks,
+                    CirrusRenderContext.ticks(),
                     CirrusRenderContext.camera().position().x,
                     CirrusRenderContext.camera().position().y,
                     CirrusRenderContext.camera().position().z
@@ -133,19 +139,6 @@ public abstract class LevelRendererCloudMixin {
         } finally {
             CirrusRenderContext.endRenderingCloudsForDistantHorizons();
         }
-    }
-
-    @Inject(method = "setLevel", at = @At("HEAD"))
-    private void cirrus$releaseOnWorldChange(ClientLevel newLevel, CallbackInfo ci) {
-        CirrusRenderers.clouds().invalidate();
-        CirrusRenderers.aurora().invalidate();
-        CirrusLightningLocator.invalidate();
-    }
-
-    @Inject(method = "onResourceManagerReload", at = @At("HEAD"))
-    private void cirrus$releaseOnReload(ResourceManager resourceManager, CallbackInfo ci) {
-        CirrusRenderers.clouds().invalidate();
-        CirrusCloudAttachment.invalidate();
     }
 
     @Inject(method = "close", at = @At("HEAD"))

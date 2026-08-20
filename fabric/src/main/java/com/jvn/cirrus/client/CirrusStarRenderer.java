@@ -6,12 +6,12 @@ import static com.jvn.cirrus.client.util.CirrusRandom.signedFloat;
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.render.CirrusUniform;
+import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.jvn.cirrus.client.render.CirrusVertexBuffer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import java.util.Random;
 import net.minecraft.client.multiplayer.ClientLevel;
 import com.jvn.cirrus.client.render.CirrusShader;
@@ -148,7 +148,6 @@ public final class CirrusStarRenderer implements AutoCloseable {
         }
 
         if (renderStarField) {
-            starBuffer.bind();
             starBuffer.drawWithShader(modelViewMatrix, projectionMatrix, shader);
         }
 
@@ -156,7 +155,6 @@ public final class CirrusStarRenderer implements AutoCloseable {
             if (renderMode != null) {
                 renderMode.set(2.0F);
             }
-            shootingStarBuffer.bind();
             shootingStarBuffer.drawWithShader(fixedSkyModelViewMatrix, projectionMatrix, shader);
         }
 
@@ -174,7 +172,6 @@ public final class CirrusStarRenderer implements AutoCloseable {
             if (renderMode != null) {
                 renderMode.set(1.0F);
             }
-            northStarBuffer.bind();
             northStarBuffer.drawWithShader(fixedSkyModelViewMatrix, projectionMatrix, shader);
         }
     }
@@ -185,8 +182,10 @@ public final class CirrusStarRenderer implements AutoCloseable {
         }
 
         Random random = new Random(STAR_SEED);
-        BufferBuilder builder = Tesselator.getInstance().begin(
-            VertexFormat.Mode.QUADS,
+        ByteBufferBuilder starSourceBuffer = new ByteBufferBuilder(1024);
+        BufferBuilder builder = new BufferBuilder(
+            starSourceBuffer,
+            PrimitiveTopology.QUADS,
             DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
         );
         for (int index = 0; index < MAX_STAR_COUNT; index++) {
@@ -223,13 +222,13 @@ public final class CirrusStarRenderer implements AutoCloseable {
 
         MeshData mesh = builder.buildOrThrow();
         starBuffer = new CirrusVertexBuffer();
-        starBuffer.bind();
-        starBuffer.upload(mesh);
-        CirrusVertexBuffer.unbind();
+        starBuffer.upload(mesh, starSourceBuffer);
 
         Random shootingRandom = new Random(SHOOTING_STAR_SEED);
-        BufferBuilder shootingBuilder = Tesselator.getInstance().begin(
-            VertexFormat.Mode.QUADS,
+        ByteBufferBuilder shootingStarSourceBuffer = new ByteBufferBuilder(1024);
+        BufferBuilder shootingBuilder = new BufferBuilder(
+            shootingStarSourceBuffer,
+            PrimitiveTopology.QUADS,
             DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
         );
         for (int index = 0; index < SHOOTING_STAR_CANDIDATE_COUNT; index++) {
@@ -268,9 +267,7 @@ public final class CirrusStarRenderer implements AutoCloseable {
         }
 
         shootingStarBuffer = new CirrusVertexBuffer();
-        shootingStarBuffer.bind();
-        shootingStarBuffer.upload(shootingBuilder.buildOrThrow());
-        CirrusVertexBuffer.unbind();
+        shootingStarBuffer.upload(shootingBuilder.buildOrThrow(), shootingStarSourceBuffer);
 
         float northElevation = (float)Math.toRadians(45.0);
         Vector3f northDirection = new Vector3f(
@@ -278,8 +275,10 @@ public final class CirrusStarRenderer implements AutoCloseable {
             Mth.sin(northElevation),
             -Mth.cos(northElevation)
         );
-        BufferBuilder northBuilder = Tesselator.getInstance().begin(
-            VertexFormat.Mode.QUADS,
+        ByteBufferBuilder northStarSourceBuffer = new ByteBufferBuilder(1024);
+        BufferBuilder northBuilder = new BufferBuilder(
+            northStarSourceBuffer,
+            PrimitiveTopology.QUADS,
             DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
         );
         for (float[] corner : CORNERS) {
@@ -294,9 +293,7 @@ public final class CirrusStarRenderer implements AutoCloseable {
         }
 
         northStarBuffer = new CirrusVertexBuffer();
-        northStarBuffer.bind();
-        northStarBuffer.upload(northBuilder.buildOrThrow());
-        CirrusVertexBuffer.unbind();
+        northStarBuffer.upload(northBuilder.buildOrThrow(), northStarSourceBuffer);
     }
 
     @Override

@@ -6,13 +6,13 @@ import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.client.util.CirrusShaderUniforms;
 import com.jvn.cirrus.client.render.CirrusUniform;
+import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.jvn.cirrus.client.render.CirrusVertexBuffer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import com.jvn.cirrus.client.render.CirrusShader;
@@ -123,7 +123,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         poseStack.mulPose(frustumMatrix);
         poseStack.scale(WORLD_SCALE, 1.0F, WORLD_SCALE);
         poseStack.translate(-(sampleX - mesh.cachedAnchorX), relativeHeight, -(sampleZ - mesh.cachedAnchorZ));
-        mesh.buffer.bind();
         CirrusShader shader = CirrusShaders.cloudMask();
         CirrusShaderUniforms.setUniform(
                 shader,
@@ -293,11 +292,10 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         }
 
         mesh.closeBuffer();
-        MeshData builtMesh = buildMesh(distanceChunks, anchorX, anchorZ, style);
+        ByteBufferBuilder sourceBuffer = new ByteBufferBuilder(1024);
+        MeshData builtMesh = buildMesh(sourceBuffer, distanceChunks, anchorX, anchorZ, style);
         mesh.buffer = new CirrusVertexBuffer();
-        mesh.buffer.bind();
-        mesh.buffer.upload(builtMesh);
-        CirrusVertexBuffer.unbind();
+        mesh.buffer.upload(builtMesh, sourceBuffer);
         mesh.cachedLevel = level;
         mesh.cachedDistanceChunks = distanceChunks;
         mesh.cachedStyle = style;
@@ -367,7 +365,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 );
             }
             mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
-            if (Minecraft.useShaderTransparency()
+            if (Minecraft.getInstance().gameRenderer.gameRenderState().useShaderTransparency()
                     && !renderingForDistantHorizons) {
                 mesh.buffer.drawWithShader(
                         poseStack.last().pose(),
@@ -499,10 +497,15 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     }
 
     private MeshData buildMesh(
-            int distanceChunks, int anchorX, int anchorZ, CirrusConfig.CloudStyle style
+            ByteBufferBuilder sourceBuffer,
+            int distanceChunks,
+            int anchorX,
+            int anchorZ,
+            CirrusConfig.CloudStyle style
     ) {
-        BufferBuilder builder = Tesselator.getInstance().begin(
-                VertexFormat.Mode.QUADS,
+        BufferBuilder builder = new BufferBuilder(
+                sourceBuffer,
+                PrimitiveTopology.QUADS,
                 DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
         );
         float radius = distanceChunks * 16.0F / WORLD_SCALE;

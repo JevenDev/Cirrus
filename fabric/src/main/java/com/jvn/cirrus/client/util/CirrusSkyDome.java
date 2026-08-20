@@ -1,11 +1,11 @@
 package com.jvn.cirrus.client.util;
 
+import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.jvn.cirrus.client.render.CirrusVertexBuffer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.util.Mth;
 
 public final class CirrusSkyDome {
@@ -21,8 +21,10 @@ public final class CirrusSkyDome {
     ) {
         validate(radius, azimuthSegments, elevationSegments, minimumElevation, maximumElevation);
 
-        BufferBuilder builder = Tesselator.getInstance().begin(
-                VertexFormat.Mode.QUADS,
+        ByteBufferBuilder sourceBuffer = new ByteBufferBuilder(1024);
+        BufferBuilder builder = new BufferBuilder(
+                sourceBuffer,
+                PrimitiveTopology.QUADS,
                 DefaultVertexFormat.POSITION
         );
         for (int elevationIndex = 0; elevationIndex < elevationSegments; elevationIndex++) {
@@ -48,14 +50,11 @@ public final class CirrusSkyDome {
 
         MeshData mesh = builder.buildOrThrow();
         CirrusVertexBuffer buffer = new CirrusVertexBuffer();
-        buffer.bind();
         try {
-            buffer.upload(mesh);
+            buffer.upload(mesh, sourceBuffer);
         } catch (RuntimeException exception) {
             buffer.close();
             throw exception;
-        } finally {
-            CirrusVertexBuffer.unbind();
         }
         return buffer;
     }

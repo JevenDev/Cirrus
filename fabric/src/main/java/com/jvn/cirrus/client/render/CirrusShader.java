@@ -1,8 +1,11 @@
 package com.jvn.cirrus.client.render;
 
 import com.jvn.cirrus.Cirrus;
+import com.mojang.blaze3d.GpuFormat;
+import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
+import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
@@ -121,19 +124,22 @@ public final class CirrusShader {
             boolean depthWrite,
             boolean depthVariant
     ) {
+        BindGroupLayout.Builder bindGroupLayout = BindGroupLayout.builder()
+                .withUniform("CirrusMatrices", UniformType.UNIFORM_BUFFER);
+        if (!uniforms.isEmpty()) {
+            bindGroupLayout.withUniform("CirrusParams", UniformType.UNIFORM_BUFFER);
+        }
+        if (textured) {
+            bindGroupLayout.withSampler("Sampler0");
+        }
         RenderPipeline.Builder builder = RenderPipeline.builder()
                 .withLocation(Cirrus.id("pipeline/" + pipelineName))
                 .withVertexShader(Cirrus.id("core/" + name))
                 .withFragmentShader(Cirrus.id("core/" + name))
-                .withUniform("CirrusMatrices", UniformType.UNIFORM_BUFFER)
+                .withBindGroupLayout(bindGroupLayout.build())
                 .withCull(false)
-                .withVertexFormat(vertexFormat, VertexFormat.Mode.QUADS);
-        if (!uniforms.isEmpty()) {
-            builder.withUniform("CirrusParams", UniformType.UNIFORM_BUFFER);
-        }
-        if (textured) {
-            builder.withSampler("Sampler0");
-        }
+                .withVertexBinding(0, vertexFormat)
+                .withPrimitiveTopology(PrimitiveTopology.QUADS);
 
         BlendFunction blendFunction = null;
         if (!depthVariant) {
@@ -145,9 +151,10 @@ public final class CirrusShader {
         }
         builder.withColorTargetState(new ColorTargetState(
                 Optional.ofNullable(blendFunction),
+                GpuFormat.RGBA8_UNORM,
                 colorWrite ? ColorTargetState.WRITE_ALL : ColorTargetState.WRITE_NONE
         ));
-        builder.withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, depthWrite));
+        builder.withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, depthWrite));
         return RenderPipelines.register(builder.build());
     }
 

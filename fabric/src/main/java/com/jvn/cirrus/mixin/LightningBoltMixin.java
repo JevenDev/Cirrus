@@ -16,7 +16,7 @@ public abstract class LightningBoltMixin {
             CallbackInfoReturnable<Boolean> cir
     ) {
         Minecraft minecraft = Minecraft.getInstance();
-        Vec3 cameraPosition = minecraft.gameRenderer.getMainCamera().position();
+        Vec3 cameraPosition = minecraft.gameRenderer.mainCamera().position();
         LightningBolt lightning = (LightningBolt)(Object)this;
         double offsetX = lightning.getX() - cameraPosition.x;
         double offsetZ = lightning.getZ() - cameraPosition.z;
