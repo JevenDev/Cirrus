@@ -30,16 +30,17 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 @Mixin(LevelRenderer.class)
 public abstract class LevelRendererCloudMixin {
     @Shadow private ClientLevel level;
     @Shadow private int ticks;
     @Unique private CloudStatus cirrus$lastCloudMode;
-    @Unique private final Consumer<float[]> cirrus$renderCloudsIntoDistantHorizons =
+    @Unique private final BiConsumer<float[], float[]> cirrus$renderCloudsIntoDistantHorizons =
             this::cirrus$renderCloudsIntoDistantHorizons;
     @Unique private final Matrix4f cirrus$dhProjectionMatrix = new Matrix4f();
+    @Unique private final Matrix4f cirrus$dhModelViewMatrix = new Matrix4f();
 
     @Inject(method = "renderLevel", at = @At("HEAD"))
     private void cirrus$beginFrame(
@@ -64,7 +65,8 @@ public abstract class LevelRendererCloudMixin {
         CirrusCloudAttachment.updateRenderTicks(ticks);
         DistantHorizonsCompat.setBeforeApplyShaderCallback(
                 DistantHorizonsCompat.shouldPrioritizeCirrusClouds()
-                        ? cirrus$renderCloudsIntoDistantHorizons
+                        && CirrusRenderContext.hasVisibleClouds()
+                                ? cirrus$renderCloudsIntoDistantHorizons
                         : null
         );
 
@@ -107,11 +109,17 @@ public abstract class LevelRendererCloudMixin {
     }
 
     @Unique
-    private void cirrus$renderCloudsIntoDistantHorizons(float[] dhProjectionMatrix) {
+    private void cirrus$renderCloudsIntoDistantHorizons(
+            float[] dhProjectionMatrix,
+            float[] dhModelViewMatrix
+    ) {
         if (dhProjectionMatrix == null
                 || dhProjectionMatrix.length != 16
                 || CirrusRenderContext.cloudsRenderedIntoDistantHorizons()
+                || dhModelViewMatrix == null
+                || dhModelViewMatrix.length != 16
                 || !CirrusRenderContext.isReady()
+                || !CirrusRenderContext.hasVisibleClouds()
                 || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudStatus())) {
             return;
         }
@@ -122,7 +130,7 @@ public abstract class LevelRendererCloudMixin {
             CirrusRenderers.clouds().render(
                     level,
                     new com.mojang.blaze3d.vertex.PoseStack(),
-                    CirrusRenderContext.frustumMatrix(),
+                    cirrus$dhModelViewMatrix.set(dhModelViewMatrix).transpose(),
                     cirrus$dhProjectionMatrix.set(dhProjectionMatrix).transpose(),
                     CirrusRenderContext.partialTick(),
                     ticks,

@@ -48,14 +48,11 @@ public final class CirrusSkyDome {
 
         MeshData mesh = builder.buildOrThrow();
         CirrusVertexBuffer buffer = new CirrusVertexBuffer();
-        buffer.bind();
         try {
             buffer.upload(mesh);
         } catch (RuntimeException exception) {
             buffer.close();
             throw exception;
-        } finally {
-            CirrusVertexBuffer.unbind();
         }
         return buffer;
     }

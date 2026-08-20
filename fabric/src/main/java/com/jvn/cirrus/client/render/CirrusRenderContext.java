@@ -78,6 +78,14 @@ public final class CirrusRenderContext {
         return ticks;
     }
 
+    public static boolean hasVisibleClouds() {
+        if (camera == null) {
+            return false;
+        }
+        int color = camera.attributeProbe().getValue(EnvironmentAttributes.CLOUD_COLOR, partialTick);
+        return ARGB.alpha(color) > 0;
+    }
+
     public static boolean cloudsRenderedIntoDistantHorizons() {
         return cloudsRenderedIntoDistantHorizons;
     }

@@ -1,5 +1,5 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.15.5' apply false
+    id 'net.fabricmc.fabric-loom' version '1.17.19' apply false
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -38,7 +38,7 @@ subprojects {
     apply plugin: 'maven-publish'
 
     base {
-        archivesName = "${rootProject.archives_base_name}-${project.name}-${rootProject.minecraft_version}"
+        archivesName = "${rootProject.archives_base_name}-${project.name}-${rootProject.minecraft_version_label}"
     }
 
     java {

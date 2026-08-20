@@ -123,7 +123,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         poseStack.mulPose(frustumMatrix);
         poseStack.scale(WORLD_SCALE, 1.0F, WORLD_SCALE);
         poseStack.translate(-(sampleX - mesh.cachedAnchorX), relativeHeight, -(sampleZ - mesh.cachedAnchorZ));
-        mesh.buffer.bind();
         CirrusShader shader = CirrusShaders.cloudMask();
         CirrusShaderUniforms.setUniform(
                 shader,
@@ -295,9 +294,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         mesh.closeBuffer();
         MeshData builtMesh = buildMesh(distanceChunks, anchorX, anchorZ, style);
         mesh.buffer = new CirrusVertexBuffer();
-        mesh.buffer.bind();
         mesh.buffer.upload(builtMesh);
-        CirrusVertexBuffer.unbind();
         mesh.cachedLevel = level;
         mesh.cachedDistanceChunks = distanceChunks;
         mesh.cachedStyle = style;

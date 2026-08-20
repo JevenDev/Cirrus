@@ -148,7 +148,6 @@ public final class CirrusStarRenderer implements AutoCloseable {
         }
 
         if (renderStarField) {
-            starBuffer.bind();
             starBuffer.drawWithShader(modelViewMatrix, projectionMatrix, shader);
         }
 
@@ -156,7 +155,6 @@ public final class CirrusStarRenderer implements AutoCloseable {
             if (renderMode != null) {
                 renderMode.set(2.0F);
             }
-            shootingStarBuffer.bind();
             shootingStarBuffer.drawWithShader(fixedSkyModelViewMatrix, projectionMatrix, shader);
         }
 
@@ -174,7 +172,6 @@ public final class CirrusStarRenderer implements AutoCloseable {
             if (renderMode != null) {
                 renderMode.set(1.0F);
             }
-            northStarBuffer.bind();
             northStarBuffer.drawWithShader(fixedSkyModelViewMatrix, projectionMatrix, shader);
         }
     }
@@ -223,9 +220,7 @@ public final class CirrusStarRenderer implements AutoCloseable {
 
         MeshData mesh = builder.buildOrThrow();
         starBuffer = new CirrusVertexBuffer();
-        starBuffer.bind();
         starBuffer.upload(mesh);
-        CirrusVertexBuffer.unbind();
 
         Random shootingRandom = new Random(SHOOTING_STAR_SEED);
         BufferBuilder shootingBuilder = Tesselator.getInstance().begin(
@@ -268,9 +263,7 @@ public final class CirrusStarRenderer implements AutoCloseable {
         }
 
         shootingStarBuffer = new CirrusVertexBuffer();
-        shootingStarBuffer.bind();
         shootingStarBuffer.upload(shootingBuilder.buildOrThrow());
-        CirrusVertexBuffer.unbind();
 
         float northElevation = (float)Math.toRadians(45.0);
         Vector3f northDirection = new Vector3f(
@@ -294,9 +287,7 @@ public final class CirrusStarRenderer implements AutoCloseable {
         }
 
         northStarBuffer = new CirrusVertexBuffer();
-        northStarBuffer.bind();
         northStarBuffer.upload(northBuilder.buildOrThrow());
-        CirrusVertexBuffer.unbind();
     }
 
     @Override

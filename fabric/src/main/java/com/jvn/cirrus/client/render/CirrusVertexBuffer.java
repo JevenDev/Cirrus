@@ -17,12 +17,6 @@ public final class CirrusVertexBuffer implements AutoCloseable {
     private GpuBuffer indexBuffer;
     private MeshData.DrawState drawState;
 
-    public void bind() {
-    }
-
-    public static void unbind() {
-    }
-
     public void upload(MeshData mesh) {
         close();
         try (mesh) {

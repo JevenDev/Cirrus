@@ -3,7 +3,7 @@ package com.jvn.cirrus.client.compat.distanthorizons;
 import com.jvn.cirrus.config.CirrusConfig;
 import net.fabricmc.loader.api.FabricLoader;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public final class DistantHorizonsCompat {
     private static final String MOD_ID = "distanthorizons";
@@ -48,7 +48,7 @@ public final class DistantHorizonsCompat {
         );
     }
 
-    public static void setBeforeApplyShaderCallback(Consumer<float[]> callback) {
+    public static void setBeforeApplyShaderCallback(BiConsumer<float[], float[]> callback) {
         if (LOADED) {
             DistantHorizonsApiCompat.setBeforeApplyShaderCallback(callback);
         }
