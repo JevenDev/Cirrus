@@ -21,8 +21,7 @@ public abstract class CloudRendererMixin {
             CloudStatus status,
             float cloudHeight,
             Vec3 cameraPosition,
-            long ticks,
-            float partialTick,
+            float ticks,
             CallbackInfo ci
     ) {
         if (!CirrusRenderContext.isReady()
@@ -39,8 +38,8 @@ public abstract class CloudRendererMixin {
                 new PoseStack(),
                 CirrusRenderContext.frustumMatrix(),
                 CirrusRenderContext.projectionMatrix(),
-                partialTick,
-                (int)ticks,
+                CirrusRenderContext.partialTick(),
+                CirrusRenderContext.ticks(),
                 cameraPosition.x,
                 cameraPosition.y,
                 cameraPosition.z

@@ -53,7 +53,7 @@ final class DistantHorizonsApiCompat {
                 } finally {
                     RenderSystem.outputColorTextureOverride = previousColorOverride;
                     RenderSystem.outputDepthTextureOverride = previousDepthOverride;
-                    // Minecraft 1.21.11 render passes bind framebuffer 0 when they close.
+                    // Minecraft render passes bind framebuffer 0 when they close.
                     // DH's apply shader expects its framebuffer to remain bound while it
                     // temporarily attaches Minecraft's color texture for the composite.
                     GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
@@ -199,13 +199,11 @@ final class DistantHorizonsApiCompat {
             this.height = height;
             this.colorView = new ExternalTextureView(
                     new ExternalTexture("Distant Horizons color", TextureFormat.RGBA8,
-                            width, height, colorTexture),
-                    framebuffer
+                            width, height, colorTexture, framebuffer)
             );
             this.depthView = new ExternalTextureView(
                     new ExternalTexture("Distant Horizons depth", TextureFormat.DEPTH32,
-                            width, height, depthTexture),
-                    framebuffer
+                            width, height, depthTexture, framebuffer)
             );
         }
 
@@ -225,14 +223,18 @@ final class DistantHorizonsApiCompat {
     }
 
     private static final class ExternalTexture extends GlTexture {
+        private final int framebuffer;
+
         private ExternalTexture(
                 String label,
                 TextureFormat format,
                 int width,
                 int height,
-                int id
+                int id,
+                int framebuffer
         ) {
             super(GpuTexture.USAGE_RENDER_ATTACHMENT, label, format, width, height, 1, 1, id);
+            this.framebuffer = framebuffer;
         }
 
         @Override
@@ -244,19 +246,16 @@ final class DistantHorizonsApiCompat {
         public boolean isClosed() {
             return false;
         }
-    }
-
-    private static final class ExternalTextureView extends GlTextureView {
-        private final int framebuffer;
-
-        private ExternalTextureView(ExternalTexture texture, int framebuffer) {
-            super(texture, 0, 1);
-            this.framebuffer = framebuffer;
-        }
 
         @Override
         public int getFbo(DirectStateAccess directStateAccess, GpuTexture depthTexture) {
             return framebuffer;
+        }
+    }
+
+    private static final class ExternalTextureView extends GlTextureView {
+        private ExternalTextureView(ExternalTexture texture) {
+            super(texture, 0, 1);
         }
 
         @Override

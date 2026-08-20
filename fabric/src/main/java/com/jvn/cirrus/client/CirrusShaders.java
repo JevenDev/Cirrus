@@ -6,7 +6,7 @@ import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.client.render.CirrusShader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 public final class CirrusShaders {
     private static final CirrusShader CLOUDS = new CirrusShader(
@@ -14,7 +14,7 @@ public final class CirrusShaders {
             DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL,
             CirrusShader.Blend.TRANSLUCENT,
             CirrusShader.Target.CLOUDS,
-            Identifier.withDefaultNamespace("textures/environment/clouds.png"),
+            ResourceLocation.withDefaultNamespace("textures/environment/clouds.png"),
             true,
             true,
             uniform("ColorModulator", 4, 1.0F, 1.0F, 1.0F, 1.0F),
@@ -40,7 +40,7 @@ public final class CirrusShaders {
             DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL,
             CirrusShader.Blend.NONE,
             CirrusShader.Target.MAIN,
-            Identifier.withDefaultNamespace("textures/environment/clouds.png"),
+            ResourceLocation.withDefaultNamespace("textures/environment/clouds.png"),
             false,
             true,
             uniform("CirrusRainCloudCoverage", 1, 0.0F),
@@ -145,7 +145,7 @@ public final class CirrusShaders {
         }
 
         minecraft.getTextureManager().getTexture(
-                Identifier.withDefaultNamespace("textures/environment/clouds.png")
+                ResourceLocation.withDefaultNamespace("textures/environment/clouds.png")
         );
         minecraft.getTextureManager().getTexture(Cirrus.texture("environment/north_star.png"));
         samplerTexturesLoaded = true;

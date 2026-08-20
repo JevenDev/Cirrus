@@ -14,13 +14,13 @@ import java.nio.ByteOrder;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
 
 public final class CirrusShader {
     private final String name;
     private final Target target;
-    private final Identifier texture;
+    private final ResourceLocation texture;
     private final Map<String, CirrusUniform> uniforms = new LinkedHashMap<>();
     private final RenderPipeline colorPipeline;
     private final RenderPipeline depthPipeline;
@@ -31,7 +31,7 @@ public final class CirrusShader {
             VertexFormat vertexFormat,
             Blend blend,
             Target target,
-            Identifier texture,
+            ResourceLocation texture,
             boolean colorWrite,
             boolean depthWrite,
             UniformSpec... specs
@@ -59,7 +59,7 @@ public final class CirrusShader {
         return uniforms.get(uniformName);
     }
 
-    public Identifier texture() {
+    public ResourceLocation texture() {
         return texture;
     }
 

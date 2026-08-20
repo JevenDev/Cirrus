@@ -9,7 +9,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SkyRenderer;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.MoonPhase;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -24,10 +23,8 @@ public abstract class SkyRendererMixin {
     @Inject(method = "renderSunMoonAndStars", at = @At("HEAD"))
     private void cirrus$renderMilkyWay(
             PoseStack poseStack,
-            float sunAngle,
-            float moonAngle,
-            float starAngle,
-            MoonPhase moonPhase,
+            float timeOfDay,
+            int moonPhase,
             float rainBrightness,
             float starBrightness,
             CallbackInfo ci
@@ -45,10 +42,8 @@ public abstract class SkyRendererMixin {
     @Inject(method = "renderSunMoonAndStars", at = @At("TAIL"))
     private void cirrus$renderAuroraAndLightning(
             PoseStack poseStack,
-            float sunAngle,
-            float moonAngle,
-            float starAngle,
-            MoonPhase moonPhase,
+            float timeOfDay,
+            int moonPhase,
             float rainBrightness,
             float starBrightness,
             CallbackInfo ci

@@ -265,7 +265,7 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
     }
 
     private static void fillVariant(ClientLevel level, long night, float[] variant) {
-        long dimensionSalt = (long)level.dimension().identifier().hashCode() * 0x9E3779B97F4A7C15L;
+        long dimensionSalt = (long)level.dimension().location().hashCode() * 0x9E3779B97F4A7C15L;
         long key = night ^ dimensionSalt;
         variant[0] = variationValue(key, 0x243F6A8885A308D3L);
         variant[1] = variationValue(key, 0x13198A2E03707344L);

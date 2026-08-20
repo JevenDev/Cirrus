@@ -15,7 +15,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import java.util.Random;
 import net.minecraft.client.multiplayer.ClientLevel;
 import com.jvn.cirrus.client.render.CirrusShader;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -27,7 +27,7 @@ public final class CirrusStarRenderer implements AutoCloseable {
     private static final float CELESTIAL_RADIUS = 100.0F;
     private static final long STAR_SEED = 10842L;
     private static final long SHOOTING_STAR_SEED = 734287L;
-    private static final Identifier NORTH_STAR_TEXTURE =
+    private static final ResourceLocation NORTH_STAR_TEXTURE =
             Cirrus.texture("environment/north_star.png");
     private static final float FULL_ROTATION = (float)(Math.PI * 2.0);
     private static final float[][] CORNERS = {
@@ -148,7 +148,6 @@ public final class CirrusStarRenderer implements AutoCloseable {
         }
 
         if (renderStarField) {
-            starBuffer.bind();
             starBuffer.drawWithShader(modelViewMatrix, projectionMatrix, shader);
         }
 
@@ -156,7 +155,6 @@ public final class CirrusStarRenderer implements AutoCloseable {
             if (renderMode != null) {
                 renderMode.set(2.0F);
             }
-            shootingStarBuffer.bind();
             shootingStarBuffer.drawWithShader(fixedSkyModelViewMatrix, projectionMatrix, shader);
         }
 
@@ -174,7 +172,6 @@ public final class CirrusStarRenderer implements AutoCloseable {
             if (renderMode != null) {
                 renderMode.set(1.0F);
             }
-            northStarBuffer.bind();
             northStarBuffer.drawWithShader(fixedSkyModelViewMatrix, projectionMatrix, shader);
         }
     }
@@ -223,9 +220,7 @@ public final class CirrusStarRenderer implements AutoCloseable {
 
         MeshData mesh = builder.buildOrThrow();
         starBuffer = new CirrusVertexBuffer();
-        starBuffer.bind();
         starBuffer.upload(mesh);
-        CirrusVertexBuffer.unbind();
 
         Random shootingRandom = new Random(SHOOTING_STAR_SEED);
         BufferBuilder shootingBuilder = Tesselator.getInstance().begin(
@@ -268,9 +263,7 @@ public final class CirrusStarRenderer implements AutoCloseable {
         }
 
         shootingStarBuffer = new CirrusVertexBuffer();
-        shootingStarBuffer.bind();
         shootingStarBuffer.upload(shootingBuilder.buildOrThrow());
-        CirrusVertexBuffer.unbind();
 
         float northElevation = (float)Math.toRadians(45.0);
         Vector3f northDirection = new Vector3f(
@@ -294,9 +287,7 @@ public final class CirrusStarRenderer implements AutoCloseable {
         }
 
         northStarBuffer = new CirrusVertexBuffer();
-        northStarBuffer.bind();
         northStarBuffer.upload(northBuilder.buildOrThrow());
-        CirrusVertexBuffer.unbind();
     }
 
     @Override

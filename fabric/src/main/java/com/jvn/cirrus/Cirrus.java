@@ -3,7 +3,7 @@ package com.jvn.cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,11 +23,11 @@ public final class Cirrus {
         }
     }
 
-    public static Identifier id(String path) {
-        return Identifier.fromNamespaceAndPath(MOD_ID, path);
+    public static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 
-    public static Identifier texture(String path) {
+    public static ResourceLocation texture(String path) {
         return id("textures/" + path);
     }
 }

@@ -5,7 +5,7 @@ import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LightningBolt;
@@ -20,8 +20,8 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class CirrusCloudAttachment {
-    private static final Identifier CLOUDS_LOCATION =
-            Identifier.withDefaultNamespace("textures/environment/clouds.png");
+    private static final ResourceLocation CLOUDS_LOCATION =
+            ResourceLocation.withDefaultNamespace("textures/environment/clouds.png");
     private static final double WORLD_SCALE = 12.0;
     private static final double PATTERN_SIZE = 256.0;
     private static final int SEARCH_RADIUS = 12;

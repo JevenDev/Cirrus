@@ -17,12 +17,6 @@ public final class CirrusVertexBuffer implements AutoCloseable {
     private GpuBuffer indexBuffer;
     private MeshData.DrawState drawState;
 
-    public void bind() {
-    }
-
-    public static void unbind() {
-    }
-
     public void upload(MeshData mesh) {
         close();
         try (mesh) {
@@ -94,7 +88,7 @@ public final class CirrusVertexBuffer implements AutoCloseable {
             }
             if (shader.texture() != null) {
                 AbstractTexture texture = minecraft.getTextureManager().getTexture(shader.texture());
-                pass.bindTexture("Sampler0", texture.getTextureView(), texture.getSampler());
+                pass.bindSampler("Sampler0", texture.getTextureView());
             }
             pass.setVertexBuffer(0, vertexBuffer);
             if (indexBuffer != null) {

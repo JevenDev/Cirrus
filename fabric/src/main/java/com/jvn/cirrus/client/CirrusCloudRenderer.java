@@ -16,7 +16,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import com.jvn.cirrus.client.render.CirrusShader;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.phys.Vec3;
@@ -31,8 +31,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private static final float SURFACE_EPSILON = 9.765625E-4F;
     private static final float UV_SCALE = 1.0F / 256.0F;
     private static final float TWILIGHT_TRANSITION = (float)Math.toRadians(12.0);
-    private static final Identifier CLOUDS_LOCATION =
-            Identifier.withDefaultNamespace("textures/environment/clouds.png");
+    private static final ResourceLocation CLOUDS_LOCATION =
+            ResourceLocation.withDefaultNamespace("textures/environment/clouds.png");
     private static final int UPPER_PATTERN_OFFSET_X = 37;
     private static final int UPPER_PATTERN_OFFSET_Z = 91;
     private static final int TOP_PATTERN_OFFSET_X = 113;
@@ -123,7 +123,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         poseStack.mulPose(frustumMatrix);
         poseStack.scale(WORLD_SCALE, 1.0F, WORLD_SCALE);
         poseStack.translate(-(sampleX - mesh.cachedAnchorX), relativeHeight, -(sampleZ - mesh.cachedAnchorZ));
-        mesh.buffer.bind();
         CirrusShader shader = CirrusShaders.cloudMask();
         CirrusShaderUniforms.setUniform(
                 shader,
@@ -295,9 +294,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         mesh.closeBuffer();
         MeshData builtMesh = buildMesh(distanceChunks, anchorX, anchorZ, style);
         mesh.buffer = new CirrusVertexBuffer();
-        mesh.buffer.bind();
         mesh.buffer.upload(builtMesh);
-        CirrusVertexBuffer.unbind();
         mesh.cachedLevel = level;
         mesh.cachedDistanceChunks = distanceChunks;
         mesh.cachedStyle = style;

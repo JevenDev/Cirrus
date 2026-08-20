@@ -1,10 +1,8 @@
 package com.jvn.cirrus.client.render;
 
 import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.util.ARGB;
-import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -42,8 +40,7 @@ public final class CirrusRenderContext {
         ticks = capturedTicks;
         cloudsRenderedIntoDistantHorizons = false;
         renderingCloudsForDistantHorizons = false;
-        cloudHeight = capturedCamera.attributeProbe()
-                .getValue(EnvironmentAttributes.CLOUD_HEIGHT, capturedPartialTick);
+        cloudHeight = resolveCloudHeight(capturedLevel);
     }
 
     public static boolean isReady() {
@@ -99,16 +96,11 @@ public final class CirrusRenderContext {
     }
 
     public static float sunAngle(float requestedPartialTick) {
-        Camera activeCamera = camera != null ? camera : Minecraft.getInstance().gameRenderer.getMainCamera();
-        return (float)Math.toRadians(
-                activeCamera.attributeProbe().getValue(EnvironmentAttributes.SUN_ANGLE, requestedPartialTick)
-        );
+        return level != null ? level.getSunAngle(requestedPartialTick) : 0.0F;
     }
 
     public static Vec3 cloudColor(float requestedPartialTick) {
-        Camera activeCamera = camera != null ? camera : Minecraft.getInstance().gameRenderer.getMainCamera();
-        int color = activeCamera.attributeProbe()
-                .getValue(EnvironmentAttributes.CLOUD_COLOR, requestedPartialTick);
+        int color = level != null ? level.getCloudColor(requestedPartialTick) : 0xFFFFFFFF;
         return new Vec3(ARGB.red(color) / 255.0, ARGB.green(color) / 255.0, ARGB.blue(color) / 255.0);
     }
 
@@ -116,17 +108,16 @@ public final class CirrusRenderContext {
         if (requestedLevel == level && Float.isFinite(cloudHeight)) {
             return cloudHeight;
         }
-        Camera mainCamera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        Vec3 position = mainCamera.position();
-        return requestedLevel.environmentAttributes().getValue(EnvironmentAttributes.CLOUD_HEIGHT, position);
+        return resolveCloudHeight(requestedLevel);
+    }
+
+    private static float resolveCloudHeight(ClientLevel requestedLevel) {
+        Integer configuredHeight = requestedLevel.dimensionType().cloudHeight().orElse(null);
+        return configuredHeight != null ? configuredHeight.floatValue() : Float.NaN;
     }
 
     public static float starBrightness(ClientLevel requestedLevel, float requestedPartialTick) {
-        if (requestedLevel == level && camera != null) {
-            return camera.attributeProbe().getValue(EnvironmentAttributes.STAR_BRIGHTNESS, requestedPartialTick);
-        }
-        return Minecraft.getInstance().gameRenderer.getMainCamera().attributeProbe()
-                .getValue(EnvironmentAttributes.STAR_BRIGHTNESS, requestedPartialTick);
+        return requestedLevel.getStarBrightness(requestedPartialTick);
     }
 
     public static void clear() {

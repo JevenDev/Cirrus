@@ -11,10 +11,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.rendertype.OutputTarget;
-import net.minecraft.client.renderer.rendertype.RenderSetup;
-import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
@@ -52,15 +51,23 @@ public final class CirrusLightningRenderer {
     );
     private static final RenderType GLOW_RENDER_TYPE = RenderType.create(
             "cirrus_lightning_glow",
-            RenderSetup.builder(GLOW_PIPELINE)
-                    .setOutputTarget(OutputTarget.WEATHER_TARGET)
-                    .createRenderSetup()
+            RenderType.TRANSIENT_BUFFER_SIZE,
+            false,
+            true,
+            GLOW_PIPELINE,
+            RenderType.CompositeState.builder()
+                    .setOutputState(RenderStateShard.WEATHER_TARGET)
+                    .createCompositeState(false)
     );
     private static final RenderType CORE_RENDER_TYPE = RenderType.create(
             "cirrus_lightning_core",
-            RenderSetup.builder(CORE_PIPELINE)
-                    .setOutputTarget(OutputTarget.WEATHER_TARGET)
-                    .createRenderSetup()
+            RenderType.TRANSIENT_BUFFER_SIZE,
+            false,
+            true,
+            CORE_PIPELINE,
+            RenderType.CompositeState.builder()
+                    .setOutputState(RenderStateShard.WEATHER_TARGET)
+                    .createCompositeState(false)
     );
     private static final Map<Long, CachedGeometry> GEOMETRY_CACHE =
             new LinkedHashMap<>(64, 0.75F, true) {

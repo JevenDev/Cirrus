@@ -45,6 +45,8 @@ Every major effect can be adjusted or turned off.
     *   Requires [Architectury API](https://www.curseforge.com/minecraft/mc-mods/architectury-api) and [YetAnotherConfigLib](https://www.curseforge.com/minecraft/mc-mods/yacl)
 *   **Minecraft 1.21.1 - Fabric**
     *   Requires [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api), [Architectury API](https://www.curseforge.com/minecraft/mc-mods/architectury-api), and [YetAnotherConfigLib](https://www.curseforge.com/minecraft/mc-mods/yacl)
+*   **Minecraft 1.21.10 - Fabric**
+    *   Requires [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api) and [YetAnotherConfigLib](https://www.curseforge.com/minecraft/mc-mods/yacl)
 *   **Minecraft 1.21.11 - Fabric**
     *   Requires [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api) and [YetAnotherConfigLib](https://www.curseforge.com/minecraft/mc-mods/yacl)
 *   **Minecraft 26.1.x - Fabric**
