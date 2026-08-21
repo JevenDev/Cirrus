@@ -1,8 +1,16 @@
 <div align="center">
 
-<h2><strong>The sky's the beginning.</strong></h2>
+<iframe width="900" height="506" src="https://www.youtube-nocookie.com/embed/juhrI-G-xjo" title="Cirrus mod trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+</div>
+
+<br>
+
+<div align="center">
 
 <img src="https://i.imgur.com/m6geeAW.png" alt="Northern lights" width="900">
+
+<h2><strong>The sky's the beginning.</strong></h2>
 
 </div>
 
@@ -57,7 +65,7 @@ Every major effect can be adjusted or turned off!!!
   - Requires [Fabric API](https://modrinth.com/mod/fabric-api) and [YetAnotherConfigLib](https://modrinth.com/mod/yacl)
 - **Minecraft 1.21.11 - Fabric**
   - Requires [Fabric API](https://modrinth.com/mod/fabric-api) and [YetAnotherConfigLib](https://modrinth.com/mod/yacl)
-- **Minecraft 26.1.x - Fabric**
+- **Minecraft 26.1 - Fabric**
   - Requires [Fabric API](https://modrinth.com/mod/fabric-api) and [YetAnotherConfigLib](https://modrinth.com/mod/yacl)
 - **Minecraft 26.2 - Fabric**
   - Requires [Fabric API](https://modrinth.com/mod/fabric-api) and [YetAnotherConfigLib](https://modrinth.com/mod/yacl)
