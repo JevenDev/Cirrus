@@ -14,6 +14,7 @@ public final class CirrusRenderContext {
     private static Camera camera;
     private static Matrix4f frustumMatrix;
     private static Matrix4f projectionMatrix;
+    private static Matrix4f pendingWorldProjectionMatrix;
     private static Vector4f fogColor;
     private static float partialTick;
     private static int ticks;
@@ -22,6 +23,10 @@ public final class CirrusRenderContext {
     private static boolean renderingCloudsForDistantHorizons;
 
     private CirrusRenderContext() {
+    }
+
+    public static void captureWorldProjection(Matrix4f capturedProjection) {
+        pendingWorldProjectionMatrix = new Matrix4f(capturedProjection);
     }
 
     public static void capture(
@@ -36,7 +41,10 @@ public final class CirrusRenderContext {
         level = capturedLevel;
         camera = capturedCamera;
         frustumMatrix = new Matrix4f(capturedFrustum);
-        projectionMatrix = new Matrix4f(capturedProjection);
+        projectionMatrix = pendingWorldProjectionMatrix != null
+                ? pendingWorldProjectionMatrix
+                : new Matrix4f(capturedProjection);
+        pendingWorldProjectionMatrix = null;
         fogColor = new Vector4f(capturedFogColor);
         partialTick = capturedPartialTick;
         ticks = capturedTicks;
@@ -142,6 +150,7 @@ public final class CirrusRenderContext {
         camera = null;
         frustumMatrix = null;
         projectionMatrix = null;
+        pendingWorldProjectionMatrix = null;
         fogColor = null;
         cloudHeight = Float.NaN;
         renderingCloudsForDistantHorizons = false;

@@ -4,10 +4,13 @@ import com.jvn.cirrus.client.CirrusLightningLocator;
 import com.jvn.cirrus.client.CirrusRenderers;
 import com.jvn.cirrus.client.CirrusTimeTransition;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
+import com.jvn.cirrus.client.render.CirrusRenderContext;
+import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
+import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -41,6 +44,21 @@ public abstract class GameRendererMixin {
         CirrusRenderers.clouds().invalidate();
         CirrusRenderers.aurora().invalidate();
         CirrusLightningLocator.invalidate();
+    }
+
+    @Inject(
+            method = "renderLevel",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/LevelRenderer;render(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Lnet/minecraft/client/DeltaTracker;ZLnet/minecraft/client/renderer/state/level/CameraRenderState;Lorg/joml/Matrix4fc;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Vector4f;Z)V"
+            )
+    )
+    private void cirrus$captureWorldProjection(
+            DeltaTracker deltaTracker,
+            CallbackInfo ci,
+            @Local Matrix4f projectionMatrix
+    ) {
+        CirrusRenderContext.captureWorldProjection(projectionMatrix);
     }
 
     @Inject(method = "renderLevel", at = @At("HEAD"))
