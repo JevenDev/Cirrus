@@ -2,6 +2,7 @@ package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusRenderers;
+import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -120,6 +121,7 @@ public abstract class SkyRendererMixin {
     @Inject(method = "renderSun", at = @At("HEAD"))
     private void cirrus$maskSun(float rainBrightness, PoseStack poseStack, CallbackInfo ci) {
         if (!CirrusRenderContext.isReady()
+                || CirrusShaderPackCompat.isShaderPackInUse()
                 || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
             return;
         }
