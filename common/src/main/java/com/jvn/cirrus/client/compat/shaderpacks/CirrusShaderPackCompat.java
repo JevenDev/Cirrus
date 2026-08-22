@@ -297,11 +297,40 @@ public final class CirrusShaderPackCompat {
                         "BORDER_FOG", "false"
                 )
         ),
+        COMPLEMENTARY_UNBOUND(
+                "Complementary Unbound",
+                Map.of(
+                        "CLOUD_STYLE_DEFINE", "50",
+                        "BORDER_FOG", "false"
+                )
+        ),
+        RETHINKING_VOXELS(
+                "Rethinking Voxels",
+                Map.of(
+                        "CLOUD_STYLE_DEFINE", "50",
+                        "BORDER_FOG", "false"
+                )
+        ),
         BSL(
                 "BSL",
                 Map.of(
                         "CLOUDS", "3",
                         "FOG_VANILLA_CLOUD", "0"
+                )
+        ),
+        INSANITY(
+                "Insanity",
+                Map.of("CLOUDS", "2")
+        ),
+        MAKEUP_ULTRA_FAST(
+                "MakeUp Ultra Fast",
+                Map.of("V_CLOUDS", "0")
+        ),
+        MELLOW(
+                "Mellow",
+                Map.of(
+                        "CLOUD_STYLE", "0",
+                        "BORDER_FOG", "false"
                 )
         );
 
@@ -326,8 +355,23 @@ public final class CirrusShaderPackCompat {
             if (normalized.contains("complementaryreimagined")) {
                 return COMPLEMENTARY_REIMAGINED;
             }
+            if (normalized.contains("complementaryunbound")) {
+                return COMPLEMENTARY_UNBOUND;
+            }
+            if (normalized.contains("rethinkingvoxels")) {
+                return RETHINKING_VOXELS;
+            }
             if (normalized.startsWith("bsl")) {
                 return BSL;
+            }
+            if (normalized.startsWith("insanityshader")) {
+                return INSANITY;
+            }
+            if (normalized.startsWith("makeupultrafast")) {
+                return MAKEUP_ULTRA_FAST;
+            }
+            if (normalized.startsWith("mellowshader")) {
+                return MELLOW;
             }
             return null;
         }
