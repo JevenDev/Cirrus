@@ -207,5 +207,13 @@
   "cirrus.config.clouds.topLayerSpeed": "Top Layer Speed",
   "cirrus.config.clouds.topLayerSpeed.description": "Controls top-layer wind speed independently; it defaults slower than the upper layer.",
   "cirrus.config.clouds.topLayerOpacity": "Top Layer Opacity",
-  "cirrus.config.clouds.topLayerOpacity.description": "Controls top-layer transparency independently; it defaults more transparent than the other layers."
+  "cirrus.config.clouds.topLayerOpacity.description": "Controls top-layer transparency independently; it defaults more transparent than the other layers.",
+  "cirrus.shaderpack.fix.prompt": "Cirrus detected incompatible cloud settings in %s.",
+  "cirrus.shaderpack.fix.apply": "[Apply compatibility settings]",
+  "cirrus.shaderpack.fix.apply.hover": "Changes only this shader pack's cloud mode and cloud-fog settings.",
+  "cirrus.shaderpack.fix.applied": "Cirrus compatibility settings were applied to %s. All other shader settings were preserved.",
+  "cirrus.shaderpack.fix.alreadyCompatible": "%s is already configured for Cirrus clouds.",
+  "cirrus.shaderpack.fix.reloadFailed": "Settings were saved for %s, but Iris could not reload them. Reload the shader pack manually.",
+  "cirrus.shaderpack.fix.unsupported": "The active shader pack does not have a Cirrus compatibility profile.",
+  "cirrus.shaderpack.fix.failed": "Cirrus could not update the settings for %s. Check the log for details."
 }

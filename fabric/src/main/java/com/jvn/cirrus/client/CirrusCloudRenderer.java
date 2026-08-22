@@ -2,6 +2,7 @@ package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
+import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.client.util.CirrusShaderUniforms;
@@ -74,14 +75,14 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         double windSample = (ticks + partialTick) * 0.03 / WORLD_SCALE;
         float rainLevel = smoothWeatherLevel(level.getRainLevel(partialTick));
         float thunderLevel = smoothWeatherLevel(level.getThunderLevel(partialTick));
-        prepareLayer(lowerMesh, LOWER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
+        prepareLayer(lowerMesh, LOWER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, false);
         boolean upperEnabled = CirrusConfig.UPPER_LAYER_ENABLED.get();
         boolean topEnabled = CirrusConfig.TOP_LAYER_ENABLED.get();
         if (upperEnabled) {
-            prepareLayer(upperMesh, UPPER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
+            prepareLayer(upperMesh, UPPER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, false);
         }
         if (topEnabled) {
-            prepareLayer(topMesh, TOP_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
+            prepareLayer(topMesh, TOP_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, false);
         }
 
         drawMaskLayer(lowerMesh, LOWER_LAYER, frustumMatrix, projectionMatrix,
@@ -159,6 +160,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         double cameraSampleZ = cameraZ / WORLD_SCALE;
         double cloudTime = ticks + partialTick;
         double windSample = cloudTime * 0.03 / WORLD_SCALE;
+        boolean shaderPackInUse = CirrusShaderPackCompat.isShaderPackInUse();
         float celestialAngle = CirrusRenderContext.sunAngle(partialTick);
         float sunWeight = celestialSunWeight(celestialAngle);
         Vector3f celestialViewDirection = celestialViewDirection(frustumMatrix, celestialAngle);
@@ -175,16 +177,16 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 distanceChunks * 16.0F
         );
 
-        prepareLayer(lowerMesh, LOWER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
+        prepareLayer(lowerMesh, LOWER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, shaderPackInUse);
         boolean upperEnabled = CirrusConfig.UPPER_LAYER_ENABLED.get();
         if (upperEnabled) {
-            prepareLayer(upperMesh, UPPER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
+            prepareLayer(upperMesh, UPPER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, shaderPackInUse);
         } else {
             upperMesh.invalidate();
         }
         boolean topEnabled = CirrusConfig.TOP_LAYER_ENABLED.get();
         if (topEnabled) {
-            prepareLayer(topMesh, TOP_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample);
+            prepareLayer(topMesh, TOP_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, shaderPackInUse);
         } else {
             topMesh.invalidate();
         }
@@ -275,7 +277,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             int distanceChunks,
             double cameraSampleX,
             double cameraSampleZ,
-            double windSample
+            double windSample,
+            boolean shaderPackDistanceFade
     ) {
         CirrusConfig.CloudStyle style = definition.style();
         double sampleX = sampleX(definition, cameraSampleX, windSample);
@@ -286,6 +289,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 && mesh.cachedLevel == level
                 && mesh.cachedDistanceChunks == distanceChunks
                 && mesh.cachedStyle == style
+                && mesh.cachedShaderPackDistanceFade == shaderPackDistanceFade
                 && mesh.cachedAnchorX == anchorX
                 && mesh.cachedAnchorZ == anchorZ) {
             return;
@@ -293,12 +297,15 @@ public final class CirrusCloudRenderer implements AutoCloseable {
 
         mesh.closeBuffer();
         ByteBufferBuilder sourceBuffer = new ByteBufferBuilder(1024);
-        MeshData builtMesh = buildMesh(sourceBuffer, distanceChunks, anchorX, anchorZ, style);
+        MeshData builtMesh = buildMesh(
+                sourceBuffer, distanceChunks, anchorX, anchorZ, style, shaderPackDistanceFade
+        );
         mesh.buffer = new CirrusVertexBuffer();
         mesh.buffer.upload(builtMesh, sourceBuffer);
         mesh.cachedLevel = level;
         mesh.cachedDistanceChunks = distanceChunks;
         mesh.cachedStyle = style;
+        mesh.cachedShaderPackDistanceFade = shaderPackDistanceFade;
         mesh.cachedAnchorX = anchorX;
         mesh.cachedAnchorZ = anchorZ;
     }
@@ -501,14 +508,16 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             int distanceChunks,
             int anchorX,
             int anchorZ,
-            CirrusConfig.CloudStyle style
+            CirrusConfig.CloudStyle style,
+            boolean shaderPackDistanceFade
     ) {
-        BufferBuilder builder = new BufferBuilder(
+        BufferBuilder bufferBuilder = new BufferBuilder(
                 sourceBuffer,
                 PrimitiveTopology.QUADS,
                 DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
         );
         float radius = distanceChunks * 16.0F / WORLD_SCALE;
+        CloudMeshBuilder builder = new CloudMeshBuilder(bufferBuilder, radius, shaderPackDistanceFade);
         float detailedRadius = Math.min(
                 radius,
                 CirrusConfig.CLOUD_RENDER_DISTANCE_SETTING.maximum() * 16.0F / WORLD_SCALE
@@ -536,11 +545,11 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         if (radius > detailedRadius) {
             addDistantCloudRing(builder, detailedRadius, radius, style, anchorX, anchorZ);
         }
-        return builder.buildOrThrow();
+        return bufferBuilder.buildOrThrow();
     }
 
     private static void addDistantCloudRing(
-            BufferBuilder builder,
+            CloudMeshBuilder builder,
             float innerRadius,
             float outerRadius,
             CirrusConfig.CloudStyle style,
@@ -580,7 +589,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     }
 
     private static void addFastTile(
-            BufferBuilder builder,
+            CloudMeshBuilder builder,
             float x,
             float z,
             int anchorX,
@@ -595,7 +604,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     }
 
     private static void addFancyTile(
-            BufferBuilder builder,
+            CloudMeshBuilder builder,
             int tileX,
             int tileZ,
             float x,
@@ -708,7 +717,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     }
 
     private static void vertex(
-            BufferBuilder builder,
+            CloudMeshBuilder builder,
             float x,
             float y,
             float z,
@@ -721,9 +730,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             float normalY,
             float normalZ
     ) {
-        builder.addVertex(x, y, z)
+        builder.buffer.addVertex(x, y, z)
                 .setUv((sampleX + anchorX) * UV_SCALE, (sampleZ + anchorZ) * UV_SCALE)
-                .setColor(shade, shade, shade, 1.0F)
+                .setColor(shade, shade, shade, builder.alpha(x, z))
                 .setNormal(normalX, normalY, normalZ);
     }
 
@@ -784,11 +793,34 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private record LightningState(float intensity, Vector3f viewPosition, Vector3f viewUp, float radius) {
     }
 
+    private static final class CloudMeshBuilder {
+        private final BufferBuilder buffer;
+        private final float fadeStart;
+        private final float fadeEnd;
+
+        private CloudMeshBuilder(BufferBuilder buffer, float radius, boolean distanceFade) {
+            this.buffer = buffer;
+            this.fadeEnd = distanceFade ? radius : 0.0F;
+            this.fadeStart = distanceFade
+                    ? radius - Math.max(32.0F / WORLD_SCALE, radius * 0.15F)
+                    : 0.0F;
+        }
+
+        private float alpha(float x, float z) {
+            if (fadeEnd <= fadeStart) {
+                return 1.0F;
+            }
+            float distance = (float)Math.sqrt(x * x + z * z);
+            return Mth.clamp((fadeEnd - distance) / (fadeEnd - fadeStart), 0.0F, 1.0F);
+        }
+    }
+
     private static final class LayerMesh {
         private CirrusVertexBuffer buffer;
         private ClientLevel cachedLevel;
         private int cachedDistanceChunks = -1;
         private CirrusConfig.CloudStyle cachedStyle;
+        private boolean cachedShaderPackDistanceFade;
         private int cachedAnchorX = Integer.MIN_VALUE;
         private int cachedAnchorZ = Integer.MIN_VALUE;
 
@@ -797,6 +829,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             cachedLevel = null;
             cachedDistanceChunks = -1;
             cachedStyle = null;
+            cachedShaderPackDistanceFade = false;
             cachedAnchorX = Integer.MIN_VALUE;
             cachedAnchorZ = Integer.MIN_VALUE;
         }
