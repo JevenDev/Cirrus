@@ -1,5 +1,6 @@
 package com.jvn.cirrus;
 
+import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackPrompt;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.loader.api.FabricLoader;
@@ -20,6 +21,7 @@ public final class Cirrus {
     public static void init() {
         if (INITIALIZED.compareAndSet(false, true)) {
             CirrusConfig.SPEC.load(FabricLoader.getInstance().getConfigDir().resolve("cirrus-client.json"));
+            CirrusShaderPackPrompt.init();
         }
     }
 
