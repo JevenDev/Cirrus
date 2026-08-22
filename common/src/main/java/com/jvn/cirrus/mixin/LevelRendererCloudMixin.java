@@ -10,6 +10,7 @@ import com.jvn.cirrus.client.CirrusLightningLocator;
 import com.jvn.cirrus.client.CirrusLightningSkyRenderer;
 import com.jvn.cirrus.client.CirrusPrecipitationCeiling;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
+import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.jvn.cirrus.client.CirrusShaders;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -294,7 +295,9 @@ public abstract class LevelRendererCloudMixin {
             Runnable skyFogSetup,
             CallbackInfo ci
     ) {
-        if (level == null || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
+        if (level == null
+                || CirrusShaderPackCompat.isShaderPackInUse()
+                || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
             return;
         }
         cirrus$cloudRenderer.renderSunMask(
