@@ -18,6 +18,7 @@ public final class CirrusRenderContext {
     private static Vector4f fogColor;
     private static float partialTick;
     private static int ticks;
+    private static long cloudTicks;
     private static float cloudHeight = Float.NaN;
     private static boolean cloudsRenderedIntoDistantHorizons;
     private static boolean renderingCloudsForDistantHorizons;
@@ -36,7 +37,8 @@ public final class CirrusRenderContext {
             Matrix4f capturedProjection,
             Vector4f capturedFogColor,
             float capturedPartialTick,
-            int capturedTicks
+            int capturedTicks,
+            long capturedCloudTicks
     ) {
         level = capturedLevel;
         camera = capturedCamera;
@@ -48,6 +50,7 @@ public final class CirrusRenderContext {
         fogColor = new Vector4f(capturedFogColor);
         partialTick = capturedPartialTick;
         ticks = capturedTicks;
+        cloudTicks = capturedCloudTicks;
         cloudsRenderedIntoDistantHorizons = false;
         renderingCloudsForDistantHorizons = false;
         cloudHeight = capturedCamera.attributeProbe()
@@ -84,6 +87,10 @@ public final class CirrusRenderContext {
 
     public static int ticks() {
         return ticks;
+    }
+
+    public static long cloudTicks() {
+        return cloudTicks;
     }
 
     public static boolean hasVisibleClouds() {

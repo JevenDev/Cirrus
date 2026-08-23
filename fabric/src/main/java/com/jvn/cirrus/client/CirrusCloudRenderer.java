@@ -64,7 +64,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             Matrix4f frustumMatrix,
             Matrix4f projectionMatrix,
             float partialTick,
-            int ticks,
+            long ticks,
             double cameraX,
             double cameraY,
             double cameraZ
@@ -243,7 +243,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             Matrix4f frustumMatrix,
             Matrix4f projectionMatrix,
             float partialTick,
-            int ticks,
+            long ticks,
             double cameraX,
             double cameraY,
             double cameraZ
@@ -268,7 +268,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 level,
                 frustumMatrix,
                 partialTick,
-                ticks,
                 cameraX,
                 cameraY,
                 cameraZ,
@@ -517,7 +516,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             ClientLevel level,
             Matrix4f frustumMatrix,
             float partialTick,
-            int ticks,
             double cameraX,
             double cameraY,
             double cameraZ,

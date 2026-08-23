@@ -29,7 +29,7 @@ public final class CirrusCloudAttachment {
 
     private static CloudPattern cloudPattern;
     private static boolean patternLoadAttempted;
-    private static int cloudRenderTicks;
+    private static long cloudRenderTicks;
     private static final Map<LightningBolt, Vec3> ATTACHMENT_CACHE = new IdentityHashMap<>();
 
     private CirrusCloudAttachment() {
@@ -165,7 +165,7 @@ public final class CirrusCloudAttachment {
         return cloudPattern;
     }
 
-    public static void updateRenderTicks(int ticks) {
+    public static void updateRenderTicks(long ticks) {
         if (cloudRenderTicks != ticks) {
             ATTACHMENT_CACHE.clear();
         }

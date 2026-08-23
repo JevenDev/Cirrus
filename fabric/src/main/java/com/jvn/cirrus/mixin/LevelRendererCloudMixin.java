@@ -49,19 +49,22 @@ public abstract class LevelRendererCloudMixin {
             boolean renderSky,
             CallbackInfo ci
     ) {
-        CirrusShaders.preloadSamplerTextures(Minecraft.getInstance());
-        ClientLevel level = Minecraft.getInstance().level;
+        Minecraft minecraft = Minecraft.getInstance();
+        CirrusShaders.preloadSamplerTextures(minecraft);
+        ClientLevel level = minecraft.level;
         if (level == null) {
             return;
         }
-        int ticks = (int)level.getGameTime();
+        int worldTicks = (int)level.getGameTime();
+        // Server time corrections must not move cloud wind backward or forward.
+        long cloudTicks = ((MinecraftAccessor)minecraft).cirrusGetClientTickCount();
         float partialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
-        Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
+        Camera camera = minecraft.gameRenderer.mainCamera();
         CirrusRenderContext.capture(
                 level, camera, new Matrix4f(modelViewMatrix),
-                cameraState.projectionMatrix, fogColor, partialTick, ticks
+                cameraState.projectionMatrix, fogColor, partialTick, worldTicks, cloudTicks
         );
-        CirrusCloudAttachment.updateRenderTicks(ticks);
+        CirrusCloudAttachment.updateRenderTicks(cloudTicks);
         DistantHorizonsCompat.setBeforeApplyShaderCallback(
                 DistantHorizonsCompat.shouldPrioritizeCirrusClouds()
                         && CirrusRenderContext.hasVisibleClouds()
@@ -131,7 +134,7 @@ public abstract class LevelRendererCloudMixin {
                     cirrus$dhModelViewMatrix.set(dhModelViewMatrix).transpose(),
                     cirrus$dhProjectionMatrix.set(dhProjectionMatrix).transpose(),
                     CirrusRenderContext.partialTick(),
-                    CirrusRenderContext.ticks(),
+                    CirrusRenderContext.cloudTicks(),
                     CirrusRenderContext.camera().position().x,
                     CirrusRenderContext.camera().position().y,
                     CirrusRenderContext.camera().position().z

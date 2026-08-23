@@ -128,7 +128,7 @@ public abstract class SkyRendererMixin {
                 CirrusRenderContext.frustumMatrix(),
                 CirrusRenderContext.projectionMatrix(),
                 CirrusRenderContext.partialTick(),
-                CirrusRenderContext.ticks(),
+                CirrusRenderContext.cloudTicks(),
                 CirrusRenderContext.camera().position().x,
                 CirrusRenderContext.camera().position().y,
                 CirrusRenderContext.camera().position().z
