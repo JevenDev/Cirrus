@@ -4,6 +4,7 @@ import com.jvn.cirrus.config.CirrusConfigSpec;
 
 public final class CirrusConfig {
     public static final IntSetting CLOUD_RENDER_DISTANCE_SETTING = new IntSetting(64, 2, 128, 1);
+    public static final IntSetting DETAILED_CLOUD_RADIUS_SETTING = new IntSetting(64, 2, 128, 1);
     public static final DoubleSetting RAIN_CLOUD_COVERAGE_SETTING = new DoubleSetting(0.55, 0.0, 1.0, 0.05);
     public static final DoubleSetting THUNDER_CLOUD_COVERAGE_SETTING = new DoubleSetting(0.75, 0.0, 1.0, 0.05);
     public static final DoubleSetting LIGHTNING_BOLT_INTENSITY_SETTING =
@@ -72,6 +73,7 @@ public final class CirrusConfig {
     public static final CirrusConfigSpec.BooleanValue SYNC_CLOUD_DISTANCE_WITH_DISTANT_HORIZONS;
     public static final CirrusConfigSpec.BooleanValue TRANSLUCENT_LAYER_OVERLAP;
     public static final CirrusConfigSpec.IntValue CLOUD_RENDER_DISTANCE;
+    public static final CirrusConfigSpec.IntValue DETAILED_CLOUD_RADIUS;
     public static final CirrusConfigSpec.DoubleValue RAIN_CLOUD_COVERAGE;
     public static final CirrusConfigSpec.DoubleValue THUNDER_CLOUD_COVERAGE;
     public static final CirrusConfigSpec.BooleanValue CUSTOM_LIGHTNING_ENABLED;
@@ -174,7 +176,7 @@ public final class CirrusConfig {
                 .define("distantHorizonsCompatibility", true);
         SYNC_CLOUD_DISTANCE_WITH_DISTANT_HORIZONS = builder
                 .comment("Use Distant Horizons' LOD render distance for Cirrus clouds while compatibility is enabled."
-                        + " Very large distances can increase cloud mesh memory and rebuild time.")
+                        + " Clouds beyond the detailed cloud radius use simplified geometry.")
                 .define("syncCloudDistanceWithDistantHorizons", false);
         TRANSLUCENT_LAYER_OVERLAP = builder
                 .comment("Allow farther cloud layers to remain visible through nearer translucent layers."
@@ -184,6 +186,11 @@ public final class CirrusConfig {
                 builder,
                 "renderDistanceChunks",
                 "Cloud render distance in chunks, independent of terrain render distance."
+        );
+        DETAILED_CLOUD_RADIUS = DETAILED_CLOUD_RADIUS_SETTING.define(
+                builder,
+                "detailedCloudRadiusChunks",
+                "Radius in chunks that uses tiled cloud geometry. The cheaper distant ring is used beyond it."
         );
         RAIN_CLOUD_COVERAGE = RAIN_CLOUD_COVERAGE_SETTING.define(
                 builder,
