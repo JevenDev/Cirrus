@@ -300,7 +300,7 @@ public abstract class LevelRendererCloudMixin {
                 || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
             return;
         }
-        cirrus$cloudRenderer.renderSunMask(
+        boolean maskRendered = cirrus$cloudRenderer.renderSunMask(
                 level,
                 frustumMatrix,
                 projectionMatrix,
@@ -310,6 +310,9 @@ public abstract class LevelRendererCloudMixin {
                 camera.getPosition().y,
                 camera.getPosition().z
         );
+        if (!maskRendered) {
+            return;
+        }
         RenderSystem.setShader(CirrusShaders::sunOcclusion);
         cirrus$sunMaskActive = true;
     }
@@ -355,9 +358,13 @@ public abstract class LevelRendererCloudMixin {
     @Unique
     private void cirrus$clearSunMask() {
         if (cirrus$sunMaskActive) {
-            RenderSystem.depthMask(true);
-            RenderSystem.clear(256, Minecraft.ON_OSX);
-            cirrus$sunMaskActive = false;
+            try {
+                RenderSystem.depthMask(true);
+                RenderSystem.clear(256, Minecraft.ON_OSX);
+            } finally {
+                RenderSystem.disableScissor();
+                cirrus$sunMaskActive = false;
+            }
         }
     }
 

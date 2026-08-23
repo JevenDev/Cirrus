@@ -30,10 +30,15 @@ import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 public final class CirrusCloudRenderer implements AutoCloseable {
     private static final float WORLD_SCALE = 12.0F;
     private static final int TILE_SIZE = 8;
+    private static final float SUN_DISTANCE = 100.0F;
+    private static final float SUN_HALF_SIZE = 30.0F;
+    private static final int SUN_SCISSOR_PADDING = 2;
+    private static final float MIN_CLIP_W = 1.0E-4F;
     private static final int DISTANT_RING_SEGMENTS = 256;
     private static final float FANCY_CLOUD_THICKNESS = 4.0F;
     private static final float SURFACE_EPSILON = 9.765625E-4F;
@@ -61,7 +66,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private final LayerMesh upperMesh = new LayerMesh();
     private final LayerMesh topMesh = new LayerMesh();
 
-    public void renderSunMask(
+    public boolean renderSunMask(
             ClientLevel level,
             Matrix4f frustumMatrix,
             Matrix4f projectionMatrix,
@@ -73,7 +78,12 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     ) {
         float cloudHeight = level.effects().getCloudHeight();
         if (Float.isNaN(cloudHeight)) {
-            return;
+            return false;
+        }
+
+        ScissorBox scissor = sunScissor(level, frustumMatrix, projectionMatrix, partialTick);
+        if (scissor == null) {
+            return false;
         }
 
         int distanceChunks = DistantHorizonsCompat.cloudRenderDistanceChunks();
@@ -101,14 +111,16 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             );
         }
 
+        RenderSystem.enableScissor(scissor.x(), scissor.y(), scissor.width(), scissor.height());
         int oldTexture = RenderSystem.getShaderTexture(0);
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(true);
-        RenderSystem.colorMask(false, false, false, false);
-        RenderSystem.disableBlend();
-        RenderSystem.disableCull();
-        RenderSystem.setShaderTexture(0, CLOUDS_LOCATION);
+        boolean completed = false;
         try {
+            RenderSystem.enableDepthTest();
+            RenderSystem.depthMask(true);
+            RenderSystem.colorMask(false, false, false, false);
+            RenderSystem.disableBlend();
+            RenderSystem.disableCull();
+            RenderSystem.setShaderTexture(0, CLOUDS_LOCATION);
             drawMaskLayer(lowerMesh, LOWER_LAYER, frustumMatrix, projectionMatrix,
                     cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
                     cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
@@ -125,6 +137,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                                 + CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
                         cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
             }
+            completed = true;
+            return true;
         } finally {
             VertexBuffer.unbind();
             RenderSystem.setShaderTexture(0, oldTexture);
@@ -132,7 +146,91 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             RenderSystem.depthMask(false);
             RenderSystem.enableBlend();
             RenderSystem.enableCull();
+            if (!completed) {
+                RenderSystem.disableScissor();
+            }
         }
+    }
+
+    private static ScissorBox sunScissor(
+            ClientLevel level,
+            Matrix4f frustumMatrix,
+            Matrix4f projectionMatrix,
+            float partialTick
+    ) {
+        Minecraft minecraft = Minecraft.getInstance();
+        int framebufferWidth = minecraft.getWindow().getWidth();
+        int framebufferHeight = minecraft.getWindow().getHeight();
+        if (framebufferWidth <= 0 || framebufferHeight <= 0) {
+            return null;
+        }
+
+        float timeAngle = level.getTimeOfDay(partialTick) * (float)(Math.PI * 2.0);
+        Matrix4f sunPose = new Matrix4f(frustumMatrix)
+                .rotateY((float)(-Math.PI * 0.5))
+                .rotateX(timeAngle);
+        Matrix4f clipTransform = new Matrix4f(projectionMatrix).mul(sunPose);
+        float minimumX = Float.POSITIVE_INFINITY;
+        float minimumY = Float.POSITIVE_INFINITY;
+        float maximumX = Float.NEGATIVE_INFINITY;
+        float maximumY = Float.NEGATIVE_INFINITY;
+        boolean hasFrontVertex = false;
+        boolean hasBehindVertex = false;
+
+        for (int xSign = -1; xSign <= 1; xSign += 2) {
+            for (int zSign = -1; zSign <= 1; zSign += 2) {
+                Vector4f clip = clipTransform.transform(new Vector4f(
+                        xSign * SUN_HALF_SIZE,
+                        SUN_DISTANCE,
+                        zSign * SUN_HALF_SIZE,
+                        1.0F
+                ));
+                if (clip.w <= MIN_CLIP_W) {
+                    hasBehindVertex = true;
+                    continue;
+                }
+                float inverseW = 1.0F / clip.w;
+                float x = clip.x * inverseW;
+                float y = clip.y * inverseW;
+                if (!Float.isFinite(x) || !Float.isFinite(y)) {
+                    return new ScissorBox(0, 0, framebufferWidth, framebufferHeight);
+                }
+                hasFrontVertex = true;
+                minimumX = Math.min(minimumX, x);
+                minimumY = Math.min(minimumY, y);
+                maximumX = Math.max(maximumX, x);
+                maximumY = Math.max(maximumY, y);
+            }
+        }
+
+        if (!hasFrontVertex) {
+            return null;
+        }
+        if (hasBehindVertex) {
+            return new ScissorBox(0, 0, framebufferWidth, framebufferHeight);
+        }
+
+        float visibleMinimumX = Math.max(-1.0F, minimumX);
+        float visibleMinimumY = Math.max(-1.0F, minimumY);
+        float visibleMaximumX = Math.min(1.0F, maximumX);
+        float visibleMaximumY = Math.min(1.0F, maximumY);
+        if (visibleMaximumX <= visibleMinimumX || visibleMaximumY <= visibleMinimumY) {
+            return null;
+        }
+
+        int x = Math.max(0, Mth.floor((visibleMinimumX * 0.5F + 0.5F) * framebufferWidth)
+                - SUN_SCISSOR_PADDING);
+        int y = Math.max(0, Mth.floor((visibleMinimumY * 0.5F + 0.5F) * framebufferHeight)
+                - SUN_SCISSOR_PADDING);
+        int maximumPixelX = Math.min(
+                framebufferWidth,
+                Mth.ceil((visibleMaximumX * 0.5F + 0.5F) * framebufferWidth) + SUN_SCISSOR_PADDING
+        );
+        int maximumPixelY = Math.min(
+                framebufferHeight,
+                Mth.ceil((visibleMaximumY * 0.5F + 0.5F) * framebufferHeight) + SUN_SCISSOR_PADDING
+        );
+        return new ScissorBox(x, y, maximumPixelX - x, maximumPixelY - y);
     }
 
     private static void drawMaskLayer(
@@ -920,6 +1018,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     }
 
     private record LightningState(float intensity, Vector3f viewPosition, Vector3f viewUp, float radius) {
+    }
+
+    private record ScissorBox(int x, int y, int width, int height) {
     }
 
     private static final class LayerMesh {
