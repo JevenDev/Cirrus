@@ -1,5 +1,7 @@
 #version 330
 
+#moj_import <minecraft:fog.glsl>
+
 layout(std140) uniform CirrusMatrices {
     mat4 ModelViewMat;
     mat4 ProjMat;
@@ -7,10 +9,6 @@ layout(std140) uniform CirrusMatrices {
 
 layout(std140) uniform CirrusParams {
     vec4 ColorModulator;
-    float FogStart;
-    float FogEnd;
-    vec4 FogColor;
-    float FogShape;
     float CirrusEnabled;
     vec2 CirrusLightDirection;
     float CirrusSunWeight;
@@ -35,11 +33,6 @@ in vec4 vertexColor;
 in vec3 viewDirection;
 
 out vec4 fragColor;
-
-vec4 linear_fog(vec4 color, float distanceValue, float fogStart, float fogEnd, vec4 fogColor) {
-    float amount = clamp((distanceValue - fogStart) / max(fogEnd - fogStart, 0.0001), 0.0, 1.0);
-    return vec4(mix(color.rgb, fogColor.rgb, amount * fogColor.a), color.a);
-}
 
 const float COS_7_DEGREES = 0.9925462;
 const float COS_30_DEGREES = 0.8660254;
@@ -196,5 +189,6 @@ void main() {
     );
     }
 
-    fragColor = linear_fog(color, vertexDistance, FogStart, FogEnd, FogColor);
+    color.a *= 1.0 - linear_fog_value(vertexDistance, 0.0, FogCloudsEnd);
+    fragColor = color;
 }

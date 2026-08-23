@@ -7,10 +7,6 @@ layout(std140) uniform CirrusMatrices {
 
 layout(std140) uniform CirrusParams {
     vec4 ColorModulator;
-    float FogStart;
-    float FogEnd;
-    vec4 FogColor;
-    float FogShape;
     float CirrusEnabled;
     vec2 CirrusLightDirection;
     float CirrusSunWeight;
@@ -41,7 +37,7 @@ void main() {
     gl_Position = ProjMat * pos;
 
     texCoord0 = UV0;
-    vertexDistance = max(length(pos.xz), abs(pos.y));
+    vertexDistance = length(pos.xyz);
     vertexColor = Color;
     viewDirection = pos.xyz;
 }

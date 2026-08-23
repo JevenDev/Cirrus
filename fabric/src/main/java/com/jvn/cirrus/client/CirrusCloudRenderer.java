@@ -292,8 +292,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             return;
         }
 
-        float distanceBlocks = distanceChunks * 16.0F;
-        float fadeLength = Math.max(32.0F, distanceBlocks * 0.15F);
         Vec3 cloudColor = CirrusRenderContext.cloudColor(partialTick);
         double lowerHeight = cloudHeight
                 + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
@@ -311,20 +309,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 : -1.0;
         int enabledLayerCount = 1 + (upperEnabled ? 1 : 0) + (topEnabled ? 1 : 0);
         CirrusShader cloudShader = CirrusShaders.clouds();
-        CirrusShaderUniforms.setUniform(
-                cloudShader, "FogStart", Math.max(0.0F, distanceBlocks - fadeLength)
-        );
-        CirrusShaderUniforms.setUniform(cloudShader, "FogEnd", distanceBlocks);
-        if (CirrusRenderContext.fogColor() != null) {
-            CirrusShaderUniforms.setUniform(
-                    cloudShader,
-                    "FogColor",
-                    CirrusRenderContext.fogColor().x,
-                    CirrusRenderContext.fogColor().y,
-                    CirrusRenderContext.fogColor().z,
-                    CirrusRenderContext.fogColor().w
-            );
-        }
         setCloudEnvironment(
                 cloudShader,
                 celestialAngle,
