@@ -1,7 +1,7 @@
 package com.jvn.cirrus.client.compat.shaderpacks;
 
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -34,7 +34,7 @@ public final class CirrusShaderPackPrompt {
         }
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
-                dispatcher.register(ClientCommandManager.literal(APPLY_COMMAND)
+                dispatcher.register(ClientCommands.literal(APPLY_COMMAND)
                         .executes(context -> applyFix(context.getSource())))
         );
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> reset());
@@ -75,11 +75,10 @@ public final class CirrusShaderPackPrompt {
                         .withHoverEvent(new HoverEvent.ShowText(
                                 Component.translatable("cirrus.shaderpack.fix.apply.hover")
                         )));
-        player.displayClientMessage(
+        player.sendSystemMessage(
                 Component.translatable("cirrus.shaderpack.fix.prompt", fix.displayName())
                         .append(Component.literal(" "))
-                        .append(apply),
-                false
+                        .append(apply)
         );
     }
 
