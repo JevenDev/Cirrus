@@ -101,7 +101,7 @@ public final class CirrusShaders {
             DefaultVertexFormat.POSITION,
             CirrusShader.Blend.TRANSLUCENT,
             CirrusShader.Target.MAIN,
-            null,
+            Cirrus.texture("environment/end_noise.png"),
             true,
             false,
             uniform("CirrusEndNoiseOctaves", 1, 3.0F),
@@ -150,6 +150,7 @@ public final class CirrusShaders {
         minecraft.getTextureManager().getTexture(Cirrus.texture("environment/aurora_noise.png"));
         minecraft.getTextureManager().getTexture(Cirrus.texture("environment/milky_way_lookup.png"));
         minecraft.getTextureManager().getTexture(Cirrus.texture("environment/north_star.png"));
+        minecraft.getTextureManager().getTexture(Cirrus.texture("environment/end_noise.png"));
         samplerTexturesLoaded = true;
     }
 
