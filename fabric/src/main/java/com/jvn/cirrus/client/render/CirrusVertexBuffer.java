@@ -46,7 +46,16 @@ public final class CirrusVertexBuffer implements AutoCloseable {
     }
 
     public void drawWithShader(Matrix4f modelView, Matrix4f projection, CirrusShader shader) {
-        drawWithShader(modelView, projection, shader, CirrusShader.DrawMode.COLOR);
+        drawWithShader(modelView, projection, shader, CirrusShader.DrawMode.COLOR, null);
+    }
+
+    public void drawWithShader(
+            Matrix4f modelView,
+            Matrix4f projection,
+            CirrusShader shader,
+            ScissorBox scissor
+    ) {
+        drawWithShader(modelView, projection, shader, CirrusShader.DrawMode.COLOR, scissor);
     }
 
     public void drawWithShader(
@@ -54,6 +63,16 @@ public final class CirrusVertexBuffer implements AutoCloseable {
             Matrix4f projection,
             CirrusShader shader,
             CirrusShader.DrawMode mode
+    ) {
+        drawWithShader(modelView, projection, shader, mode, null);
+    }
+
+    private void drawWithShader(
+            Matrix4f modelView,
+            Matrix4f projection,
+            CirrusShader shader,
+            CirrusShader.DrawMode mode,
+            ScissorBox scissor
     ) {
         if (vertexBuffer == null || drawState == null) {
             return;
@@ -88,6 +107,9 @@ public final class CirrusVertexBuffer implements AutoCloseable {
                              OptionalDouble.empty()
                      )) {
             pass.setPipeline(shader.pipeline(mode));
+            if (scissor != null) {
+                pass.enableScissor(scissor.x(), scissor.y(), scissor.width(), scissor.height());
+            }
             pass.setUniform("CirrusMatrices", matrices);
             if (parameters != null) {
                 pass.setUniform("CirrusParams", parameters);
@@ -105,6 +127,9 @@ public final class CirrusVertexBuffer implements AutoCloseable {
             }
             pass.drawIndexed(0, 0, drawState.indexCount(), 1);
         }
+    }
+
+    public record ScissorBox(int x, int y, int width, int height) {
     }
 
     @Override

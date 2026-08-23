@@ -123,7 +123,7 @@ public abstract class SkyRendererMixin {
             return;
         }
 
-        CirrusRenderers.clouds().renderSunMask(
+        cirrus$sunMaskActive = CirrusRenderers.clouds().renderSunMask(
                 CirrusRenderContext.level(),
                 CirrusRenderContext.frustumMatrix(),
                 CirrusRenderContext.projectionMatrix(),
@@ -133,7 +133,6 @@ public abstract class SkyRendererMixin {
                 CirrusRenderContext.camera().position().y,
                 CirrusRenderContext.camera().position().z
         );
-        cirrus$sunMaskActive = true;
     }
 
     @Inject(method = "renderSun", at = @At("TAIL"))
