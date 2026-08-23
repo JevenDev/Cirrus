@@ -17,7 +17,9 @@ import org.joml.Matrix4f;
 public final class CirrusMilkyWayRenderer implements AutoCloseable {
     private static final ResourceLocation MILKY_WAY_TEXTURE =
             Cirrus.texture("environment/milky_way_lookup.png");
-    private static final float QUARTER_TURN = Mth.TWO_PI * 0.25F;
+    private static final float NORTH_STAR_ELEVATION = (float)Math.toRadians(45.0);
+    private static final float NORTH_STAR_Y = Mth.sin(NORTH_STAR_ELEVATION);
+    private static final float NORTH_STAR_Z = -Mth.cos(NORTH_STAR_ELEVATION);
     private static final float DOME_RADIUS = 100.0F;
     private static final int AZIMUTH_SEGMENTS = 64;
     private static final int ELEVATION_SEGMENTS = 24;
@@ -85,9 +87,10 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
                     skyPalette.zenithRed(), skyPalette.zenithGreen(), skyPalette.zenithBlue()
             );
         }
-        worldToMilkyWay.rotationY(QUARTER_TURN)
-                .rotateX(-level.getTimeOfDay(partialTick) * Mth.TWO_PI)
-                .rotateY(QUARTER_TURN);
+        worldToMilkyWay.rotationY(Mth.PI).rotate(
+                -level.getTimeOfDay(partialTick) * Mth.TWO_PI,
+                0.0F, NORTH_STAR_Y, NORTH_STAR_Z
+        );
         CirrusShaderUniforms.setUniform(
                 shader, "CirrusWorldToMilkyWay", worldToMilkyWay
         );

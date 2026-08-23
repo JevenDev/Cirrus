@@ -52,7 +52,6 @@ public abstract class LevelRendererStarMixin {
             }
             cirrus$starRenderer.render(
                     level,
-                    modelViewMatrix,
                     projectionMatrix,
                     frustumMatrix,
                     partialTick,
