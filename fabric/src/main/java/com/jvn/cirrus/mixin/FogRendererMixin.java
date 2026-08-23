@@ -1,11 +1,16 @@
 package com.jvn.cirrus.mixin;
 
+import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusSkyPalette;
+import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.config.CirrusConfig;
 import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.fog.FogData;
 import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
@@ -76,6 +81,27 @@ public abstract class FogRendererMixin {
                 fogColor
         );
         cir.setReturnValue(fogColor);
+    }
+
+    @Inject(method = "setupFog", at = @At("RETURN"))
+    private void cirrus$useConfiguredCloudDistance(
+            Camera camera,
+            int renderDistanceChunks,
+            DeltaTracker deltaTracker,
+            float darkenWorldAmount,
+            ClientLevel level,
+            CallbackInfoReturnable<FogData> cir
+    ) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!CirrusCloudMode.isActive(minecraft.options.getCloudStatus())
+                || camera.getFluidInCamera() != FogType.NONE
+                || hasVisibilityEffect(camera)
+                || minecraft.gui.getBossOverlay().shouldCreateWorldFog()) {
+            return;
+        }
+
+        cir.getReturnValue().cloudEnd =
+                DistantHorizonsCompat.cloudRenderDistanceChunks() * 16.0F;
     }
 
     @ModifyArg(

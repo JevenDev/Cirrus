@@ -25,6 +25,7 @@ public final class CirrusShader {
     private final Target target;
     private final Identifier texture;
     private final Map<String, CirrusUniform> uniforms = new LinkedHashMap<>();
+    private final boolean usesVanillaFog;
     private final RenderPipeline colorPipeline;
     private final RenderPipeline depthPipeline;
     private final int uniformBufferSize;
@@ -39,9 +40,24 @@ public final class CirrusShader {
             boolean depthWrite,
             UniformSpec... specs
     ) {
+        this(name, vertexFormat, blend, target, texture, colorWrite, depthWrite, false, specs);
+    }
+
+    public CirrusShader(
+            String name,
+            VertexFormat vertexFormat,
+            Blend blend,
+            Target target,
+            Identifier texture,
+            boolean colorWrite,
+            boolean depthWrite,
+            boolean usesVanillaFog,
+            UniformSpec... specs
+    ) {
         this.name = name;
         this.target = target;
         this.texture = texture;
+        this.usesVanillaFog = usesVanillaFog;
 
         int size = 0;
         for (UniformSpec spec : specs) {
@@ -51,10 +67,10 @@ public final class CirrusShader {
         }
         this.uniformBufferSize = align(size, 16);
         this.colorPipeline = createPipeline(
-                name, vertexFormat, blend, texture != null, colorWrite, depthWrite, false
+                name, vertexFormat, blend, texture != null, colorWrite, depthWrite, usesVanillaFog, false
         );
         this.depthPipeline = createPipeline(
-                name + "_depth", vertexFormat, Blend.NONE, texture != null, false, true, true
+                name + "_depth", vertexFormat, Blend.NONE, texture != null, false, true, usesVanillaFog, true
         );
     }
 
@@ -68,6 +84,10 @@ public final class CirrusShader {
 
     Target target() {
         return target;
+    }
+
+    boolean usesVanillaFog() {
+        return usesVanillaFog;
     }
 
     RenderPipeline pipeline(DrawMode mode) {
@@ -119,6 +139,7 @@ public final class CirrusShader {
             boolean textured,
             boolean colorWrite,
             boolean depthWrite,
+            boolean usesVanillaFog,
             boolean depthVariant
     ) {
         RenderPipeline.Builder builder = RenderPipeline.builder()
@@ -128,6 +149,9 @@ public final class CirrusShader {
                 .withUniform("CirrusMatrices", UniformType.UNIFORM_BUFFER)
                 .withCull(false)
                 .withVertexFormat(vertexFormat, VertexFormat.Mode.QUADS);
+        if (usesVanillaFog) {
+            builder.withUniform("Fog", UniformType.UNIFORM_BUFFER);
+        }
         if (!uniforms.isEmpty()) {
             builder.withUniform("CirrusParams", UniformType.UNIFORM_BUFFER);
         }

@@ -101,6 +101,9 @@ public final class CirrusVertexBuffer implements AutoCloseable {
                              OptionalDouble.empty()
                      )) {
             pass.setPipeline(shader.pipeline(mode));
+            if (shader.usesVanillaFog()) {
+                pass.setUniform("Fog", RenderSystem.getShaderFog());
+            }
             if (scissor != null) {
                 pass.enableScissor(scissor.x(), scissor.y(), scissor.width(), scissor.height());
             }
