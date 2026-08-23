@@ -147,6 +147,7 @@ public final class CirrusShaders {
         minecraft.getTextureManager().getTexture(
                 ResourceLocation.withDefaultNamespace("textures/environment/clouds.png")
         );
+        minecraft.getTextureManager().getTexture(Cirrus.texture("environment/milky_way_lookup.png"));
         minecraft.getTextureManager().getTexture(Cirrus.texture("environment/north_star.png"));
         samplerTexturesLoaded = true;
     }
