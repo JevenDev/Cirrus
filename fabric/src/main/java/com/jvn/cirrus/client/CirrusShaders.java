@@ -52,7 +52,7 @@ public final class CirrusShaders {
             DefaultVertexFormat.POSITION,
             CirrusShader.Blend.ADDITIVE,
             CirrusShader.Target.MAIN,
-            null,
+            Cirrus.texture("environment/aurora_noise.png"),
             true,
             false,
             uniform("CirrusAuroraTime", 1, 0.0F),
@@ -147,6 +147,7 @@ public final class CirrusShaders {
         minecraft.getTextureManager().getTexture(
                 ResourceLocation.withDefaultNamespace("textures/environment/clouds.png")
         );
+        minecraft.getTextureManager().getTexture(Cirrus.texture("environment/aurora_noise.png"));
         minecraft.getTextureManager().getTexture(Cirrus.texture("environment/milky_way_lookup.png"));
         minecraft.getTextureManager().getTexture(Cirrus.texture("environment/north_star.png"));
         samplerTexturesLoaded = true;
