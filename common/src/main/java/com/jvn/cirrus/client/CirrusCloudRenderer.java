@@ -4,7 +4,6 @@ import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusEasing;
-import com.jvn.cirrus.client.util.CirrusShaderUniforms;
 import com.mojang.blaze3d.shaders.FogShape;
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -15,6 +14,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import java.util.IdentityHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.FogRenderer;
@@ -65,6 +65,10 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private final LayerMesh lowerMesh = new LayerMesh();
     private final LayerMesh upperMesh = new LayerMesh();
     private final LayerMesh topMesh = new LayerMesh();
+    private final IdentityHashMap<ShaderInstance, CloudUniforms> cloudUniforms = new IdentityHashMap<>();
+    private ShaderInstance cachedMaskShader;
+    private CloudMaskUniforms cachedMaskUniforms;
+    private long cloudUniformFrame;
 
     public boolean renderSunMask(
             ClientLevel level,
@@ -92,6 +96,12 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         double windSample = (ticks + partialTick) * 0.03 / WORLD_SCALE;
         float rainLevel = smoothWeatherLevel(level.getRainLevel(partialTick));
         float thunderLevel = smoothWeatherLevel(level.getThunderLevel(partialTick));
+        ShaderInstance maskShader = CirrusShaders.cloudMask();
+        CloudMaskUniforms maskUniforms = cloudMaskUniforms(maskShader);
+        maskUniforms.setWeather(
+                rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue(),
+                thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue()
+        );
         prepareLayer(
                 lowerMesh, LOWER_LAYER, level, distanceChunks,
                 cameraSampleX, cameraSampleZ, windSample, false
@@ -122,16 +132,19 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             RenderSystem.disableCull();
             RenderSystem.setShaderTexture(0, CLOUDS_LOCATION);
             drawMaskLayer(lowerMesh, LOWER_LAYER, frustumMatrix, projectionMatrix,
+                    maskShader, maskUniforms,
                     cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
                     cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
             if (upperEnabled) {
                 drawMaskLayer(upperMesh, UPPER_LAYER, frustumMatrix, projectionMatrix,
+                        maskShader, maskUniforms,
                         cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                                 + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
                         cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
             }
             if (topEnabled) {
                 drawMaskLayer(topMesh, TOP_LAYER, frustumMatrix, projectionMatrix,
+                        maskShader, maskUniforms,
                         cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                                 + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
                                 + CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
@@ -238,6 +251,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             LayerDefinition definition,
             Matrix4f frustumMatrix,
             Matrix4f projectionMatrix,
+            ShaderInstance shader,
+            CloudMaskUniforms uniforms,
             double relativeHeight,
             double cameraSampleX,
             double cameraSampleZ,
@@ -255,19 +270,16 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         poseStack.scale(WORLD_SCALE, 1.0F, WORLD_SCALE);
         poseStack.translate(-(sampleX - mesh.cachedAnchorX), relativeHeight, -(sampleZ - mesh.cachedAnchorZ));
         mesh.buffer.bind();
-        ShaderInstance shader = CirrusShaders.cloudMask();
-        CirrusShaderUniforms.setUniform(
-                shader,
-                "CirrusRainCloudCoverage",
-                rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue()
-        );
-        CirrusShaderUniforms.setUniform(
-                shader,
-                "CirrusThunderCloudCoverage",
-                thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue()
-        );
-        CirrusShaderUniforms.setUniform(shader, "CirrusLayerOpacity", definition.opacity(rainLevel, thunderLevel));
+        uniforms.setLayerOpacity(definition.opacity(rainLevel, thunderLevel));
         mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
+    }
+
+    private CloudMaskUniforms cloudMaskUniforms(ShaderInstance shader) {
+        if (shader != cachedMaskShader) {
+            cachedMaskShader = shader;
+            cachedMaskUniforms = new CloudMaskUniforms(shader);
+        }
+        return cachedMaskUniforms;
     }
 
     public void render(
@@ -307,6 +319,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 cameraZ,
                 distanceChunks * 16.0F
         );
+        long uniformFrame = ++cloudUniformFrame;
 
         prepareLayer(
                 lowerMesh, LOWER_LAYER, level, distanceChunks,
@@ -412,6 +425,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                         rainLevel,
                         thunderLevel,
                         lightning,
+                        uniformFrame,
                         shaderPackInUse
                 );
             }
@@ -496,6 +510,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             float rainLevel,
             float thunderLevel,
             LightningState lightning,
+            long uniformFrame,
             boolean shaderPackInUse
     ) {
         if (mesh.buffer == null) {
@@ -527,6 +542,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     ShaderInstance shader = cloudShader(shaderPackInUse);
                     setCloudEnvironment(
                             shader,
+                            uniformFrame,
                             celestialAngle,
                             sunWeight,
                             celestialViewDirection,
@@ -545,6 +561,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 ShaderInstance shader = cloudShader(shaderPackInUse);
                 setCloudEnvironment(
                         shader,
+                        uniformFrame,
                         celestialAngle,
                         sunWeight,
                         celestialViewDirection,
@@ -564,6 +581,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     ShaderInstance shader = cloudShader(shaderPackInUse);
                     setCloudEnvironment(
                             shader,
+                            uniformFrame,
                             celestialAngle,
                             sunWeight,
                             celestialViewDirection,
@@ -666,8 +684,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         return new LightningState(intensity, viewPosition, viewUp, radius);
     }
 
-    private static void setCloudEnvironment(
+    private void setCloudEnvironment(
             ShaderInstance shader,
+            long uniformFrame,
             float celestialAngle,
             float sunWeight,
             Vector3f celestialViewDirection,
@@ -675,39 +694,25 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             float thunderLevel,
             LightningState lightning
     ) {
-        CirrusShaderUniforms.setUniform(shader, "CirrusEnabled", true);
-        Uniform lightDirection = shader.getUniform("CirrusLightDirection");
-        if (lightDirection == null) {
+        CloudUniforms uniforms = cloudUniforms.get(shader);
+        if (uniforms == null) {
+            uniforms = new CloudUniforms(shader);
+            cloudUniforms.put(shader, uniforms);
+        }
+        if (uniforms.isPreparedFor(uniformFrame)) {
             return;
         }
-        lightDirection.set(-Mth.sin(celestialAngle), 0.0F);
-        CirrusShaderUniforms.setUniform(shader, "CirrusSunWeight", sunWeight);
-        CirrusShaderUniforms.setUniform(
-                shader, "CirrusLightViewDirection",
-                celestialViewDirection.x, celestialViewDirection.y, celestialViewDirection.z
+        uniforms.upload(
+                uniformFrame,
+                -Mth.sin(celestialAngle),
+                sunWeight,
+                celestialViewDirection,
+                rainLevel,
+                thunderLevel,
+                rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue(),
+                thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue(),
+                lightning
         );
-        CirrusShaderUniforms.setUniform(shader, "CirrusRainLevel", rainLevel);
-        CirrusShaderUniforms.setUniform(shader, "CirrusThunderLevel", thunderLevel);
-        CirrusShaderUniforms.setUniform(
-                shader,
-                "CirrusRainCloudCoverage",
-                rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue()
-        );
-        CirrusShaderUniforms.setUniform(
-                shader,
-                "CirrusThunderCloudCoverage",
-                thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue()
-        );
-        CirrusShaderUniforms.setUniform(shader, "CirrusLightningFlash", lightning.intensity());
-        CirrusShaderUniforms.setUniform(
-                shader, "CirrusLightningViewPosition",
-                lightning.viewPosition().x, lightning.viewPosition().y, lightning.viewPosition().z
-        );
-        CirrusShaderUniforms.setUniform(
-                shader, "CirrusWorldUpViewDirection",
-                lightning.viewUp().x, lightning.viewUp().y, lightning.viewUp().z
-        );
-        CirrusShaderUniforms.setUniform(shader, "CirrusLightningRadius", lightning.radius());
     }
 
     private MeshData buildMesh(
@@ -945,6 +950,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         lowerMesh.invalidate();
         upperMesh.invalidate();
         topMesh.invalidate();
+        cloudUniforms.clear();
+        cachedMaskShader = null;
+        cachedMaskUniforms = null;
     }
 
     @Override
@@ -1014,6 +1022,112 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             }
             float distance = (float)Math.sqrt(x * x + z * z);
             return Mth.clamp((fadeEnd - distance) / (fadeEnd - fadeStart), 0.0F, 1.0F);
+        }
+    }
+
+    private static final class CloudMaskUniforms {
+        private final Uniform rainCloudCoverage;
+        private final Uniform thunderCloudCoverage;
+        private final Uniform layerOpacity;
+
+        private CloudMaskUniforms(ShaderInstance shader) {
+            rainCloudCoverage = shader.getUniform("CirrusRainCloudCoverage");
+            thunderCloudCoverage = shader.getUniform("CirrusThunderCloudCoverage");
+            layerOpacity = shader.getUniform("CirrusLayerOpacity");
+        }
+
+        private void setWeather(float rainCoverage, float thunderCoverage) {
+            set(rainCloudCoverage, rainCoverage);
+            set(thunderCloudCoverage, thunderCoverage);
+        }
+
+        private void setLayerOpacity(float opacity) {
+            set(layerOpacity, opacity);
+        }
+
+        private static void set(Uniform uniform, float value) {
+            if (uniform != null) {
+                uniform.set(value);
+            }
+        }
+    }
+
+    private static final class CloudUniforms {
+        private final Uniform enabled;
+        private final Uniform lightDirection;
+        private final Uniform sunWeight;
+        private final Uniform lightViewDirection;
+        private final Uniform rainLevel;
+        private final Uniform thunderLevel;
+        private final Uniform rainCloudCoverage;
+        private final Uniform thunderCloudCoverage;
+        private final Uniform lightningFlash;
+        private final Uniform lightningViewPosition;
+        private final Uniform worldUpViewDirection;
+        private final Uniform lightningRadius;
+        private long lastFrame = Long.MIN_VALUE;
+
+        private CloudUniforms(ShaderInstance shader) {
+            enabled = shader.getUniform("CirrusEnabled");
+            lightDirection = shader.getUniform("CirrusLightDirection");
+            sunWeight = shader.getUniform("CirrusSunWeight");
+            lightViewDirection = shader.getUniform("CirrusLightViewDirection");
+            rainLevel = shader.getUniform("CirrusRainLevel");
+            thunderLevel = shader.getUniform("CirrusThunderLevel");
+            rainCloudCoverage = shader.getUniform("CirrusRainCloudCoverage");
+            thunderCloudCoverage = shader.getUniform("CirrusThunderCloudCoverage");
+            lightningFlash = shader.getUniform("CirrusLightningFlash");
+            lightningViewPosition = shader.getUniform("CirrusLightningViewPosition");
+            worldUpViewDirection = shader.getUniform("CirrusWorldUpViewDirection");
+            lightningRadius = shader.getUniform("CirrusLightningRadius");
+        }
+
+        private boolean isPreparedFor(long frame) {
+            return lastFrame == frame;
+        }
+
+        private void upload(
+                long frame,
+                float lightDirectionX,
+                float currentSunWeight,
+                Vector3f currentLightViewDirection,
+                float currentRainLevel,
+                float currentThunderLevel,
+                float currentRainCloudCoverage,
+                float currentThunderCloudCoverage,
+                LightningState lightning
+        ) {
+            if (lastFrame == frame) {
+                return;
+            }
+            lastFrame = frame;
+            set(enabled, 1.0F);
+            if (lightDirection == null) {
+                return;
+            }
+            lightDirection.set(lightDirectionX, 0.0F);
+            set(sunWeight, currentSunWeight);
+            set(lightViewDirection, currentLightViewDirection);
+            set(rainLevel, currentRainLevel);
+            set(thunderLevel, currentThunderLevel);
+            set(rainCloudCoverage, currentRainCloudCoverage);
+            set(thunderCloudCoverage, currentThunderCloudCoverage);
+            set(lightningFlash, lightning.intensity());
+            set(lightningViewPosition, lightning.viewPosition());
+            set(worldUpViewDirection, lightning.viewUp());
+            set(lightningRadius, lightning.radius());
+        }
+
+        private static void set(Uniform uniform, float value) {
+            if (uniform != null) {
+                uniform.set(value);
+            }
+        }
+
+        private static void set(Uniform uniform, Vector3f value) {
+            if (uniform != null) {
+                uniform.set(value.x, value.y, value.z);
+            }
         }
     }
 
