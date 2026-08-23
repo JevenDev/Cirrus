@@ -40,7 +40,7 @@ public abstract class CloudRendererMixin {
                 CirrusRenderContext.frustumMatrix(),
                 CirrusRenderContext.projectionMatrix(),
                 partialTick,
-                (int)ticks,
+                CirrusRenderContext.ticks(),
                 cameraPosition.x,
                 cameraPosition.y,
                 cameraPosition.z
