@@ -55,6 +55,12 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.CLOUD_RENDER_DISTANCE_SETTING,
                                 value -> Component.literal(value + " chunks")
                         ))
+                        .option(integerOption(
+                                "cirrus.config.clouds.detailedCloudRadiusChunks",
+                                CirrusConfig.DETAILED_CLOUD_RADIUS,
+                                CirrusConfig.DETAILED_CLOUD_RADIUS_SETTING,
+                                value -> Component.literal(value + " chunks")
+                        ))
                         .option(booleanOption(
                                 "cirrus.config.clouds.translucentLayerOverlap",
                                 CirrusConfig.TRANSLUCENT_LAYER_OVERLAP
