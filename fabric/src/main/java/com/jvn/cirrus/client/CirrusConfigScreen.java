@@ -185,6 +185,15 @@ public final class CirrusConfigScreen {
                                 "cirrus.config.sky.skyGradientsEnabled",
                                 CirrusConfig.SKY_GRADIENTS_ENABLED
                         ))
+                        .option(booleanOption(
+                                "cirrus.config.sky.fogUsesHorizonColor",
+                                CirrusConfig.FOG_USES_HORIZON_COLOR
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.fogHorizonTintStrength",
+                                CirrusConfig.FOG_HORIZON_TINT_STRENGTH,
+                                CirrusConfig.FOG_HORIZON_TINT_STRENGTH_SETTING
+                        ))
                         .option(percentageOption(
                                 "cirrus.config.sky.skyGradientOpacity",
                                 CirrusConfig.SKY_GRADIENT_OPACITY,
