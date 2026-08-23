@@ -1,5 +1,6 @@
 package com.jvn.cirrus.client;
 
+import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.client.util.CirrusSkyDome;
@@ -13,11 +14,14 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.biome.Biome;
 import org.joml.Matrix4f;
 
 public final class CirrusAuroraRenderer implements AutoCloseable {
+    private static final ResourceLocation AURORA_NOISE_TEXTURE =
+            Cirrus.texture("environment/aurora_noise.png");
     private static final float DOME_RADIUS = 100.0F;
     private static final int AZIMUTH_SEGMENTS = 64;
     private static final int ELEVATION_SEGMENTS = 20;
@@ -95,6 +99,7 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
 
         prepareDome();
         ShaderInstance shader = CirrusShaders.aurora();
+        RenderSystem.setShaderTexture(0, AURORA_NOISE_TEXTURE);
         CirrusShaderUniforms.setUniform(shader, "CirrusAuroraTime", shaderTime);
         CirrusShaderUniforms.setUniform(shader, "CirrusAuroraIntensity", intensity);
         CirrusShaderUniforms.setUniform(shader, "CirrusAuroraPixelation", CirrusConfig.AURORA_PIXELATION_ENABLED.get());

@@ -1,5 +1,6 @@
 #version 150
 
+uniform sampler2D Sampler0;
 uniform float CirrusAuroraTime;
 uniform float CirrusAuroraIntensity;
 uniform float CirrusAuroraPixelation;
@@ -51,24 +52,13 @@ vec3 pixelateDirection(vec3 direction) {
     return normalize(pixelDirection);
 }
 
-float randomValue(vec2 position) {
-    return fract(sin(dot(position, vec2(127.1, 311.7))) * 43758.5453123);
-}
-
 float valueNoise(vec2 position) {
     vec2 cell = floor(position);
     vec2 local = fract(position);
     local = local * local * (3.0 - 2.0 * local);
 
-    float bottomLeft = randomValue(cell);
-    float bottomRight = randomValue(cell + vec2(1.0, 0.0));
-    float topLeft = randomValue(cell + vec2(0.0, 1.0));
-    float topRight = randomValue(cell + vec2(1.0, 1.0));
-    return mix(
-        mix(bottomLeft, bottomRight, local.x),
-        mix(topLeft, topRight, local.x),
-        local.y
-    );
+    vec2 textureSizePixels = vec2(textureSize(Sampler0, 0));
+    return texture(Sampler0, (cell + local + 0.5) / textureSizePixels).r;
 }
 
 float evolvingNoise(vec2 position, float evolution, float seed) {
