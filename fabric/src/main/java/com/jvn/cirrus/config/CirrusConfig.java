@@ -516,7 +516,7 @@ public final class CirrusConfig {
                 .comment("Replace the vanilla End sky with moving clouds, lightning, and spreading darkness.")
                 .define("endSkyEnabled", true);
         END_SKY_QUALITY = builder
-                .comment("Procedural End sky detail. Lower quality reduces fragment-shader noise octaves.")
+                .comment("End sky texture detail. Lower quality selects fewer precomputed noise octaves.")
                 .defineEnum("endSkyQuality", EndSkyQuality.BALANCED);
         END_SKY_PIXELATION_ENABLED = builder
                 .comment("Sample the End sky through a sky-fixed pixel grid for a Minecraft-native finish.")
