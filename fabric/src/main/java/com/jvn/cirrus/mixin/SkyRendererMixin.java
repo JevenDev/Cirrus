@@ -85,11 +85,8 @@ public abstract class SkyRendererMixin {
             return;
         }
 
-        Matrix4f rotatingSky = new Matrix4f(CirrusRenderContext.frustumMatrix())
-                .mul(poseStack.last().pose());
         CirrusRenderers.stars().render(
                 CirrusRenderContext.level(),
-                rotatingSky,
                 CirrusRenderContext.projectionMatrix(),
                 CirrusRenderContext.frustumMatrix(),
                 CirrusRenderContext.partialTick(),

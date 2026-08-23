@@ -27,6 +27,9 @@ public final class CirrusStarRenderer implements AutoCloseable {
     private static final float CELESTIAL_RADIUS = 100.0F;
     private static final long STAR_SEED = 10842L;
     private static final long SHOOTING_STAR_SEED = 734287L;
+    private static final float NORTH_STAR_ELEVATION = (float)Math.toRadians(45.0);
+    private static final float NORTH_STAR_Y = Mth.sin(NORTH_STAR_ELEVATION);
+    private static final float NORTH_STAR_Z = -Mth.cos(NORTH_STAR_ELEVATION);
     private static final Identifier NORTH_STAR_TEXTURE =
             Cirrus.texture("environment/north_star.png");
     private static final float FULL_ROTATION = (float)(Math.PI * 2.0);
@@ -40,10 +43,10 @@ public final class CirrusStarRenderer implements AutoCloseable {
     private CirrusVertexBuffer starBuffer;
     private CirrusVertexBuffer northStarBuffer;
     private CirrusVertexBuffer shootingStarBuffer;
+    private final Matrix4f starModelViewMatrix = new Matrix4f();
 
     public void render(
             ClientLevel level,
-            Matrix4f modelViewMatrix,
             Matrix4f projectionMatrix,
             Matrix4f fixedSkyModelViewMatrix,
             float partialTick,
@@ -148,7 +151,11 @@ public final class CirrusStarRenderer implements AutoCloseable {
         }
 
         if (renderStarField) {
-            starBuffer.drawWithShader(modelViewMatrix, projectionMatrix, shader);
+            starModelViewMatrix.set(fixedSkyModelViewMatrix).rotate(
+                    CirrusRenderContext.sunAngle(partialTick),
+                    0.0F, NORTH_STAR_Y, NORTH_STAR_Z
+            );
+            starBuffer.drawWithShader(starModelViewMatrix, projectionMatrix, shader);
         }
 
         if (renderShootingStars) {
@@ -265,11 +272,10 @@ public final class CirrusStarRenderer implements AutoCloseable {
         shootingStarBuffer = new CirrusVertexBuffer();
         shootingStarBuffer.upload(shootingBuilder.buildOrThrow());
 
-        float northElevation = (float)Math.toRadians(45.0);
         Vector3f northDirection = new Vector3f(
             0.0F,
-            Mth.sin(northElevation),
-            -Mth.cos(northElevation)
+            NORTH_STAR_Y,
+            NORTH_STAR_Z
         );
         BufferBuilder northBuilder = Tesselator.getInstance().begin(
             VertexFormat.Mode.QUADS,
