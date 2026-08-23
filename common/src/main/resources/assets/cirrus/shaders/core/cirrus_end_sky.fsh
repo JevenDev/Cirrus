@@ -1,5 +1,6 @@
 #version 150
 
+uniform sampler2D Sampler0;
 uniform float CirrusEndTime;
 uniform float CirrusEndNoiseOctaves;
 uniform float CirrusEndIntensity;
@@ -19,6 +20,14 @@ out vec4 fragColor;
 
 const float PI = 3.14159265359;
 
+// The atlas packs padded Z slices. R is base noise; G, B, and A contain
+// precomputed 2-, 3-, and 4-octave FBM respectively.
+const float NOISE_VOLUME_SIZE = 96.0;
+const float NOISE_VOLUME_PERIOD = 24.0;
+const float NOISE_ATLAS_COLUMNS = 12.0;
+const float NOISE_TILE_SIZE = 98.0;
+const vec2 NOISE_ATLAS_SIZE = vec2(1176.0, 784.0);
+
 float hash13(vec3 p) {
     p = fract(p * 0.1031);
     p += dot(p, p.yzx + 33.33);
@@ -34,42 +43,39 @@ vec3 hash33(vec3 p) {
     return fract(sin(p) * 43758.5453);
 }
 
-float valueNoise(vec3 p) {
-    vec3 cell = floor(p);
-    vec3 local = fract(p);
-    local = local * local * (3.0 - 2.0 * local);
-
-    float n000 = hash13(cell + vec3(0.0, 0.0, 0.0));
-    float n100 = hash13(cell + vec3(1.0, 0.0, 0.0));
-    float n010 = hash13(cell + vec3(0.0, 1.0, 0.0));
-    float n110 = hash13(cell + vec3(1.0, 1.0, 0.0));
-    float n001 = hash13(cell + vec3(0.0, 0.0, 1.0));
-    float n101 = hash13(cell + vec3(1.0, 0.0, 1.0));
-    float n011 = hash13(cell + vec3(0.0, 1.0, 1.0));
-    float n111 = hash13(cell + vec3(1.0, 1.0, 1.0));
-
-    float nearZ = mix(mix(n000, n100, local.x), mix(n010, n110, local.x), local.y);
-    float farZ = mix(mix(n001, n101, local.x), mix(n011, n111, local.x), local.y);
-    return mix(nearZ, farZ, local.z);
+vec4 sampleNoiseSlice(vec2 voxelPosition, float slice) {
+    vec2 tile = vec2(
+        mod(slice, NOISE_ATLAS_COLUMNS),
+        floor(slice / NOISE_ATLAS_COLUMNS)
+    );
+    vec2 pixel = tile * NOISE_TILE_SIZE + voxelPosition + vec2(1.5);
+    return texture(Sampler0, pixel / NOISE_ATLAS_SIZE);
 }
 
-float fbm(vec3 p) {
-    float result = 0.0;
-    float weight = 0.53;
-    mat3 octaveRotation = mat3(
-        0.00, 0.80, 0.60,
-       -0.80, 0.36, -0.48,
-       -0.60, -0.48, 0.64
+vec4 sampleNoiseVolume(vec3 position) {
+    vec3 voxelPosition = fract(position / NOISE_VOLUME_PERIOD) * NOISE_VOLUME_SIZE;
+    float firstSlice = floor(voxelPosition.z);
+    float secondSlice = mod(firstSlice + 1.0, NOISE_VOLUME_SIZE);
+    return mix(
+        sampleNoiseSlice(voxelPosition.xy, firstSlice),
+        sampleNoiseSlice(voxelPosition.xy, secondSlice),
+        fract(voxelPosition.z)
     );
-    for (int octave = 0; octave < 4; octave++) {
-        result += valueNoise(p) * weight;
-        if (float(octave + 1) >= CirrusEndNoiseOctaves) {
-            break;
-        }
-        p = octaveRotation * p * 2.03 + vec3(7.1, 13.7, 19.3);
-        weight *= 0.49;
+}
+
+float valueNoise(vec3 position) {
+    return sampleNoiseVolume(position).r;
+}
+
+float fbm(vec3 position) {
+    vec4 noise = sampleNoiseVolume(position);
+    if (CirrusEndNoiseOctaves < 2.5) {
+        return noise.g;
     }
-    return result;
+    if (CirrusEndNoiseOctaves < 3.5) {
+        return noise.b;
+    }
+    return noise.a;
 }
 
 vec3 rotateY(vec3 p, float angle) {

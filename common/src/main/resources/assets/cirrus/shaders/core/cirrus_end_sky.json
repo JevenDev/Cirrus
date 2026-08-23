@@ -1,7 +1,9 @@
 {
   "vertex": "cirrus:cirrus_end_sky",
   "fragment": "cirrus:cirrus_end_sky",
-  "samplers": [],
+  "samplers": [
+    { "name": "Sampler0" }
+  ],
   "uniforms": [
     { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
     { "name": "CirrusEndNoiseOctaves", "type": "float", "count": 1, "values": [ 3.0 ] },

@@ -1,5 +1,6 @@
 package com.jvn.cirrus.client;
 
+import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusSkyDome;
 import com.jvn.cirrus.client.util.CirrusShaderUniforms;
@@ -7,10 +8,13 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 
 public final class CirrusEndSkyRenderer implements AutoCloseable {
+    private static final ResourceLocation END_NOISE_TEXTURE =
+            Cirrus.texture("environment/end_noise.png");
     private static final float DOME_RADIUS = 100.0F;
     private static final int AZIMUTH_SEGMENTS = 64;
     private static final int ELEVATION_SEGMENTS = 32;
@@ -25,6 +29,8 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
     ) {
         prepareDome();
         ShaderInstance shader = CirrusShaders.endSky();
+        int previousTexture = RenderSystem.getShaderTexture(0);
+        RenderSystem.setShaderTexture(0, END_NOISE_TEXTURE);
         CirrusShaderUniforms.setUniform(shader, "CirrusEndTime", (ticks + partialTick) / 20.0F);
         CirrusShaderUniforms.setUniform(
                 shader, "CirrusEndNoiseOctaves", (float)CirrusConfig.END_SKY_QUALITY.get().noiseOctaves()
@@ -65,6 +71,7 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
             domeBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
         } finally {
             VertexBuffer.unbind();
+            RenderSystem.setShaderTexture(0, previousTexture);
             RenderSystem.setShaderColor(
                     previousColor[0],
                     previousColor[1],
