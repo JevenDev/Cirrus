@@ -25,7 +25,8 @@ out vec4 fragColor;
 const float CIRRUS_PI = 3.14159265358979323846;
 const float CIRRUS_TWO_PI = 6.28318530717958647692;
 const float CIRRUS_LUMINOSITY_RANGE = 1.32;
-const float CIRRUS_QUARTER_TURN = CIRRUS_PI * 0.5;
+const float CIRRUS_STAR_AXIS_COMPONENT = 0.70710678118654752440;
+const vec3 CIRRUS_STAR_AXIS = vec3(0.0, CIRRUS_STAR_AXIS_COMPONENT, -CIRRUS_STAR_AXIS_COMPONENT);
 
 float cirrusMilkyWayPixelsPerFace() { return max(CirrusMilkyWayPixelationResolution, 1.0); }
 
@@ -66,14 +67,12 @@ vec3 pixelateDirection(vec3 direction) {
     return normalize(pixelDirection);
 }
 
-vec3 rotateX(vec3 direction, float angle) {
+vec3 rotateAroundAxis(vec3 direction, vec3 axis, float angle) {
     float sine = sin(angle);
     float cosine = cos(angle);
-    return vec3(
-        direction.x,
-        direction.y * cosine - direction.z * sine,
-        direction.y * sine + direction.z * cosine
-    );
+    return direction * cosine
+            + cross(axis, direction) * sine
+            + axis * dot(axis, direction) * (1.0 - cosine);
 }
 
 vec3 rotateY(vec3 direction, float angle) {
@@ -115,8 +114,8 @@ void main() {
     }
 
     vec3 smoothCelestialDirection = normalize(rotateY(
-        rotateX(rotateY(viewDirection, CIRRUS_QUARTER_TURN), -CirrusMilkyWayRotation),
-        CIRRUS_QUARTER_TURN
+        rotateAroundAxis(viewDirection, CIRRUS_STAR_AXIS, -CirrusMilkyWayRotation),
+        CIRRUS_PI
     ));
     vec3 celestialDirection = mix(
         smoothCelestialDirection,
