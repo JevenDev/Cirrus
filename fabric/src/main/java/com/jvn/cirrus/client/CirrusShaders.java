@@ -67,7 +67,7 @@ public final class CirrusShaders {
             DefaultVertexFormat.POSITION,
             CirrusShader.Blend.TRANSLUCENT,
             CirrusShader.Target.MAIN,
-            null,
+            Cirrus.texture("environment/milky_way_lookup.png"),
             true,
             false,
             uniform("CirrusMilkyWayIntensity", 1, 0.0F),
