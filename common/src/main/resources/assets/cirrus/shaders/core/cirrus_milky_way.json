@@ -1,7 +1,9 @@
 {
   "vertex": "cirrus:cirrus_milky_way",
   "fragment": "cirrus:cirrus_milky_way",
-  "samplers": [],
+  "samplers": [
+    { "name": "Sampler0" }
+  ],
   "uniforms": [
     { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
     { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
@@ -12,6 +14,6 @@
     { "name": "CirrusSkyGradientHeight", "type": "float", "count": 1, "values": [ 0.55 ] },
     { "name": "CirrusSkyHorizonColor", "type": "float", "count": 3, "values": [ 1.0, 0.62, 0.47 ] },
     { "name": "CirrusSkyZenithColor", "type": "float", "count": 3, "values": [ 0.45, 0.59, 0.80 ] },
-    { "name": "CirrusMilkyWayRotation", "type": "float", "count": 1, "values": [ 0.0 ] }
+    { "name": "CirrusWorldToMilkyWay", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] }
   ]
 }

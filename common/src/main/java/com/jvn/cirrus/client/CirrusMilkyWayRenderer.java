@@ -1,5 +1,6 @@
 package com.jvn.cirrus.client;
 
+import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusSkyDome;
 import com.jvn.cirrus.client.util.CirrusShaderUniforms;
@@ -9,10 +10,14 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 
 public final class CirrusMilkyWayRenderer implements AutoCloseable {
+    private static final ResourceLocation MILKY_WAY_TEXTURE =
+            Cirrus.texture("environment/milky_way_lookup.png");
+    private static final float QUARTER_TURN = Mth.TWO_PI * 0.25F;
     private static final float DOME_RADIUS = 100.0F;
     private static final int AZIMUTH_SEGMENTS = 64;
     private static final int ELEVATION_SEGMENTS = 24;
@@ -20,6 +25,7 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
     private static final float MAX_ELEVATION = (float)Math.toRadians(90.0);
 
     private VertexBuffer domeBuffer;
+    private final Matrix4f worldToMilkyWay = new Matrix4f();
 
     public void render(
             ClientLevel level,
@@ -56,6 +62,7 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
 
         prepareDome();
         ShaderInstance shader = CirrusShaders.milkyWay();
+        RenderSystem.setShaderTexture(0, MILKY_WAY_TEXTURE);
         CirrusShaderUniforms.setUniform(shader, "CirrusMilkyWayIntensity", milkyWayIntensity);
         CirrusShaderUniforms.setUniform(
                 shader, "CirrusMilkyWayPixelation", CirrusConfig.MILKY_WAY_PIXELATION_ENABLED.get()
@@ -78,10 +85,11 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
                     skyPalette.zenithRed(), skyPalette.zenithGreen(), skyPalette.zenithBlue()
             );
         }
-        // Use the same smoothed celestial angle as Minecraft's sun, moon,
-        // and stars so the galactic band remains attached to the sky.
+        worldToMilkyWay.rotationY(QUARTER_TURN)
+                .rotateX(-level.getTimeOfDay(partialTick) * Mth.TWO_PI)
+                .rotateY(QUARTER_TURN);
         CirrusShaderUniforms.setUniform(
-                shader, "CirrusMilkyWayRotation", level.getTimeOfDay(partialTick) * Mth.TWO_PI
+                shader, "CirrusWorldToMilkyWay", worldToMilkyWay
         );
 
         float[] previousColor = RenderSystem.getShaderColor();

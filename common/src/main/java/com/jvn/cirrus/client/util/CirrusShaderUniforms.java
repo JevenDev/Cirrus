@@ -1,6 +1,7 @@
 package com.jvn.cirrus.client.util;
 
 import net.minecraft.client.renderer.ShaderInstance;
+import org.joml.Matrix4f;
 
 public final class CirrusShaderUniforms {
     private CirrusShaderUniforms() {
@@ -36,5 +37,12 @@ public final class CirrusShaderUniforms {
 
     public static void setUniform(ShaderInstance shader, String name, boolean value) {
         setUniform(shader, name, value ? 1.0F : 0.0F);
+    }
+
+    public static void setUniform(ShaderInstance shader, String name, Matrix4f value) {
+        var uniform = shader.getUniform(name);
+        if (uniform != null) {
+            uniform.set(value);
+        }
     }
 }
