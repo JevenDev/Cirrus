@@ -75,9 +75,9 @@ public final class CirrusShaders {
             uniform("CirrusMilkyWayPixelationResolution", 1, 320.0F),
             uniform("CirrusSkyGradientIntensity", 1, 0.0F),
             uniform("CirrusSkyGradientHeight", 1, 0.55F),
+            uniform("CirrusMilkyWayRotation", 1, 0.0F),
             uniform("CirrusSkyHorizonColor", 3, 1.0F, 0.62F, 0.47F),
-            uniform("CirrusSkyZenithColor", 3, 0.45F, 0.59F, 0.80F),
-            uniform("CirrusMilkyWayRotation", 1, 0.0F)
+            uniform("CirrusSkyZenithColor", 3, 0.45F, 0.59F, 0.80F)
     );
     private static final CirrusShader STARS = new CirrusShader(
             "cirrus_stars",

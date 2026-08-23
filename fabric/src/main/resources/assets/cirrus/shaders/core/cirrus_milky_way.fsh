@@ -11,9 +11,9 @@ layout(std140) uniform CirrusParams {
     float CirrusMilkyWayPixelationResolution;
     float CirrusSkyGradientIntensity;
     float CirrusSkyGradientHeight;
+    float CirrusMilkyWayRotation;
     vec3 CirrusSkyHorizonColor;
     vec3 CirrusSkyZenithColor;
-    float CirrusMilkyWayRotation;
 };
 
 uniform sampler2D Sampler0;
