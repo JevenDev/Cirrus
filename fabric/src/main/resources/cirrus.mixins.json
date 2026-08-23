@@ -6,6 +6,7 @@
     "CameraMixin",
     "ClientClockManagerMixin",
     "ClientPacketListenerMixin",
+    "FogRendererMixin",
     "GameRendererMixin",
     "LevelRendererCloudMixin",
     "CloudRendererMixin",
