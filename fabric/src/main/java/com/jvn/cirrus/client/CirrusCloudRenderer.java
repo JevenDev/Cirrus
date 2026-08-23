@@ -75,6 +75,17 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         double windSample = (ticks + partialTick) * 0.03 / WORLD_SCALE;
         float rainLevel = smoothWeatherLevel(level.getRainLevel(partialTick));
         float thunderLevel = smoothWeatherLevel(level.getThunderLevel(partialTick));
+        CirrusShader maskShader = CirrusShaders.cloudMask();
+        CirrusShaderUniforms.setUniform(
+                maskShader,
+                "CirrusRainCloudCoverage",
+                rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue()
+        );
+        CirrusShaderUniforms.setUniform(
+                maskShader,
+                "CirrusThunderCloudCoverage",
+                thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue()
+        );
         prepareLayer(lowerMesh, LOWER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, false);
         boolean upperEnabled = CirrusConfig.UPPER_LAYER_ENABLED.get();
         boolean topEnabled = CirrusConfig.TOP_LAYER_ENABLED.get();
@@ -85,17 +96,17 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             prepareLayer(topMesh, TOP_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, false);
         }
 
-        drawMaskLayer(lowerMesh, LOWER_LAYER, frustumMatrix, projectionMatrix,
+        drawMaskLayer(lowerMesh, LOWER_LAYER, frustumMatrix, projectionMatrix, maskShader,
                 cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
                 cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
         if (upperEnabled) {
-            drawMaskLayer(upperMesh, UPPER_LAYER, frustumMatrix, projectionMatrix,
+            drawMaskLayer(upperMesh, UPPER_LAYER, frustumMatrix, projectionMatrix, maskShader,
                     cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                             + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
                     cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
         }
         if (topEnabled) {
-            drawMaskLayer(topMesh, TOP_LAYER, frustumMatrix, projectionMatrix,
+            drawMaskLayer(topMesh, TOP_LAYER, frustumMatrix, projectionMatrix, maskShader,
                     cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                             + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
                             + CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
@@ -108,6 +119,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             LayerDefinition definition,
             Matrix4f frustumMatrix,
             Matrix4f projectionMatrix,
+            CirrusShader shader,
             double relativeHeight,
             double cameraSampleX,
             double cameraSampleZ,
@@ -124,18 +136,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         poseStack.mulPose(frustumMatrix);
         poseStack.scale(WORLD_SCALE, 1.0F, WORLD_SCALE);
         poseStack.translate(-(sampleX - mesh.cachedAnchorX), relativeHeight, -(sampleZ - mesh.cachedAnchorZ));
-        mesh.buffer.bind();
-        CirrusShader shader = CirrusShaders.cloudMask();
-        CirrusShaderUniforms.setUniform(
-                shader,
-                "CirrusRainCloudCoverage",
-                rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue()
-        );
-        CirrusShaderUniforms.setUniform(
-                shader,
-                "CirrusThunderCloudCoverage",
-                thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue()
-        );
         CirrusShaderUniforms.setUniform(shader, "CirrusLayerOpacity", definition.opacity(rainLevel, thunderLevel));
         mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
     }
@@ -228,6 +228,15 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     CirrusRenderContext.fogColor().w
             );
         }
+        setCloudEnvironment(
+                cloudShader,
+                celestialAngle,
+                sunWeight,
+                celestialViewDirection,
+                rainLevel,
+                thunderLevel,
+                lightning
+        );
 
         for (int layerIndex = 0; layerIndex < enabledLayerCount; layerIndex++) {
             LayerMesh mesh;
@@ -255,6 +264,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     poseStack,
                     frustumMatrix,
                     projectionMatrix,
+                    cloudShader,
                     relativeHeight,
                     cameraSampleX,
                     cameraSampleZ,
@@ -326,6 +336,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             PoseStack poseStack,
             Matrix4f frustumMatrix,
             Matrix4f projectionMatrix,
+            CirrusShader shader,
             double relativeHeight,
             double cameraSampleX,
             double cameraSampleZ,
@@ -353,7 +364,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     -(sampleZ - mesh.cachedAnchorZ)
             );
 
-            CirrusShader shader = CirrusShaders.clouds();
             CirrusShaderUniforms.setUniform(
                     shader,
                     "ColorModulator",
@@ -361,15 +371,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     (float)cloudColor.y,
                     (float)cloudColor.z,
                     definition.opacity(rainLevel, thunderLevel)
-            );
-            setCloudEnvironment(
-                    shader,
-                    celestialAngle,
-                    sunWeight,
-                    celestialViewDirection,
-                    rainLevel,
-                    thunderLevel,
-                    lightning
             );
             boolean renderingForDistantHorizons =
                     CirrusRenderContext.renderingCloudsForDistantHorizons();
