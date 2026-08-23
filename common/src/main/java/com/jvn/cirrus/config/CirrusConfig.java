@@ -39,6 +39,7 @@ public final class CirrusConfig {
     public static final DoubleSetting SHOOTING_STAR_BLOOM_SETTING = new DoubleSetting(2.0, 0.0, 2.0, 0.05);
     public static final DoubleSetting SHOOTING_STAR_COLOR_VARIATION_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
     public static final DoubleSetting SKY_GRADIENT_OPACITY_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
+    public static final DoubleSetting FOG_HORIZON_TINT_STRENGTH_SETTING = new DoubleSetting(0.6, 0.0, 1.0, 0.01);
     public static final DoubleSetting SKY_GRADIENT_TRANSITION_TICKS_SETTING =
             new DoubleSetting(1800.0, 0.0, 2400.0, 100.0);
     public static final DoubleSetting SKY_GRADIENT_HEIGHT_SETTING = new DoubleSetting(0.90, 0.15, 0.90, 0.05);
@@ -115,6 +116,8 @@ public final class CirrusConfig {
     public static final CirrusConfigSpec.DoubleValue SHOOTING_STAR_BLOOM;
     public static final CirrusConfigSpec.DoubleValue SHOOTING_STAR_COLOR_VARIATION;
     public static final CirrusConfigSpec.BooleanValue SKY_GRADIENTS_ENABLED;
+    public static final CirrusConfigSpec.BooleanValue FOG_USES_HORIZON_COLOR;
+    public static final CirrusConfigSpec.DoubleValue FOG_HORIZON_TINT_STRENGTH;
     public static final CirrusConfigSpec.DoubleValue SKY_GRADIENT_OPACITY;
     public static final CirrusConfigSpec.DoubleValue SKY_GRADIENT_TRANSITION_TICKS;
     public static final CirrusConfigSpec.DoubleValue SKY_GRADIENT_HEIGHT;
@@ -381,6 +384,16 @@ public final class CirrusConfig {
         SKY_GRADIENTS_ENABLED = builder
                 .comment("Overlay configurable horizon-to-zenith gradients that transition through the full day.")
                 .define("skyGradientsEnabled", true);
+        FOG_USES_HORIZON_COLOR = builder
+                .comment("Match normal air fog to Cirrus' view-direction sky gradient and soften the terrain"
+                        + " transition. Water, lava, powder snow, visibility effects, and non-normal skies keep"
+                        + " their original fog.")
+                .define("fogUsesHorizonColor", true);
+        FOG_HORIZON_TINT_STRENGTH = FOG_HORIZON_TINT_STRENGTH_SETTING.define(
+                builder,
+                "fogHorizonTintStrength",
+                "Amount of sky color matching and terrain fog transition smoothing."
+        );
         SKY_GRADIENT_OPACITY = SKY_GRADIENT_OPACITY_SETTING.define(
                 builder,
                 "skyGradientOpacity",

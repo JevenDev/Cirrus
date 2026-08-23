@@ -6,6 +6,7 @@
     "ClientLevelMixin",
     "ClientLevelDataMixin",
     "ClientPacketListenerMixin",
+    "FogRendererMixin",
     "GameRendererMixin",
     "LevelRendererCloudMixin",
     "LightningBoltMixin",
