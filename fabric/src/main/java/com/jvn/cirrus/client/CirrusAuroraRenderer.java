@@ -41,7 +41,7 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
     private CirrusVertexBuffer domeBuffer;
     private ClientLevel blendLevel;
     private float coldBiomeBlend;
-    private double previousFrameTime = Double.NaN;
+    private double previousFrameTime;
     private ClientLevel sampledBiomeLevel;
     private int lastBiomeSampleTick;
     private int sampledBiomeX;
@@ -50,11 +50,10 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
     private float sampledColdStrength;
     private ClientLevel animationLevel;
     private float animationTime;
-    private double previousAnimationRenderTime = Double.NaN;
+    private double previousAnimationRenderTime;
     private ClientLevel variationLevel;
     private final float[] currentVariant = new float[4];
-    private long currentVariantNight = Long.MIN_VALUE;
-    private boolean variantInitialized;
+    private long currentVariantNight;
 
     public void render(
             ClientLevel level,
@@ -138,7 +137,7 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
         }
 
         double frameTime = ticks + (double)partialTick;
-        if (blendLevel != level || Double.isNaN(previousFrameTime)) {
+        if (blendLevel != level) {
             blendLevel = level;
             coldBiomeBlend = sampledColdStrength;
             previousFrameTime = frameTime;
@@ -184,7 +183,7 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
 
     private float updateAnimationTime(ClientLevel level, float partialTick, int ticks) {
         double renderTime = ticks + (double)partialTick;
-        if (animationLevel != level || Double.isNaN(previousAnimationRenderTime)) {
+        if (animationLevel != level) {
             animationLevel = level;
             animationTime = 0.0F;
             previousAnimationRenderTime = renderTime;
@@ -204,13 +203,8 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
         long visualNight = Math.floorDiv(CirrusTimeTransition.visualDayTime(), 24000L);
         if (variationLevel != level) {
             variationLevel = level;
-            variantInitialized = false;
-            currentVariantNight = Long.MIN_VALUE;
-        }
-        if (!variantInitialized) {
             fillVariant(level, visualNight, currentVariant);
             currentVariantNight = visualNight;
-            variantInitialized = true;
             return;
         }
 
@@ -249,16 +243,9 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
 
     public void invalidate() {
         blendLevel = null;
-        coldBiomeBlend = 0.0F;
-        previousFrameTime = Double.NaN;
         sampledBiomeLevel = null;
-        lastBiomeSampleTick = 0;
         animationLevel = null;
-        animationTime = 0.0F;
-        previousAnimationRenderTime = Double.NaN;
         variationLevel = null;
-        variantInitialized = false;
-        currentVariantNight = Long.MIN_VALUE;
     }
 
     @Override
