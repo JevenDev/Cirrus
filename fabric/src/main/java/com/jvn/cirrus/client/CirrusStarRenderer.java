@@ -3,7 +3,6 @@ package com.jvn.cirrus.client;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import static com.jvn.cirrus.client.util.CirrusRandom.signedFloat;
 
-import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.render.CirrusUniform;
 import com.mojang.blaze3d.PrimitiveTopology;
@@ -15,7 +14,6 @@ import com.jvn.cirrus.client.render.CirrusVertexBuffer;
 import java.util.Random;
 import net.minecraft.client.multiplayer.ClientLevel;
 import com.jvn.cirrus.client.render.CirrusShader;
-import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -30,8 +28,6 @@ public final class CirrusStarRenderer implements AutoCloseable {
     private static final float NORTH_STAR_ELEVATION = (float)Math.toRadians(45.0);
     private static final float NORTH_STAR_Y = Mth.sin(NORTH_STAR_ELEVATION);
     private static final float NORTH_STAR_Z = -Mth.cos(NORTH_STAR_ELEVATION);
-    private static final Identifier NORTH_STAR_TEXTURE =
-            Cirrus.texture("environment/north_star.png");
     private static final float FULL_ROTATION = (float)(Math.PI * 2.0);
     private static final float[][] CORNERS = {
             {1.0F, -1.0F},
