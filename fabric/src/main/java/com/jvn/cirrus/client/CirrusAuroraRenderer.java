@@ -51,15 +51,10 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
     private ClientLevel animationLevel;
     private float animationTime;
     private double previousAnimationRenderTime = Double.NaN;
-    private double previousAnimationVisualDayTime = Double.NaN;
-    private boolean previousTimeTransitionActive;
     private ClientLevel variationLevel;
     private final float[] currentVariant = new float[4];
-    private final float[] transitionStartVariant = new float[4];
-    private final float[] transitionTargetVariant = new float[4];
-    private long transitionTargetNight = Long.MIN_VALUE;
+    private long currentVariantNight = Long.MIN_VALUE;
     private boolean variantInitialized;
-    private boolean variantTransitionActive;
 
     public void render(
             ClientLevel level,
@@ -82,6 +77,7 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
                 * weatherVisibility
                 * CirrusConfig.AURORA_OPACITY.get().floatValue();
         if (visibleIntensity < 0.002F) {
+            updateNightlyVariation(level, false);
             return;
         }
         float coldStrength = CirrusConfig.AURORA_COLD_BIOMES_ONLY.get()
@@ -89,8 +85,10 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
                 : 1.0F;
         float intensity = coldStrength * visibleIntensity;
         if (intensity < 0.002F) {
+            updateNightlyVariation(level, false);
             return;
         }
+        updateNightlyVariation(level, true);
 
         prepareDome();
         CirrusShader shader = CirrusShaders.aurora();
@@ -104,7 +102,7 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
 
         CirrusUniform variantUniform = shader.getUniform("CirrusAuroraVariant");
         if (variantUniform != null) {
-            setNightlyVariation(variantUniform, level);
+            applyNightlyVariation(variantUniform);
         }
 
         CirrusShaderUniforms.setUniform(
@@ -186,76 +184,43 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
 
     private float updateAnimationTime(ClientLevel level, float partialTick, int ticks) {
         double renderTime = ticks + (double)partialTick;
-        double visualDayTime = CirrusTimeTransition.visualDayTime(level, partialTick);
-        if (animationLevel != level
-                || Double.isNaN(previousAnimationRenderTime)
-                || Double.isNaN(previousAnimationVisualDayTime)) {
+        if (animationLevel != level || Double.isNaN(previousAnimationRenderTime)) {
             animationLevel = level;
             animationTime = 0.0F;
             previousAnimationRenderTime = renderTime;
-            previousAnimationVisualDayTime = visualDayTime;
             return animationTime;
         }
 
         double renderTimeDelta = Math.max(0.0, renderTime - previousAnimationRenderTime);
-        double visualTimeDelta = Math.max(0.0, visualDayTime - previousAnimationVisualDayTime);
         previousAnimationRenderTime = renderTime;
-        previousAnimationVisualDayTime = visualDayTime;
-
-        // Preserve ordinary animation when daylight is frozen. Smooth time
-        // transitions contribute only a twelfth of their extra acceleration so
-        // the aurora reacts without racing through several shapes at once.
-        double acceleratedExtra = Math.max(0.0, visualTimeDelta - renderTimeDelta);
-        boolean timeTransitionActive = CirrusTimeTransition.isTransitionActive();
-        double transitionScale = timeTransitionActive || previousTimeTransitionActive
-                ? 1.0 / 12.0
-                : 1.0;
-        previousTimeTransitionActive = timeTransitionActive;
-        double elapsedTicks = Math.min(renderTimeDelta + acceleratedExtra * transitionScale, 1200.0);
+        double elapsedTicks = Math.min(renderTimeDelta, 1200.0);
         animationTime += (float)(elapsedTicks
                 * CirrusConfig.AURORA_ANIMATION_SPEED.get()
                 / 20.0);
         return animationTime;
     }
 
-    private void setNightlyVariation(CirrusUniform uniform, ClientLevel level) {
+    private void updateNightlyVariation(ClientLevel level, boolean visible) {
         long visualNight = Math.floorDiv(CirrusTimeTransition.visualDayTime(), 24000L);
         if (variationLevel != level) {
             variationLevel = level;
             variantInitialized = false;
-            variantTransitionActive = false;
-            transitionTargetNight = Long.MIN_VALUE;
+            currentVariantNight = Long.MIN_VALUE;
         }
         if (!variantInitialized) {
             fillVariant(level, visualNight, currentVariant);
+            currentVariantNight = visualNight;
             variantInitialized = true;
+            return;
         }
 
-        if (CirrusTimeTransition.isTransitionActive()) {
-            long targetNight = Math.floorDiv(CirrusTimeTransition.authoritativeDayTime(), 24000L);
-            if (!variantTransitionActive || transitionTargetNight != targetNight) {
-                System.arraycopy(currentVariant, 0, transitionStartVariant, 0, currentVariant.length);
-                fillVariant(level, targetNight, transitionTargetVariant);
-                transitionTargetNight = targetNight;
-                variantTransitionActive = true;
-            }
-
-            float progress = (float)CirrusTimeTransition.transitionProgress();
-            for (int index = 0; index < currentVariant.length; index++) {
-                currentVariant[index] = Mth.lerp(
-                        progress,
-                        transitionStartVariant[index],
-                        transitionTargetVariant[index]
-                );
-            }
-        } else {
-            // Recompute from the settled visual night so the final transition
-            // frame and all subsequent frames use the exact same layout.
+        if (!visible && currentVariantNight != visualNight) {
             fillVariant(level, visualNight, currentVariant);
-            variantTransitionActive = false;
-            transitionTargetNight = Long.MIN_VALUE;
+            currentVariantNight = visualNight;
         }
+    }
 
+    private void applyNightlyVariation(CirrusUniform uniform) {
         float strength = CirrusConfig.AURORA_NIGHTLY_VARIATION.get().floatValue();
         uniform.set(
                 Mth.lerp(strength, 0.5F, currentVariant[0]),
@@ -291,12 +256,9 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
         animationLevel = null;
         animationTime = 0.0F;
         previousAnimationRenderTime = Double.NaN;
-        previousAnimationVisualDayTime = Double.NaN;
-        previousTimeTransitionActive = false;
         variationLevel = null;
         variantInitialized = false;
-        variantTransitionActive = false;
-        transitionTargetNight = Long.MIN_VALUE;
+        currentVariantNight = Long.MIN_VALUE;
     }
 
     @Override
