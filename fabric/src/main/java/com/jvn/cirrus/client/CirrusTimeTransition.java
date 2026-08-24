@@ -78,19 +78,37 @@ public final class CirrusTimeTransition {
         awaitingInitialTime = true;
     }
 
-    public static void acceptInitialTime(ClientLevel level) {
-        if (!awaitingInitialTime) {
+    public static void acceptServerTimeUpdate(ClientLevel level) {
+        long actualDayTime = level.getDefaultClockTime();
+        long gameTime = level.getGameTime();
+        if (awaitingInitialTime
+                || trackedLevel != level
+                || !CirrusConfig.SMOOTH_TIME_TRANSITIONS.get()
+                || level.dimensionType().hasFixedTime()) {
+            awaitingInitialTime = false;
+            reset(level, actualDayTime, gameTime);
             return;
         }
 
-        awaitingInitialTime = false;
-        reset(level, level.getDefaultClockTime(), level.getGameTime());
+        long actualDelta = actualDayTime - lastActualDayTime;
+        if (Math.abs(actualDelta) > ABRUPT_TIME_CHANGE_TICKS) {
+            long now = System.nanoTime();
+            updateTransition(lastActualDayTime, now);
+            startTransition(actualDayTime, now);
+        }
+        lastActualDayTime = actualDayTime;
+        lastGameTime = gameTime;
     }
 
     public static boolean isRenderingWith(Holder<WorldClock> clock) {
         return rendering
                 && trackedLevel != null
-                && trackedLevel.dimensionType().defaultClock().filter(clock::equals).isPresent();
+                && trackedLevel.dimensionType().defaultClock()
+                        .filter(defaultClock -> defaultClock.unwrapKey()
+                                .map(clock::is)
+                                .orElseGet(() -> defaultClock == clock
+                                        || defaultClock.value() == clock.value()))
+                        .isPresent();
     }
 
     public static long visualDayTime() {

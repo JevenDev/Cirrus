@@ -23,7 +23,7 @@ import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(FogRenderer.class)
@@ -40,9 +40,9 @@ public abstract class FogRendererMixin {
             ClientLevel level,
             int renderDistanceChunks,
             float darkenWorldAmount,
-            CallbackInfoReturnable<Vector4f> cir
+            Vector4f fogColor,
+            CallbackInfo ci
     ) {
-        Vector4f fogColor = cir.getReturnValue();
         cirrus$terrainFadeStrength = 0.0F;
         cirrus$farPlaneDistance = renderDistanceChunks * 16.0F;
         if (!shouldMatchSky(camera, level)) {
@@ -80,7 +80,6 @@ public abstract class FogRendererMixin {
                 strength,
                 fogColor
         );
-        cir.setReturnValue(fogColor);
     }
 
     @Inject(method = "setupFog", at = @At("RETURN"))
@@ -93,6 +92,9 @@ public abstract class FogRendererMixin {
             CallbackInfoReturnable<FogData> cir
     ) {
         Minecraft minecraft = Minecraft.getInstance();
+        FogData fogData = cir.getReturnValue();
+        fogData.renderDistanceStart =
+                cirrus$softenTerrainFogTransition(fogData.renderDistanceStart);
         if (!CirrusCloudMode.isActive(minecraft.options.getCloudStatus())
                 || camera.getFluidInCamera() != FogType.NONE
                 || hasVisibilityEffect(camera)
@@ -100,18 +102,9 @@ public abstract class FogRendererMixin {
             return;
         }
 
-        cir.getReturnValue().cloudEnd =
-                DistantHorizonsCompat.cloudRenderDistanceChunks() * 16.0F;
+        fogData.cloudEnd = DistantHorizonsCompat.cloudRenderDistanceChunks() * 16.0F;
     }
 
-    @ModifyArg(
-            method = "setupFog",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/fog/FogRenderer;updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V"
-            ),
-            index = 5
-    )
     private float cirrus$softenTerrainFogTransition(float vanillaStart) {
         if (cirrus$terrainFadeStrength < 0.002F) {
             return vanillaStart;
