@@ -148,20 +148,22 @@ public abstract class FogRendererMixin {
 
         if (renderDistanceChunks >= 4) {
             float timeOfDay = level.getTimeOfDay(partialTick);
-            int sunriseColor = level.effects().getSunriseOrSunsetColor(timeOfDay);
-            float sunriseColorAlpha = ARGB.alphaFloat(sunriseColor);
-            if (sunriseColorAlpha > 0.0F) {
-                float sunDirection = Mth.sin(level.getSunAngle(partialTick)) > 0.0F
-                        ? -1.0F
-                        : 1.0F;
-                float sunriseAlpha = Mth.clamp(
-                        camera.getLookVector().x() * sunDirection,
-                        0.0F,
-                        1.0F
-                ) * sunriseColorAlpha;
-                red = Mth.lerp(sunriseAlpha, red, ARGB.redFloat(sunriseColor));
-                green = Mth.lerp(sunriseAlpha, green, ARGB.greenFloat(sunriseColor));
-                blue = Mth.lerp(sunriseAlpha, blue, ARGB.blueFloat(sunriseColor));
+            if (level.effects().isSunriseOrSunset(timeOfDay)) {
+                int sunriseColor = level.effects().getSunriseOrSunsetColor(timeOfDay);
+                float sunriseColorAlpha = ARGB.alphaFloat(sunriseColor);
+                if (sunriseColorAlpha > 0.0F) {
+                    float sunDirection = Mth.sin(level.getSunAngle(partialTick)) > 0.0F
+                            ? -1.0F
+                            : 1.0F;
+                    float sunriseAlpha = Mth.clamp(
+                            camera.getLookVector().x() * sunDirection,
+                            0.0F,
+                            1.0F
+                    ) * sunriseColorAlpha;
+                    red = Mth.lerp(sunriseAlpha, red, ARGB.redFloat(sunriseColor));
+                    green = Mth.lerp(sunriseAlpha, green, ARGB.greenFloat(sunriseColor));
+                    blue = Mth.lerp(sunriseAlpha, blue, ARGB.blueFloat(sunriseColor));
+                }
             }
         }
 
