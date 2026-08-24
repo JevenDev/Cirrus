@@ -24,10 +24,10 @@ public abstract class ClientPacketListenerMixin {
     }
 
     @Inject(method = "handleSetTime", at = @At("TAIL"))
-    private void cirrus$acceptInitialTime(ClientboundSetTimePacket packet, CallbackInfo ci) {
+    private void cirrus$acceptServerTimeUpdate(ClientboundSetTimePacket packet, CallbackInfo ci) {
         var level = Minecraft.getInstance().level;
         if (level != null) {
-            CirrusTimeTransition.acceptInitialTime(level);
+            CirrusTimeTransition.acceptServerTimeUpdate(level);
         }
     }
 }
