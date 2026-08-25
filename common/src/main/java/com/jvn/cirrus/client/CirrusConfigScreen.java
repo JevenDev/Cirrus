@@ -41,6 +41,10 @@ public final class CirrusConfigScreen {
                         .name(text("cirrus.config.group.cloudGeneral"))
                         .option(booleanOption("cirrus.config.clouds.enabled", CirrusConfig.CUSTOM_CLOUDS_ENABLED))
                         .option(booleanOption(
+                                "cirrus.config.clouds.shaderPackWarningsEnabled",
+                                CirrusConfig.SHADER_PACK_WARNINGS_ENABLED
+                        ))
+                        .option(booleanOption(
                                 "cirrus.config.clouds.distantHorizonsCompatibility",
                                 CirrusConfig.DISTANT_HORIZONS_COMPATIBILITY
                         ))
