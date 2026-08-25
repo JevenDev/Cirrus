@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientLevel.class)
 public abstract class ClientLevelMixin {
     @Inject(method = "setDayTime", at = @At("TAIL"))
-    private void cirrus$acceptInitialDayTime(long dayTime, CallbackInfo ci) {
-        CirrusTimeTransition.acceptInitialTime((ClientLevel)(Object)this);
+    private void cirrus$acceptServerTimeUpdate(long dayTime, CallbackInfo ci) {
+        CirrusTimeTransition.acceptServerTimeUpdate((ClientLevel)(Object)this, dayTime);
     }
 }

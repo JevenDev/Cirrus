@@ -27,7 +27,6 @@ public final class CirrusTimeTransition {
     private static double transitionDelta;
     private static long transitionStartNanos;
     private static double transitionDurationTicks;
-    private static double transitionProgress = 1.0;
     private static boolean transitionActive;
     private static boolean rendering;
     private static boolean awaitingInitialTime;
@@ -76,13 +75,25 @@ public final class CirrusTimeTransition {
         awaitingInitialTime = true;
     }
 
-    public static void acceptInitialTime(ClientLevel level) {
-        if (!awaitingInitialTime) {
+    public static void acceptServerTimeUpdate(ClientLevel level, long actualDayTime) {
+        long gameTime = level.getGameTime();
+        if (awaitingInitialTime
+                || trackedLevel != level
+                || !CirrusConfig.SMOOTH_TIME_TRANSITIONS.get()
+                || level.dimensionType().hasFixedTime()) {
+            awaitingInitialTime = false;
+            reset(level, actualDayTime, gameTime);
             return;
         }
 
-        awaitingInitialTime = false;
-        reset(level, level.getLevelData().getDayTime(), level.getGameTime());
+        long actualDelta = actualDayTime - lastActualDayTime;
+        if (Math.abs(actualDelta) > ABRUPT_TIME_CHANGE_TICKS) {
+            long now = System.nanoTime();
+            updateTransition(lastActualDayTime, now);
+            startTransition(actualDayTime, now);
+        }
+        lastActualDayTime = actualDayTime;
+        lastGameTime = gameTime;
     }
 
     public static boolean isRenderingWith(ClientLevel.ClientLevelData levelData) {
@@ -101,29 +112,12 @@ public final class CirrusTimeTransition {
         return displayedDayTime + CirrusTimeAccess.dayTimeFraction(level) + partialTick * ticksPerGameTick;
     }
 
-    public static boolean isTransitionActive() {
-        return transitionActive;
-    }
-
-    public static double transitionProgress() {
-        return transitionProgress;
-    }
-
-    public static long authoritativeDayTime() {
-        return lastActualDayTime;
-    }
-
     private static void reset(ClientLevel level, long actualDayTime, long gameTime) {
         trackedLevel = level;
         lastActualDayTime = actualDayTime;
         lastGameTime = gameTime;
         visualDayTime = actualDayTime;
         displayedDayTime = actualDayTime;
-        transitionStartDayTime = actualDayTime;
-        transitionTargetDayTime = actualDayTime;
-        transitionDelta = 0.0;
-        transitionDurationTicks = 0.0;
-        transitionProgress = 1.0;
         transitionActive = false;
     }
 
@@ -143,7 +137,6 @@ public final class CirrusTimeTransition {
         transitionDelta = shortestDayDelta(displayedDayTime, targetDayTime);
         transitionDurationTicks = durationTicks(Math.abs(transitionDelta));
         transitionStartNanos = now;
-        transitionProgress = 0.0;
         transitionActive = true;
     }
 
@@ -160,7 +153,6 @@ public final class CirrusTimeTransition {
     private static void updateTransition(long actualDayTime, long now) {
         if (!transitionActive) {
             displayedDayTime = actualDayTime;
-            transitionProgress = 1.0;
             return;
         }
 
@@ -169,14 +161,12 @@ public final class CirrusTimeTransition {
                 ? 1.0
                 : Math.min(1.0, elapsedTicks / transitionDurationTicks);
         double easedProgress = CirrusEasing.smootherstep(progress);
-        transitionProgress = easedProgress;
         double naturalTimePassed = actualDayTime - transitionTargetDayTime;
         displayedDayTime = transitionStartDayTime
                 + transitionDelta * easedProgress
                 + naturalTimePassed;
         if (progress >= 1.0) {
             displayedDayTime = actualDayTime;
-            transitionProgress = 1.0;
             transitionActive = false;
         }
     }
