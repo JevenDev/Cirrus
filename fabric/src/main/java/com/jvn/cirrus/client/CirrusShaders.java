@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 public final class CirrusShaders {
     private static final CirrusShader CLOUDS = new CirrusShader(
             "cirrus_clouds",
-            DefaultVertexFormat.POSITION_TEX_COLOR,
+            DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL,
             CirrusShader.Blend.TRANSLUCENT,
             CirrusShader.Target.CLOUDS,
             ResourceLocation.withDefaultNamespace("textures/environment/clouds.png"),
@@ -37,7 +37,7 @@ public final class CirrusShaders {
     );
     private static final CirrusShader CLOUD_MASK = new CirrusShader(
             "cirrus_cloud_mask",
-            DefaultVertexFormat.POSITION_TEX_COLOR,
+            DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL,
             CirrusShader.Blend.NONE,
             CirrusShader.Target.MAIN,
             ResourceLocation.withDefaultNamespace("textures/environment/clouds.png"),

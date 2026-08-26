@@ -392,8 +392,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     rainLevel,
                     thunderLevel,
                     lightning,
-                    cloudTexture,
-                    shaderPackInUse
+                    cloudTexture
             );
         }
     }
@@ -464,8 +463,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             float rainLevel,
             float thunderLevel,
             LightningState lightning,
-            CloudTexture cloudTexture,
-            boolean shaderPackInUse
+            CloudTexture cloudTexture
     ) {
         if (mesh.buffer == null) {
             return;
@@ -492,7 +490,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             );
             boolean renderingForDistantHorizons =
                     CirrusRenderContext.renderingCloudsForDistantHorizons();
-            if (definition.style() == CirrusConfig.CloudStyle.FANCY || shaderPackInUse) {
+            if (definition.style() == CirrusConfig.CloudStyle.FANCY) {
                 mesh.buffer.drawWithShader(
                         poseStack.last().pose(),
                         projectionMatrix,
@@ -768,7 +766,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     ) {
         BufferBuilder bufferBuilder = Tesselator.getInstance().begin(
                 VertexFormat.Mode.QUADS,
-                DefaultVertexFormat.POSITION_TEX_COLOR
+                DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
         );
         float radius = distanceChunks * 16.0F / WORLD_SCALE;
         CloudMeshBuilder builder = new CloudMeshBuilder(bufferBuilder, radius, shaderPackDistanceFade);
