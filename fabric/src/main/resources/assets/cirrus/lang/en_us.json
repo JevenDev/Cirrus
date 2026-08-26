@@ -217,6 +217,7 @@
   "cirrus.config.clouds.topLayerOpacity": "Top Layer Opacity",
   "cirrus.config.clouds.topLayerOpacity.description": "Controls top-layer transparency independently; it defaults more transparent than the other layers.",
   "cirrus.shaderpack.fix.prompt": "Cirrus does not fully support shaders. Incompatible shader detected. Cirrus won't work as intended with %s.",
+  "cirrus.shaderpack.fix.prompt.distantHorizons": "Cirrus does not fully support shaders with Distant Horizons. Clouds may appear gray. Incompatible cloud settings were also detected in %s.",
   "cirrus.shaderpack.fix.apply": "[Apply compatibility settings]",
   "cirrus.shaderpack.fix.apply.hover": "Changes only this shader pack's cloud mode and cloud-fog settings.",
   "cirrus.shaderpack.fix.applied": "Cirrus compatibility settings were applied to %s. All other shader settings were preserved.",
@@ -224,5 +225,7 @@
   "cirrus.shaderpack.fix.reloadFailed": "Settings were saved for %s, but Iris could not reload them. Reload the shader pack manually.",
   "cirrus.shaderpack.fix.unsupported": "The active shader pack does not have a Cirrus compatibility profile.",
   "cirrus.shaderpack.unknown.prompt": "Cirrus does not fully support shaders. Unknown shader detected: %s. Cirrus may not work as intended. Disable the shader pack's clouds and cloud fog in Shader Pack Settings.",
+  "cirrus.shaderpack.unknown.prompt.distantHorizons": "Cirrus does not fully support shaders with Distant Horizons. Clouds may appear gray. Unknown shader detected: %s. Disable the shader pack's clouds and cloud fog in Shader Pack Settings.",
+  "cirrus.shaderpack.distantHorizons.prompt": "Cirrus does not fully support shaders with Distant Horizons. Clouds may appear gray while %s is active.",
   "cirrus.shaderpack.fix.failed": "Cirrus could not update the settings for %s. Check the log for details."
 }

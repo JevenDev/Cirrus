@@ -17,6 +17,10 @@ public final class DistantHorizonsCompat {
     private DistantHorizonsCompat() {
     }
 
+    public static boolean isLoaded() {
+        return LOADED;
+    }
+
     public static boolean shouldPrioritizeCirrusClouds() {
         ensureInitialized();
         return prioritizeCirrusClouds;
