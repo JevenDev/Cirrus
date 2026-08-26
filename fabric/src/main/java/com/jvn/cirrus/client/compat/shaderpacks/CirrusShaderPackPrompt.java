@@ -1,5 +1,6 @@
 package com.jvn.cirrus.client.compat.shaderpacks;
 
+import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.config.CirrusConfig;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
@@ -66,17 +67,30 @@ public final class CirrusShaderPackPrompt {
         }
         lastObservedPack = currentPack;
 
+        boolean distantHorizonsLoaded = DistantHorizonsCompat.isLoaded();
         if (!currentPack.isEmpty() && !CirrusShaderPackCompat.hasCompatibilityProfile(currentPack)) {
-            showUnknownPackWarning(player, currentPack);
+            showUnknownPackWarning(player, currentPack, distantHorizonsLoaded);
             return;
         }
 
-        CirrusShaderPackCompat.activeFix()
-                .filter(CirrusShaderPackCompat.ActiveFix::needsChanges)
-                .ifPresent(fix -> showPrompt(player, fix));
+        var activeFix = CirrusShaderPackCompat.activeFix();
+        if (distantHorizonsLoaded && !currentPack.isEmpty()) {
+            activeFix.filter(CirrusShaderPackCompat.ActiveFix::needsChanges)
+                    .ifPresentOrElse(
+                            fix -> showPrompt(player, fix, true),
+                            () -> showDistantHorizonsWarning(player, currentPack)
+                    );
+            return;
+        }
+        activeFix.filter(CirrusShaderPackCompat.ActiveFix::needsChanges)
+                .ifPresent(fix -> showPrompt(player, fix, false));
     }
 
-    private static void showPrompt(LocalPlayer player, CirrusShaderPackCompat.ActiveFix fix) {
+    private static void showPrompt(
+            LocalPlayer player,
+            CirrusShaderPackCompat.ActiveFix fix,
+            boolean distantHorizonsLoaded
+    ) {
         MutableComponent apply = Component.translatable("cirrus.shaderpack.fix.apply")
                 .withStyle(ChatFormatting.AQUA, ChatFormatting.UNDERLINE)
                 .withStyle(style -> style
@@ -86,8 +100,11 @@ public final class CirrusShaderPackPrompt {
                         .withHoverEvent(new HoverEvent.ShowText(
                                 Component.translatable("cirrus.shaderpack.fix.apply.hover")
                         )));
+        String promptKey = distantHorizonsLoaded
+                ? "cirrus.shaderpack.fix.prompt.distantHorizons"
+                : "cirrus.shaderpack.fix.prompt";
         player.displayClientMessage(
-                Component.translatable("cirrus.shaderpack.fix.prompt", fix.displayName())
+                Component.translatable(promptKey, fix.displayName())
                         .withStyle(ChatFormatting.YELLOW)
                         .append(Component.literal(" "))
                         .append(apply),
@@ -95,9 +112,24 @@ public final class CirrusShaderPackPrompt {
         );
     }
 
-    private static void showUnknownPackWarning(LocalPlayer player, String packName) {
+    private static void showUnknownPackWarning(
+            LocalPlayer player,
+            String packName,
+            boolean distantHorizonsLoaded
+    ) {
+        String promptKey = distantHorizonsLoaded
+                ? "cirrus.shaderpack.unknown.prompt.distantHorizons"
+                : "cirrus.shaderpack.unknown.prompt";
         player.displayClientMessage(
-                Component.translatable("cirrus.shaderpack.unknown.prompt", packName)
+                Component.translatable(promptKey, packName)
+                        .withStyle(ChatFormatting.YELLOW),
+                false
+        );
+    }
+
+    private static void showDistantHorizonsWarning(LocalPlayer player, String packName) {
+        player.displayClientMessage(
+                Component.translatable("cirrus.shaderpack.distantHorizons.prompt", packName)
                         .withStyle(ChatFormatting.YELLOW),
                 false
         );
