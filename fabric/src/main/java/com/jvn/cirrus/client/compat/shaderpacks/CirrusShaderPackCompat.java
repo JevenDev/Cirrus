@@ -52,12 +52,20 @@ public final class CirrusShaderPackCompat {
         }
     }
 
-    public static boolean assignCloudPipeline(RenderPipeline pipeline) {
-        if (API == null || API.assignPipeline() == null || API.cloudMeshProgram() == null) {
+    public static boolean assignCloudColorPipeline(RenderPipeline pipeline) {
+        return assignCloudPipeline(pipeline, API == null ? null : API.cloudColorProgram());
+    }
+
+    public static boolean assignCloudDepthPipeline(RenderPipeline pipeline) {
+        return assignCloudPipeline(pipeline, API == null ? null : API.cloudDepthProgram());
+    }
+
+    private static boolean assignCloudPipeline(RenderPipeline pipeline, Object program) {
+        if (API == null || API.assignPipeline() == null || program == null) {
             return false;
         }
         try {
-            API.assignPipeline().invoke(API.instance(), pipeline, API.cloudMeshProgram());
+            API.assignPipeline().invoke(API.instance(), pipeline, program);
             return true;
         } catch (ReflectiveOperationException | LinkageError exception) {
             logInvocationWarning(exception);
@@ -244,6 +252,7 @@ public final class CirrusShaderPackCompat {
         }
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private static ApiAccess findApi() {
         if (!SHADER_LOADER_PRESENT) {
             return null;
@@ -255,7 +264,8 @@ public final class CirrusShaderPackCompat {
                 Object instance = getInstance.invoke(null);
                 Method isShaderPackInUse = apiClass.getMethod("isShaderPackInUse");
                 Method assignPipeline = null;
-                Object cloudMeshProgram = null;
+                Object cloudColorProgram = null;
+                Object cloudDepthProgram = null;
                 try {
                     Class<?> programClass = Class.forName(
                             className.substring(0, className.lastIndexOf('.') + 1) + "IrisProgram"
@@ -263,12 +273,24 @@ public final class CirrusShaderPackCompat {
                     assignPipeline = apiClass.getMethod(
                             "assignPipeline", RenderPipeline.class, programClass
                     );
-                    @SuppressWarnings({"rawtypes", "unchecked"})
-                    Object program = Enum.valueOf((Class<? extends Enum>)programClass, "TEXTURED");
-                    cloudMeshProgram = program;
+                    Class<? extends Enum> enumClass = (Class<? extends Enum>)programClass;
+                    cloudColorProgram = Enum.valueOf(
+                            enumClass,
+                            "SKY_TEXTURED"
+                    );
+                    cloudDepthProgram = Enum.valueOf(
+                            enumClass,
+                            "TEXTURED"
+                    );
                 } catch (ClassNotFoundException | NoSuchMethodException | IllegalArgumentException ignored) {
                 }
-                return new ApiAccess(instance, isShaderPackInUse, assignPipeline, cloudMeshProgram);
+                return new ApiAccess(
+                        instance,
+                        isShaderPackInUse,
+                        assignPipeline,
+                        cloudColorProgram,
+                        cloudDepthProgram
+                );
             } catch (ClassNotFoundException ignored) {
                 // Try the next known Iris/Oculus API package.
             } catch (ReflectiveOperationException | LinkageError exception) {
@@ -417,7 +439,8 @@ public final class CirrusShaderPackCompat {
             Object instance,
             Method isShaderPackInUse,
             Method assignPipeline,
-            Object cloudMeshProgram
+            Object cloudColorProgram,
+            Object cloudDepthProgram
     ) {
     }
 

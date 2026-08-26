@@ -60,15 +60,15 @@ public final class CirrusShader {
         if (target == Target.CLOUDS) {
             this.shaderPackColorPipeline = createShaderPackPipeline(
                     name + "_shader_pack", vertexFormat, blend, texture != null,
-                    colorWrite, depthWrite, false
+                    colorWrite, false, false
             );
             this.shaderPackDepthPipeline = createShaderPackPipeline(
                     name + "_shader_pack_depth", vertexFormat, Blend.NONE, texture != null,
                     false, true, true
             );
             this.shaderPackPipelinesAssigned =
-                    CirrusShaderPackCompat.assignCloudPipeline(shaderPackColorPipeline)
-                            && CirrusShaderPackCompat.assignCloudPipeline(shaderPackDepthPipeline);
+                    CirrusShaderPackCompat.assignCloudColorPipeline(shaderPackColorPipeline)
+                            && CirrusShaderPackCompat.assignCloudDepthPipeline(shaderPackDepthPipeline);
         } else {
             this.shaderPackColorPipeline = null;
             this.shaderPackDepthPipeline = null;

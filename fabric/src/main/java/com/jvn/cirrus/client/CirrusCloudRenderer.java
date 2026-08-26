@@ -392,7 +392,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     rainLevel,
                     thunderLevel,
                     lightning,
-                    cloudTexture
+                    cloudTexture,
+                    shaderPackInUse
             );
         }
     }
@@ -463,7 +464,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             float rainLevel,
             float thunderLevel,
             LightningState lightning,
-            CloudTexture cloudTexture
+            CloudTexture cloudTexture,
+            boolean shaderPackInUse
     ) {
         if (mesh.buffer == null) {
             return;
@@ -490,7 +492,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             );
             boolean renderingForDistantHorizons =
                     CirrusRenderContext.renderingCloudsForDistantHorizons();
-            if (definition.style() == CirrusConfig.CloudStyle.FANCY) {
+            if (definition.style() == CirrusConfig.CloudStyle.FANCY || shaderPackInUse) {
                 mesh.buffer.drawWithShader(
                         poseStack.last().pose(),
                         projectionMatrix,
