@@ -1,5 +1,6 @@
 package com.jvn.cirrus.client;
 
+import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
@@ -8,16 +9,22 @@ import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.client.util.CirrusShaderUniforms;
 import com.jvn.cirrus.client.render.CirrusUniform;
 import com.mojang.blaze3d.PrimitiveTopology;
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.jvn.cirrus.client.render.CirrusVertexBuffer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import java.io.IOException;
+import java.io.InputStream;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import com.jvn.cirrus.client.render.CirrusShader;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.phys.Vec3;
@@ -39,6 +46,10 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private static final float TWILIGHT_TRANSITION = (float)Math.toRadians(12.0);
     private static final Identifier CLOUDS_LOCATION =
             Identifier.withDefaultNamespace("textures/environment/clouds.png");
+    private static final int RAIN_CLOUD_PATTERN_OFFSET_X = 83;
+    private static final int RAIN_CLOUD_PATTERN_OFFSET_Z = 47;
+    private static final int THUNDER_CLOUD_PATTERN_OFFSET_X = 157;
+    private static final int THUNDER_CLOUD_PATTERN_OFFSET_Z = 109;
     private static final int UPPER_PATTERN_OFFSET_X = 37;
     private static final int UPPER_PATTERN_OFFSET_Z = 91;
     private static final int TOP_PATTERN_OFFSET_X = 113;
@@ -58,6 +69,13 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private final LayerMesh lowerMesh = new LayerMesh();
     private final LayerMesh upperMesh = new LayerMesh();
     private final LayerMesh topMesh = new LayerMesh();
+    private DynamicTexture shaderPackWeatherTexture;
+    private int[] baseCloudPixels;
+    private int cloudTextureWidth;
+    private int cloudTextureHeight;
+    private int cachedRainCoverage = -1;
+    private int cachedThunderCoverage = -1;
+    private boolean weatherTextureLoadAttempted;
 
     public boolean renderSunMask(
             ClientLevel level,
@@ -264,6 +282,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         Vector3f celestialViewDirection = celestialViewDirection(frustumMatrix, celestialAngle);
         float rainLevel = smoothWeatherLevel(level.getRainLevel(partialTick));
         float thunderLevel = smoothWeatherLevel(level.getThunderLevel(partialTick));
+        CloudTexture cloudTexture = cloudTexture(shaderPackInUse, rainLevel, thunderLevel);
         LightningState lightning = lightningState(
                 level,
                 frustumMatrix,
@@ -315,7 +334,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 celestialViewDirection,
                 rainLevel,
                 thunderLevel,
-                lightning
+                lightning,
+                cloudTexture.weatherPrecomposed()
         );
 
         for (int layerIndex = 0; layerIndex < enabledLayerCount; layerIndex++) {
@@ -355,7 +375,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     celestialViewDirection,
                     rainLevel,
                     thunderLevel,
-                    lightning
+                    lightning,
+                    cloudTexture
             );
         }
     }
@@ -427,7 +448,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             Vector3f celestialViewDirection,
             float rainLevel,
             float thunderLevel,
-            LightningState lightning
+            LightningState lightning,
+            CloudTexture cloudTexture
     ) {
         if (mesh.buffer == null) {
             return;
@@ -459,22 +481,144 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                         poseStack.last().pose(),
                         projectionMatrix,
                         shader,
-                        CirrusShader.DrawMode.DEPTH_ONLY
+                        CirrusShader.DrawMode.DEPTH_ONLY,
+                        cloudTexture.texture()
                 );
             }
-            mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
+            mesh.buffer.drawWithShader(
+                    poseStack.last().pose(), projectionMatrix, shader, cloudTexture.texture()
+            );
             if (Minecraft.getInstance().gameRenderer.gameRenderState().useShaderTransparency()
                     && !renderingForDistantHorizons) {
                 mesh.buffer.drawWithShader(
                         poseStack.last().pose(),
                         projectionMatrix,
                         shader,
-                        CirrusShader.DrawMode.MAIN_DEPTH_ONLY
+                        CirrusShader.DrawMode.MAIN_DEPTH_ONLY,
+                        cloudTexture.texture()
                 );
             }
         } finally {
             poseStack.popPose();
         }
+    }
+
+    private CloudTexture cloudTexture(boolean shaderPackInUse, float rainLevel, float thunderLevel) {
+        if (!shaderPackInUse) {
+            return new CloudTexture(null, false);
+        }
+
+        int rainCoverage = coverageLevel(
+                rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue()
+        );
+        int thunderCoverage = coverageLevel(
+                thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue()
+        );
+        if ((rainCoverage == 0 && thunderCoverage == 0)
+                || !updateWeatherTexture(rainCoverage, thunderCoverage)) {
+            return new CloudTexture(null, false);
+        }
+        return new CloudTexture(shaderPackWeatherTexture, true);
+    }
+
+    private boolean updateWeatherTexture(int rainCoverage, int thunderCoverage) {
+        if (!loadWeatherTexture()) {
+            return false;
+        }
+        if (rainCoverage == cachedRainCoverage && thunderCoverage == cachedThunderCoverage) {
+            return true;
+        }
+
+        NativeImage output = shaderPackWeatherTexture.getPixels();
+        if (output == null) {
+            return false;
+        }
+        float rainWeight = rainCoverage / 255.0F;
+        float thunderWeight = thunderCoverage / 255.0F;
+        for (int y = 0; y < cloudTextureHeight; y++) {
+            int rainY = Mth.positiveModulo(y + RAIN_CLOUD_PATTERN_OFFSET_Z, cloudTextureHeight);
+            int thunderY = Mth.positiveModulo(y + THUNDER_CLOUD_PATTERN_OFFSET_Z, cloudTextureHeight);
+            for (int x = 0; x < cloudTextureWidth; x++) {
+                int base = baseCloudPixels[y * cloudTextureWidth + x];
+                int rain = baseCloudPixels[
+                        rainY * cloudTextureWidth
+                                + Mth.positiveModulo(x + RAIN_CLOUD_PATTERN_OFFSET_X, cloudTextureWidth)
+                ];
+                int thunder = baseCloudPixels[
+                        thunderY * cloudTextureWidth
+                                + Mth.positiveModulo(x + THUNDER_CLOUD_PATTERN_OFFSET_X, cloudTextureWidth)
+                ];
+                output.setPixel(
+                        x,
+                        y,
+                        composeWeatherPixel(base, rain, thunder, rainWeight, thunderWeight)
+                );
+            }
+        }
+        shaderPackWeatherTexture.upload();
+        cachedRainCoverage = rainCoverage;
+        cachedThunderCoverage = thunderCoverage;
+        return true;
+    }
+
+    private boolean loadWeatherTexture() {
+        if (weatherTextureLoadAttempted) {
+            return shaderPackWeatherTexture != null;
+        }
+        weatherTextureLoadAttempted = true;
+        Resource resource = Minecraft.getInstance()
+                .getResourceManager()
+                .getResource(CLOUDS_LOCATION)
+                .orElse(null);
+        if (resource == null) {
+            return false;
+        }
+
+        try (InputStream input = resource.open(); NativeImage source = NativeImage.read(input)) {
+            cloudTextureWidth = source.getWidth();
+            cloudTextureHeight = source.getHeight();
+            baseCloudPixels = new int[cloudTextureWidth * cloudTextureHeight];
+            for (int y = 0; y < cloudTextureHeight; y++) {
+                for (int x = 0; x < cloudTextureWidth; x++) {
+                    baseCloudPixels[y * cloudTextureWidth + x] = source.getPixel(x, y);
+                }
+            }
+            shaderPackWeatherTexture = new DynamicTexture(
+                    () -> "Cirrus shader-pack weather cloud texture",
+                    new NativeImage(cloudTextureWidth, cloudTextureHeight, false)
+            );
+            return true;
+        } catch (IOException exception) {
+            Cirrus.LOGGER.warn("Could not prepare shader-pack weather cloud texture", exception);
+            return false;
+        }
+    }
+
+    private static int composeWeatherPixel(
+            int base,
+            int rain,
+            int thunder,
+            float rainWeight,
+            float thunderWeight
+    ) {
+        float baseAlpha = alpha(base);
+        float rainAlpha = alpha(rain) * rainWeight;
+        float thunderAlpha = alpha(thunder) * thunderWeight;
+        float supplementalAlpha = 1.0F - (1.0F - rainAlpha) * (1.0F - thunderAlpha);
+        int dominantWeather = rainAlpha >= thunderAlpha ? rain : thunder;
+        int color = supplementalAlpha > baseAlpha ? dominantWeather : base;
+        int combinedAlpha = Math.round(
+                (1.0F - (1.0F - baseAlpha) * (1.0F - supplementalAlpha)) * 255.0F
+        );
+        return color & 0x00FFFFFF | combinedAlpha << 24;
+    }
+
+    private static float alpha(int pixel) {
+        return (pixel >>> 24 & 0xFF) / 255.0F;
+    }
+
+    private static int coverageLevel(float coverage) {
+        return Mth.clamp(Math.round(coverage * 255.0F), 0, 255);
     }
 
     private static double wrapSample(double sample) {
@@ -553,7 +697,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             Vector3f celestialViewDirection,
             float rainLevel,
             float thunderLevel,
-            LightningState lightning
+            LightningState lightning,
+            boolean weatherPrecomposed
     ) {
         CirrusShaderUniforms.setUniform(shader, "CirrusEnabled", true);
         CirrusUniform lightDirection = shader.getUniform("CirrusLightDirection");
@@ -572,12 +717,14 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         CirrusShaderUniforms.setUniform(
                 shader,
                 "CirrusRainCloudCoverage",
-                rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue()
+                weatherPrecomposed
+                        ? 0.0F : rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue()
         );
         CirrusShaderUniforms.setUniform(
                 shader,
                 "CirrusThunderCloudCoverage",
-                thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue()
+                weatherPrecomposed
+                        ? 0.0F : thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue()
         );
         CirrusShaderUniforms.setUniform(shader, "CirrusLightningFlash", lightning.intensity());
         CirrusShaderUniforms.setUniform(
@@ -828,11 +975,24 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         lowerMesh.invalidate();
         upperMesh.invalidate();
         topMesh.invalidate();
+        if (shaderPackWeatherTexture != null) {
+            shaderPackWeatherTexture.close();
+            shaderPackWeatherTexture = null;
+        }
+        baseCloudPixels = null;
+        cloudTextureWidth = 0;
+        cloudTextureHeight = 0;
+        cachedRainCoverage = -1;
+        cachedThunderCoverage = -1;
+        weatherTextureLoadAttempted = false;
     }
 
     @Override
     public void close() {
         invalidate();
+    }
+
+    private record CloudTexture(DynamicTexture texture, boolean weatherPrecomposed) {
     }
 
     private record LayerDefinition(LayerKind kind, int patternOffsetX, int patternOffsetZ) {
