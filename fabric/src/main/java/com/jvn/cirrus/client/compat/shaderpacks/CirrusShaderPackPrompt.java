@@ -1,5 +1,6 @@
 package com.jvn.cirrus.client.compat.shaderpacks;
 
+import com.jvn.cirrus.config.CirrusConfig;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -54,11 +55,21 @@ public final class CirrusShaderPackPrompt {
         }
         checkDelayTicks = RECHECK_DELAY_TICKS;
 
+        if (!CirrusConfig.SHADER_PACK_WARNINGS_ENABLED.get()) {
+            lastObservedPack = null;
+            return;
+        }
+
         String currentPack = CirrusShaderPackCompat.currentPackName().orElse("");
         if (Objects.equals(currentPack, lastObservedPack)) {
             return;
         }
         lastObservedPack = currentPack;
+
+        if (!currentPack.isEmpty() && !CirrusShaderPackCompat.hasCompatibilityProfile(currentPack)) {
+            showUnknownPackWarning(player, currentPack);
+            return;
+        }
 
         CirrusShaderPackCompat.activeFix()
                 .filter(CirrusShaderPackCompat.ActiveFix::needsChanges)
@@ -77,8 +88,16 @@ public final class CirrusShaderPackPrompt {
                         )));
         player.sendSystemMessage(
                 Component.translatable("cirrus.shaderpack.fix.prompt", fix.displayName())
+                        .withStyle(ChatFormatting.YELLOW)
                         .append(Component.literal(" "))
                         .append(apply)
+        );
+    }
+
+    private static void showUnknownPackWarning(LocalPlayer player, String packName) {
+        player.sendSystemMessage(
+                Component.translatable("cirrus.shaderpack.unknown.prompt", packName)
+                        .withStyle(ChatFormatting.YELLOW)
         );
     }
 

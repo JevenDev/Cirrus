@@ -51,6 +51,10 @@ public final class CirrusShaderPackCompat {
         }
     }
 
+    public static boolean hasCompatibilityProfile(String packName) {
+        return PackProfile.forPackName(packName) != null;
+    }
+
     public static Optional<String> currentPackName() {
         if (!isShaderPackInUse() || IRIS == null) {
             return Optional.empty();
