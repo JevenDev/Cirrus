@@ -163,6 +163,8 @@
   "cirrus.config.group.topLayer": "Top Layer",
   "cirrus.config.clouds.enabled": "Cirrus Clouds",
   "cirrus.config.clouds.enabled.description": "Replaces vanilla clouds with Cirrus clouds.",
+  "cirrus.config.clouds.shaderPackWarningsEnabled": "Shader Pack Warnings",
+  "cirrus.config.clouds.shaderPackWarningsEnabled.description": "Displays compatibility warnings when Cirrus detects an incompatible or unknown shader pack.",
   "cirrus.config.clouds.distantHorizonsCompatibility": "Distant Horizons Compatibility",
   "cirrus.config.clouds.distantHorizonsCompatibility.description": "Disables Distant Horizons' overlapping LOD clouds and keeps Cirrus visible when DH turns Minecraft clouds off. Disable this to let DH and Minecraft's Clouds: Off setting take precedence.",
   "cirrus.config.clouds.syncCloudDistanceWithDistantHorizons": "Sync Cloud Distance",
@@ -214,12 +216,13 @@
   "cirrus.config.clouds.topLayerSpeed.description": "Controls top-layer wind speed independently; it defaults slower than the upper layer.",
   "cirrus.config.clouds.topLayerOpacity": "Top Layer Opacity",
   "cirrus.config.clouds.topLayerOpacity.description": "Controls top-layer transparency independently; it defaults more transparent than the other layers.",
-  "cirrus.shaderpack.fix.prompt": "Cirrus detected incompatible cloud settings in %s.",
+  "cirrus.shaderpack.fix.prompt": "Cirrus does not fully support shaders. Incompatible shader detected. Cirrus won't work as intended with %s.",
   "cirrus.shaderpack.fix.apply": "[Apply compatibility settings]",
   "cirrus.shaderpack.fix.apply.hover": "Changes only this shader pack's cloud mode and cloud-fog settings.",
   "cirrus.shaderpack.fix.applied": "Cirrus compatibility settings were applied to %s. All other shader settings were preserved.",
   "cirrus.shaderpack.fix.alreadyCompatible": "%s is already configured for Cirrus clouds.",
   "cirrus.shaderpack.fix.reloadFailed": "Settings were saved for %s, but Iris could not reload them. Reload the shader pack manually.",
   "cirrus.shaderpack.fix.unsupported": "The active shader pack does not have a Cirrus compatibility profile.",
+  "cirrus.shaderpack.unknown.prompt": "Cirrus does not fully support shaders. Unknown shader detected: %s. Cirrus may not work as intended. Disable the shader pack's clouds and cloud fog in Shader Pack Settings.",
   "cirrus.shaderpack.fix.failed": "Cirrus could not update the settings for %s. Check the log for details."
 }

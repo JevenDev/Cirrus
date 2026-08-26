@@ -69,6 +69,7 @@ public final class CirrusConfig {
     public static final DoubleSetting END_SKY_SURGE_STRENGTH_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
 
     public static final CirrusConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
+    public static final CirrusConfigSpec.BooleanValue SHADER_PACK_WARNINGS_ENABLED;
     public static final CirrusConfigSpec.BooleanValue DISTANT_HORIZONS_COMPATIBILITY;
     public static final CirrusConfigSpec.BooleanValue SYNC_CLOUD_DISTANCE_WITH_DISTANT_HORIZONS;
     public static final CirrusConfigSpec.BooleanValue TRANSLUCENT_LAYER_OVERLAP;
@@ -170,6 +171,9 @@ public final class CirrusConfig {
         CUSTOM_CLOUDS_ENABLED = builder
                 .comment("Replace vanilla clouds with Cirrus clouds.")
                 .define("enabled", true);
+        SHADER_PACK_WARNINGS_ENABLED = builder
+                .comment("Show compatibility warnings for incompatible or unknown shader packs.")
+                .define("shaderPackWarningsEnabled", true);
         DISTANT_HORIZONS_COMPATIBILITY = builder
                 .comment("When Distant Horizons is installed, disable its overlapping LOD clouds and keep Cirrus"
                         + " clouds visible when DH turns Minecraft clouds off.")

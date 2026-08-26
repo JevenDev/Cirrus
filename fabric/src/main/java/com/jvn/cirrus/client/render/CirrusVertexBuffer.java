@@ -46,7 +46,18 @@ public final class CirrusVertexBuffer implements AutoCloseable {
     }
 
     public void drawWithShader(Matrix4f modelView, Matrix4f projection, CirrusShader shader) {
-        drawWithShader(modelView, projection, shader, CirrusShader.DrawMode.COLOR, null);
+        drawWithShader(modelView, projection, shader, CirrusShader.DrawMode.COLOR, null, null);
+    }
+
+    public void drawWithShader(
+            Matrix4f modelView,
+            Matrix4f projection,
+            CirrusShader shader,
+            AbstractTexture textureOverride
+    ) {
+        drawWithShader(
+                modelView, projection, shader, CirrusShader.DrawMode.COLOR, null, textureOverride
+        );
     }
 
     public void drawWithShader(
@@ -55,7 +66,7 @@ public final class CirrusVertexBuffer implements AutoCloseable {
             CirrusShader shader,
             ScissorBox scissor
     ) {
-        drawWithShader(modelView, projection, shader, CirrusShader.DrawMode.COLOR, scissor);
+        drawWithShader(modelView, projection, shader, CirrusShader.DrawMode.COLOR, scissor, null);
     }
 
     public void drawWithShader(
@@ -64,7 +75,17 @@ public final class CirrusVertexBuffer implements AutoCloseable {
             CirrusShader shader,
             CirrusShader.DrawMode mode
     ) {
-        drawWithShader(modelView, projection, shader, mode, null);
+        drawWithShader(modelView, projection, shader, mode, null, null);
+    }
+
+    public void drawWithShader(
+            Matrix4f modelView,
+            Matrix4f projection,
+            CirrusShader shader,
+            CirrusShader.DrawMode mode,
+            AbstractTexture textureOverride
+    ) {
+        drawWithShader(modelView, projection, shader, mode, null, textureOverride);
     }
 
     private void drawWithShader(
@@ -72,7 +93,8 @@ public final class CirrusVertexBuffer implements AutoCloseable {
             Matrix4f projection,
             CirrusShader shader,
             CirrusShader.DrawMode mode,
-            ScissorBox scissor
+            ScissorBox scissor,
+            AbstractTexture textureOverride
     ) {
         if (vertexBuffer == null || drawState == null) {
             return;
@@ -114,8 +136,10 @@ public final class CirrusVertexBuffer implements AutoCloseable {
             if (parameters != null) {
                 pass.setUniform("CirrusParams", parameters);
             }
-            if (shader.texture() != null) {
-                AbstractTexture texture = minecraft.getTextureManager().getTexture(shader.texture());
+            if (textureOverride != null || shader.texture() != null) {
+                AbstractTexture texture = textureOverride != null
+                        ? textureOverride
+                        : minecraft.getTextureManager().getTexture(shader.texture());
                 pass.bindTexture("Sampler0", texture.getTextureView(), texture.getSampler());
             }
             pass.setVertexBuffer(0, vertexBuffer);
