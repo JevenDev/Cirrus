@@ -18,7 +18,7 @@ public abstract class ClientLevelMixin implements CirrusClientLevelAccess {
         return tickDayTime;
     }
     @Inject(method = "setTimeFromServer", at = @At("TAIL"))
-    private void cirrus$acceptInitialDayTime(long gameTime, long dayTime, boolean tickDayTime, CallbackInfo ci) {
-        CirrusTimeTransition.acceptInitialTime((ClientLevel)(Object)this);
+    private void cirrus$acceptServerTimeUpdate(long gameTime, long dayTime, boolean tickDayTime, CallbackInfo ci) {
+        CirrusTimeTransition.acceptServerTimeUpdate((ClientLevel)(Object)this, dayTime);
     }
 }
