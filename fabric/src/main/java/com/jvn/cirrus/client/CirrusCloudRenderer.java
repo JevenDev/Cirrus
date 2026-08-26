@@ -766,7 +766,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     ) {
         BufferBuilder bufferBuilder = Tesselator.getInstance().begin(
                 VertexFormat.Mode.QUADS,
-                DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
+                DefaultVertexFormat.POSITION_TEX_COLOR
         );
         float radius = distanceChunks * 16.0F / WORLD_SCALE;
         CloudMeshBuilder builder = new CloudMeshBuilder(bufferBuilder, radius, shaderPackDistanceFade);

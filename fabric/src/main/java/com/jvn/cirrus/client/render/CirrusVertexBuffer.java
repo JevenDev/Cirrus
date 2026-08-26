@@ -1,6 +1,8 @@
 package com.jvn.cirrus.client.render;
 
+import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -9,8 +11,12 @@ import com.mojang.blaze3d.vertex.MeshData;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.DynamicUniforms;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 public final class CirrusVertexBuffer implements AutoCloseable {
     private GpuBuffer vertexBuffer;
@@ -111,6 +117,15 @@ public final class CirrusVertexBuffer implements AutoCloseable {
                 ? RenderSystem.outputDepthTextureOverride
                 : target.getDepthTextureView();
 
+        boolean shaderPackDraw = shader.hasShaderPackPipeline()
+                && CirrusShaderPackCompat.isShaderPackInUse();
+        if (shaderPackDraw) {
+            drawWithShaderPack(
+                    modelView, shader, mode, scissor, textureOverride, minecraft, color, depth
+            );
+            return;
+        }
+
         try (GpuBuffer matrices = shader.createMatricesBuffer(modelView, projection);
              GpuBuffer parameters = shader.createUniformBuffer();
              RenderPass pass = RenderSystem.getDevice()
@@ -144,6 +159,63 @@ public final class CirrusVertexBuffer implements AutoCloseable {
                 pass.setIndexBuffer(sequential.getBuffer(drawState.indexCount()), sequential.type());
             }
             pass.drawIndexed(0, 0, drawState.indexCount(), 1);
+        }
+    }
+
+    private void drawWithShaderPack(
+            Matrix4f modelView,
+            CirrusShader shader,
+            CirrusShader.DrawMode mode,
+            ScissorBox scissor,
+            AbstractTexture textureOverride,
+            Minecraft minecraft,
+            GpuTextureView color,
+            GpuTextureView depth
+    ) {
+        float[] modulator = shader.colorModulator();
+        DynamicUniforms uniforms = RenderSystem.getDynamicUniforms();
+        GpuBufferSlice transform = uniforms.writeTransform(
+                modelView,
+                new Vector4f(modulator[0], modulator[1], modulator[2], modulator[3]),
+                new Vector3f(),
+                new Matrix4f(),
+                0.0F
+        );
+        Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
+        modelViewStack.pushMatrix();
+        modelViewStack.set(modelView);
+        try (RenderPass pass = RenderSystem.getDevice()
+                .createCommandEncoder()
+                .createRenderPass(
+                        () -> "Cirrus shader-pack clouds",
+                        color,
+                        OptionalInt.empty(),
+                        depth,
+                        OptionalDouble.empty()
+                )) {
+            pass.setPipeline(shader.shaderPackPipeline(mode));
+            if (scissor != null) {
+                pass.enableScissor(scissor.x(), scissor.y(), scissor.width(), scissor.height());
+            }
+            RenderSystem.bindDefaultUniforms(pass);
+            pass.setUniform("DynamicTransforms", transform);
+            AbstractTexture texture = textureOverride != null
+                    ? textureOverride
+                    : minecraft.getTextureManager().getTexture(shader.texture());
+            pass.bindSampler("Sampler0", texture.getTextureView());
+            pass.setVertexBuffer(0, vertexBuffer);
+            if (indexBuffer != null) {
+                pass.setIndexBuffer(indexBuffer, drawState.indexType());
+            } else {
+                RenderSystem.AutoStorageIndexBuffer sequential =
+                        RenderSystem.getSequentialBuffer(drawState.mode());
+                pass.setIndexBuffer(
+                        sequential.getBuffer(drawState.indexCount()), sequential.type()
+                );
+            }
+            pass.drawIndexed(0, 0, drawState.indexCount(), 1);
+        } finally {
+            modelViewStack.popMatrix();
         }
     }
 

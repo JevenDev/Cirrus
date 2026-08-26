@@ -1,6 +1,7 @@
 package com.jvn.cirrus.client.render;
 
 import com.jvn.cirrus.Cirrus;
+import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.pipeline.BlendFunction;
@@ -24,6 +25,9 @@ public final class CirrusShader {
     private final Map<String, CirrusUniform> uniforms = new LinkedHashMap<>();
     private final RenderPipeline colorPipeline;
     private final RenderPipeline depthPipeline;
+    private final RenderPipeline shaderPackColorPipeline;
+    private final RenderPipeline shaderPackDepthPipeline;
+    private final boolean shaderPackPipelinesAssigned;
     private final int uniformBufferSize;
 
     public CirrusShader(
@@ -53,6 +57,23 @@ public final class CirrusShader {
         this.depthPipeline = createPipeline(
                 name + "_depth", vertexFormat, Blend.NONE, texture != null, false, true, true
         );
+        if (target == Target.CLOUDS) {
+            this.shaderPackColorPipeline = createShaderPackPipeline(
+                    name + "_shader_pack", vertexFormat, blend, texture != null,
+                    colorWrite, depthWrite, false
+            );
+            this.shaderPackDepthPipeline = createShaderPackPipeline(
+                    name + "_shader_pack_depth", vertexFormat, Blend.NONE, texture != null,
+                    false, true, true
+            );
+            this.shaderPackPipelinesAssigned =
+                    CirrusShaderPackCompat.assignCloudPipeline(shaderPackColorPipeline)
+                            && CirrusShaderPackCompat.assignCloudPipeline(shaderPackDepthPipeline);
+        } else {
+            this.shaderPackColorPipeline = null;
+            this.shaderPackDepthPipeline = null;
+            this.shaderPackPipelinesAssigned = false;
+        }
     }
 
     public CirrusUniform getUniform(String uniformName) {
@@ -69,6 +90,19 @@ public final class CirrusShader {
 
     RenderPipeline pipeline(DrawMode mode) {
         return mode == DrawMode.COLOR ? colorPipeline : depthPipeline;
+    }
+
+    RenderPipeline shaderPackPipeline(DrawMode mode) {
+        return mode == DrawMode.COLOR ? shaderPackColorPipeline : shaderPackDepthPipeline;
+    }
+
+    boolean hasShaderPackPipeline() {
+        return shaderPackPipelinesAssigned;
+    }
+
+    float[] colorModulator() {
+        CirrusUniform color = uniforms.get("ColorModulator");
+        return color == null ? new float[]{1.0F, 1.0F, 1.0F, 1.0F} : color.values();
     }
 
     GpuBuffer createMatricesBuffer(Matrix4f modelView, Matrix4f projection) {
@@ -140,6 +174,36 @@ public final class CirrusShader {
             } else if (blend == Blend.ADDITIVE) {
                 builder.withBlend(BlendFunction.OVERLAY);
             }
+        }
+        return RenderPipelines.register(builder.build());
+    }
+
+    private RenderPipeline createShaderPackPipeline(
+            String pipelineName,
+            VertexFormat vertexFormat,
+            Blend blend,
+            boolean textured,
+            boolean colorWrite,
+            boolean depthWrite,
+            boolean depthVariant
+    ) {
+        RenderPipeline.Builder builder = RenderPipeline.builder(
+                        RenderPipelines.MATRICES_FOG_SNIPPET,
+                        RenderPipelines.GLOBALS_SNIPPET
+                )
+                .withLocation(Cirrus.id("pipeline/" + pipelineName))
+                .withVertexShader("core/position_tex_color")
+                .withFragmentShader("core/position_tex_color")
+                .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
+                .withCull(false)
+                .withColorWrite(colorWrite)
+                .withDepthWrite(depthWrite)
+                .withVertexFormat(vertexFormat, VertexFormat.Mode.QUADS);
+        if (textured) {
+            builder.withSampler("Sampler0");
+        }
+        if (!depthVariant && blend == Blend.TRANSLUCENT) {
+            builder.withBlend(BlendFunction.TRANSLUCENT);
         }
         return RenderPipelines.register(builder.build());
     }

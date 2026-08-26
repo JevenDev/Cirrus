@@ -1,6 +1,7 @@
 package com.jvn.cirrus.client.compat.shaderpacks;
 
 import com.jvn.cirrus.Cirrus;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
@@ -45,6 +46,19 @@ public final class CirrusShaderPackCompat {
         }
         try {
             return (boolean)API.isShaderPackInUse().invoke(API.instance());
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            logInvocationWarning(exception);
+            return false;
+        }
+    }
+
+    public static boolean assignCloudPipeline(RenderPipeline pipeline) {
+        if (API == null || API.assignPipeline() == null || API.cloudMeshProgram() == null) {
+            return false;
+        }
+        try {
+            API.assignPipeline().invoke(API.instance(), pipeline, API.cloudMeshProgram());
+            return true;
         } catch (ReflectiveOperationException | LinkageError exception) {
             logInvocationWarning(exception);
             return false;
@@ -240,7 +254,21 @@ public final class CirrusShaderPackCompat {
                 Method getInstance = apiClass.getMethod("getInstance");
                 Object instance = getInstance.invoke(null);
                 Method isShaderPackInUse = apiClass.getMethod("isShaderPackInUse");
-                return new ApiAccess(instance, isShaderPackInUse);
+                Method assignPipeline = null;
+                Object cloudMeshProgram = null;
+                try {
+                    Class<?> programClass = Class.forName(
+                            className.substring(0, className.lastIndexOf('.') + 1) + "IrisProgram"
+                    );
+                    assignPipeline = apiClass.getMethod(
+                            "assignPipeline", RenderPipeline.class, programClass
+                    );
+                    @SuppressWarnings({"rawtypes", "unchecked"})
+                    Object program = Enum.valueOf((Class<? extends Enum>)programClass, "TEXTURED");
+                    cloudMeshProgram = program;
+                } catch (ClassNotFoundException | NoSuchMethodException | IllegalArgumentException ignored) {
+                }
+                return new ApiAccess(instance, isShaderPackInUse, assignPipeline, cloudMeshProgram);
             } catch (ClassNotFoundException ignored) {
                 // Try the next known Iris/Oculus API package.
             } catch (ReflectiveOperationException | LinkageError exception) {
@@ -385,7 +413,12 @@ public final class CirrusShaderPackCompat {
     private record ActivePack(String packName, Path optionsPath, PackProfile profile) {
     }
 
-    private record ApiAccess(Object instance, Method isShaderPackInUse) {
+    private record ApiAccess(
+            Object instance,
+            Method isShaderPackInUse,
+            Method assignPipeline,
+            Object cloudMeshProgram
+    ) {
     }
 
     private record IrisAccess(Method getCurrentPackName, Method getShaderpacksDirectory, Method reload) {
