@@ -7,6 +7,9 @@ uniform float CirrusAuroraPixelation;
 uniform float CirrusAuroraPixelationResolution;
 uniform vec4 CirrusAuroraVariant;
 uniform vec4 CirrusAuroraSettings;
+uniform vec3 CirrusAuroraLowerColor;
+uniform vec3 CirrusAuroraMiddleColor;
+uniform vec3 CirrusAuroraUpperColor;
 
 in vec3 worldDirection;
 
@@ -265,12 +268,24 @@ void main() {
     float upperStrength = mix(0.34, 0.86, CirrusAuroraVariant.y);
     float highStrength = mix(0.02, 0.48, CirrusAuroraVariant.w);
     float splitStrength = smoothstep(0.42, 0.82, CirrusAuroraVariant.x) * 0.46;
+    float rayDetail = mix(0.84, 1.14, rays);
+    float lowerLayer = lowerRibbon * lowerStrength * rayDetail;
+    float middleLayer = upperRibbon * upperStrength * mix(0.90, 1.08, rays);
+    float upperLayer = highRibbon * highStrength;
+    float splitLayer = splitRibbon * splitStrength * rayDetail;
+    float curtainLayer = curtainHeight * rays * mix(0.42, 0.60, CirrusAuroraVariant.x);
+    float lowerHalo = exp(-lowerRibbonOffset * lowerRibbonOffset * 0.34) * 0.055;
+    float middleHalo = exp(-upperRibbonOffset * upperRibbonOffset * 0.28) * 0.045;
+    float upperHalo = exp(-highRibbonOffset * highRibbonOffset * 0.24) * 0.035;
     float shape = (
-        lowerRibbon * lowerStrength
-        + upperRibbon * upperStrength
-        + highRibbon * highStrength
-        + splitRibbon * splitStrength
-        + curtainHeight * rays * mix(0.42, 0.60, CirrusAuroraVariant.x)
+        lowerLayer
+        + middleLayer
+        + upperLayer
+        + splitLayer
+        + curtainLayer
+        + lowerHalo
+        + middleHalo
+        + upperHalo
     ) * fineShimmer
             * skyCoverage
             * horizonFade
@@ -290,29 +305,28 @@ void main() {
     );
     float paletteBlend = clamp(paletteCycle * 0.72 + localPalette * 0.28, 0.0, 1.0);
 
-    vec3 green = mix(
-        vec3(0.10, 1.0, 0.38),
-        vec3(0.06, 0.88, 0.68),
-        paletteBlend * 0.72
+    float colorDrift = paletteBlend * mix(0.08, 0.22, CirrusAuroraVariant.x);
+    vec3 lowerColor = mix(CirrusAuroraLowerColor, CirrusAuroraMiddleColor, colorDrift);
+    vec3 middleColor = mix(CirrusAuroraMiddleColor, CirrusAuroraUpperColor, colorDrift * 0.72);
+    vec3 upperColor = mix(CirrusAuroraUpperColor, CirrusAuroraMiddleColor, (1.0 - paletteBlend) * 0.08);
+    vec3 splitColor = mix(lowerColor, upperColor, 0.38 + paletteBlend * 0.18);
+    float lowerColorWeight = lowerLayer + lowerHalo + curtainLayer * 0.72;
+    float middleColorWeight = middleLayer + middleHalo + curtainLayer * 0.28;
+    float upperColorWeight = upperLayer + upperHalo;
+    float colorWeight = max(
+        lowerColorWeight + middleColorWeight + upperColorWeight + splitLayer,
+        0.001
     );
-    vec3 cyan = mix(
-        vec3(0.07, 0.76, 0.92),
-        vec3(0.24, 0.52, 1.0),
-        paletteBlend * 0.68
-    );
-    vec3 violet = mix(
-        vec3(0.44, 0.34, 0.92),
-        vec3(0.74, 0.20, 0.96),
-        paletteBlend
-    );
-    vec3 color = mix(green, cyan, heightMix);
-    color = mix(
-        color,
-        violet,
-        smoothstep(0.92, 1.34, elevation)
-                * mix(0.30, 0.66, paletteBlend)
-                * mix(0.72, 1.0, CirrusAuroraVariant.x)
-    );
+    vec3 layerColor = (
+        lowerColor * lowerColorWeight
+        + middleColor * middleColorWeight
+        + upperColor * upperColorWeight
+        + splitColor * splitLayer
+    ) / colorWeight;
+    vec3 heightColor = heightMix < 0.5
+            ? mix(lowerColor, middleColor, heightMix * 2.0)
+            : mix(middleColor, upperColor, (heightMix - 0.5) * 2.0);
+    vec3 color = mix(heightColor, layerColor, 0.78);
 
     float pulseAmount = 0.10 * min(movement, 1.5);
     float pulsePhase = time * 0.060 * movement

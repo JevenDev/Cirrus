@@ -2,6 +2,7 @@ package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
+import com.jvn.cirrus.client.util.CirrusColors;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.client.util.CirrusSkyDome;
 import com.jvn.cirrus.client.util.CirrusShaderUniforms;
@@ -104,6 +105,9 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
                 shader, "CirrusAuroraPixelationResolution",
                 CirrusConfig.AURORA_PIXELATION_RESOLUTION.get().floatValue()
         );
+        setColorUniform(shader, "CirrusAuroraLowerColor", CirrusConfig.AURORA_LOWER_COLOR.get());
+        setColorUniform(shader, "CirrusAuroraMiddleColor", CirrusConfig.AURORA_MIDDLE_COLOR.get());
+        setColorUniform(shader, "CirrusAuroraUpperColor", CirrusConfig.AURORA_UPPER_COLOR.get());
 
         Uniform variantUniform = shader.getUniform("CirrusAuroraVariant");
         if (variantUniform != null) {
@@ -144,6 +148,16 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
             );
             RenderSystem.defaultBlendFunc();
         }
+    }
+
+    private static void setColorUniform(ShaderInstance shader, String name, int color) {
+        CirrusShaderUniforms.setUniform(
+                shader,
+                name,
+                CirrusColors.red(color) / 255.0F,
+                CirrusColors.green(color) / 255.0F,
+                CirrusColors.blue(color) / 255.0F
+        );
     }
 
     private float updateColdBiomeBlend(ClientLevel level, float partialTick, int ticks, Camera camera) {

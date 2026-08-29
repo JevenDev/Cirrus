@@ -466,6 +466,18 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.AURORA_OPACITY,
                                 CirrusConfig.AURORA_OPACITY_SETTING
                         ))
+                        .option(colorOption(
+                                "cirrus.config.sky.auroraLowerColor",
+                                CirrusConfig.AURORA_LOWER_COLOR
+                        ))
+                        .option(colorOption(
+                                "cirrus.config.sky.auroraMiddleColor",
+                                CirrusConfig.AURORA_MIDDLE_COLOR
+                        ))
+                        .option(colorOption(
+                                "cirrus.config.sky.auroraUpperColor",
+                                CirrusConfig.AURORA_UPPER_COLOR
+                        ))
                         .option(doubleOption(
                                 "cirrus.config.sky.auroraAnimationSpeed",
                                 CirrusConfig.AURORA_ANIMATION_SPEED,

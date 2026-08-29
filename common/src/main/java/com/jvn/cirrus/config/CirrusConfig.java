@@ -149,6 +149,9 @@ public final class CirrusConfig {
     public static final CirrusConfigSpec.IntValue AURORA_PIXELATION_RESOLUTION;
     public static final CirrusConfigSpec.BooleanValue AURORA_COLD_BIOMES_ONLY;
     public static final CirrusConfigSpec.DoubleValue AURORA_OPACITY;
+    public static final CirrusConfigSpec.IntValue AURORA_LOWER_COLOR;
+    public static final CirrusConfigSpec.IntValue AURORA_MIDDLE_COLOR;
+    public static final CirrusConfigSpec.IntValue AURORA_UPPER_COLOR;
     public static final CirrusConfigSpec.DoubleValue AURORA_ANIMATION_SPEED;
     public static final CirrusConfigSpec.DoubleValue AURORA_MOVEMENT;
     public static final CirrusConfigSpec.DoubleValue AURORA_RIBBON_WIDTH;
@@ -507,6 +510,15 @@ public final class CirrusConfig {
                 "auroraOpacity",
                 "Maximum opacity of the northern lights."
         );
+        AURORA_LOWER_COLOR = defineColor(
+                builder, "auroraLowerColor", 0x1EFA72, "RGB color of the lower aurora curtains."
+        );
+        AURORA_MIDDLE_COLOR = defineColor(
+                builder, "auroraMiddleColor", 0x1EBEFA, "RGB color of the middle aurora ribbons."
+        );
+        AURORA_UPPER_COLOR = defineColor(
+                builder, "auroraUpperColor", 0xDB4FF5, "RGB color of the upper aurora glow."
+        );
         AURORA_ANIMATION_SPEED = AURORA_ANIMATION_SPEED_SETTING.define(
                 builder,
                 "auroraAnimationSpeed",
@@ -530,7 +542,7 @@ public final class CirrusConfig {
         AURORA_NIGHTLY_VARIATION = AURORA_NIGHTLY_VARIATION_SETTING.define(
                 builder,
                 "auroraNightlyVariation",
-                "How strongly the aurora layout changes from one night to the next."
+                "How strongly the aurora layout and color blending change from one night to the next."
         );
         END_SKY_ENABLED = builder
                 .comment("Replace the vanilla End sky with moving clouds, lightning, and spreading darkness.")
