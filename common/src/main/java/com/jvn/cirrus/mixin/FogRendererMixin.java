@@ -1,6 +1,7 @@
 package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.CirrusSkyPalette;
+import com.jvn.cirrus.client.util.CirrusCelestialTransform;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -157,11 +158,13 @@ public abstract class FogRendererMixin {
                     level.getTimeOfDay(partialTick), partialTick
             );
             if (sunriseColor != null) {
-                float sunDirection = Mth.sin(level.getSunAngle(partialTick)) > 0.0F
-                        ? -1.0F
-                        : 1.0F;
                 float sunriseAlpha = Mth.clamp(
-                        camera.getLookVector().x() * sunDirection,
+                        CirrusCelestialTransform.sunViewAlignment(
+                                level.getTimeOfDay(partialTick),
+                                CirrusConfig.SUN_ANGLED_ORBIT.get(),
+                                camera.getLookVector().x(),
+                                camera.getLookVector().z()
+                        ),
                         0.0F,
                         1.0F
                 ) * sunriseColor[3];

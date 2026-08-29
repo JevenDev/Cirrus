@@ -8,6 +8,7 @@
     "ClientPacketListenerMixin",
     "FogRendererMixin",
     "GameRendererMixin",
+    "LevelRendererCelestialMixin",
     "LevelRendererCloudMixin",
     "LightningBoltMixin",
     "LightningBoltRendererMixin",

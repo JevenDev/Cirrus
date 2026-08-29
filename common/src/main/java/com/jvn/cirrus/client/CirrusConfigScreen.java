@@ -286,6 +286,25 @@ public final class CirrusConfigScreen {
                         ))
                         .build())
                 .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.celestialOrbits"))
+                        .option(booleanOption(
+                                "cirrus.config.sky.sunAngledOrbit",
+                                CirrusConfig.SUN_ANGLED_ORBIT
+                        ))
+                        .option(booleanOption(
+                                "cirrus.config.sky.moonAngledOrbit",
+                                CirrusConfig.MOON_ANGLED_ORBIT
+                        ))
+                        .option(booleanOption(
+                                "cirrus.config.sky.starsAngledOrbit",
+                                CirrusConfig.STARS_ANGLED_ORBIT
+                        ))
+                        .option(booleanOption(
+                                "cirrus.config.sky.milkyWayAngledOrbit",
+                                CirrusConfig.MILKY_WAY_ANGLED_ORBIT
+                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.stars"))
                         .option(booleanOption(
                                 "cirrus.config.sky.customStarsEnabled",

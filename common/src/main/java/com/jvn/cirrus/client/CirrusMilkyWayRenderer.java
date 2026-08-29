@@ -2,6 +2,7 @@ package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
+import com.jvn.cirrus.client.util.CirrusCelestialTransform;
 import com.jvn.cirrus.client.util.CirrusSkyDome;
 import com.jvn.cirrus.client.util.CirrusShaderUniforms;
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -17,9 +18,6 @@ import org.joml.Matrix4f;
 public final class CirrusMilkyWayRenderer implements AutoCloseable {
     private static final ResourceLocation MILKY_WAY_TEXTURE =
             Cirrus.texture("environment/milky_way_lookup.png");
-    private static final float NORTH_STAR_ELEVATION = (float)Math.toRadians(45.0);
-    private static final float NORTH_STAR_Y = Mth.sin(NORTH_STAR_ELEVATION);
-    private static final float NORTH_STAR_Z = -Mth.cos(NORTH_STAR_ELEVATION);
     private static final float DOME_RADIUS = 100.0F;
     private static final int AZIMUTH_SEGMENTS = 64;
     private static final int ELEVATION_SEGMENTS = 24;
@@ -87,9 +85,10 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
                     skyPalette.zenithRed(), skyPalette.zenithGreen(), skyPalette.zenithBlue()
             );
         }
-        worldToMilkyWay.rotationY(Mth.PI).rotate(
-                -level.getTimeOfDay(partialTick) * Mth.TWO_PI,
-                0.0F, NORTH_STAR_Y, NORTH_STAR_Z
+        CirrusCelestialTransform.worldToSkyTexture(
+                worldToMilkyWay,
+                level.getTimeOfDay(partialTick),
+                CirrusConfig.MILKY_WAY_ANGLED_ORBIT.get()
         );
         CirrusShaderUniforms.setUniform(
                 shader, "CirrusWorldToMilkyWay", worldToMilkyWay

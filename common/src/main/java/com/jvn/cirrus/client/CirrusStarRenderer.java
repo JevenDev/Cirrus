@@ -4,6 +4,7 @@ import static com.jvn.cirrus.client.util.CirrusRandom.signedFloat;
 
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
+import com.jvn.cirrus.client.util.CirrusCelestialTransform;
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -27,9 +28,6 @@ public final class CirrusStarRenderer implements AutoCloseable {
     private static final float CELESTIAL_RADIUS = 100.0F;
     private static final long STAR_SEED = 10842L;
     private static final long SHOOTING_STAR_SEED = 734287L;
-    private static final float NORTH_STAR_ELEVATION = (float)Math.toRadians(45.0);
-    private static final float NORTH_STAR_Y = Mth.sin(NORTH_STAR_ELEVATION);
-    private static final float NORTH_STAR_Z = -Mth.cos(NORTH_STAR_ELEVATION);
     private static final ResourceLocation NORTH_STAR_TEXTURE =
             Cirrus.texture("environment/north_star.png");
     private static final float FULL_ROTATION = (float)(Math.PI * 2.0);
@@ -155,10 +153,13 @@ public final class CirrusStarRenderer implements AutoCloseable {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShaderTexture(0, NORTH_STAR_TEXTURE);
         try {
+            boolean angledOrbit = CirrusConfig.STARS_ANGLED_ORBIT.get();
             if (renderStarField) {
-                starModelViewMatrix.set(fixedSkyModelViewMatrix).rotate(
-                        level.getTimeOfDay(partialTick) * FULL_ROTATION,
-                        0.0F, NORTH_STAR_Y, NORTH_STAR_Z
+                CirrusCelestialTransform.skyModelView(
+                        starModelViewMatrix,
+                        fixedSkyModelViewMatrix,
+                        level.getTimeOfDay(partialTick),
+                        angledOrbit
                 );
                 starBuffer.bind();
                 starBuffer.drawWithShader(starModelViewMatrix, projectionMatrix, shader);
@@ -187,7 +188,11 @@ public final class CirrusStarRenderer implements AutoCloseable {
                     renderMode.set(1.0F);
                 }
                 northStarBuffer.bind();
-                northStarBuffer.drawWithShader(fixedSkyModelViewMatrix, projectionMatrix, shader);
+                northStarBuffer.drawWithShader(
+                        angledOrbit ? fixedSkyModelViewMatrix : starModelViewMatrix,
+                        projectionMatrix,
+                        shader
+                );
             }
         } finally {
             VertexBuffer.unbind();
@@ -296,8 +301,8 @@ public final class CirrusStarRenderer implements AutoCloseable {
 
         Vector3f northDirection = new Vector3f(
                 0.0F,
-                NORTH_STAR_Y,
-                NORTH_STAR_Z
+                CirrusCelestialTransform.polarAxisY(),
+                CirrusCelestialTransform.polarAxisZ()
         );
         BufferBuilder northBuilder = Tesselator.getInstance().begin(
                 VertexFormat.Mode.QUADS,
