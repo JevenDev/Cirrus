@@ -21,7 +21,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.function.BiConsumer;
 
-final class DistantHorizonsApiCompat {
+public final class DistantHorizonsApiCompat {
     private static final float[] DH_PROJECTION_MATRIX_VALUES = new float[16];
     private static final float[] DH_MODEL_VIEW_MATRIX_VALUES = new float[16];
     private static IDhApiConfig configs;
@@ -31,6 +31,7 @@ final class DistantHorizonsApiCompat {
     private static boolean overrideApplied;
     private static boolean beforeApplyShaderEventRegistered;
     private static BiConsumer<float[], float[]> beforeApplyShaderCallback;
+    private static boolean cloudCallbackInvoked;
     private static boolean blazeRendererLookupFailed;
     private static Object blazeMetaRenderer;
     private static Field blazeColorWrapperField;
@@ -40,38 +41,46 @@ final class DistantHorizonsApiCompat {
             new DhApiBeforeApplyShaderRenderEvent() {
         @Override
         public void beforeRender(DhApiCancelableEventParam<DhApiRenderParam> event) {
-            BiConsumer<float[], float[]> callback = beforeApplyShaderCallback;
-            if (callback == null) {
-                return;
-            }
-
-            event.value.dhProjectionMatrix.putValuesInArray(DH_PROJECTION_MATRIX_VALUES);
-            event.value.dhModelViewMatrix.putValuesInArray(DH_MODEL_VIEW_MATRIX_VALUES);
-            int drawFramebuffer = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-            int readFramebuffer = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
-            GpuTextureView previousColorOverride = RenderSystem.outputColorTextureOverride;
-            GpuTextureView previousDepthOverride = RenderSystem.outputDepthTextureOverride;
-            try {
-                ExternalFramebufferTarget target = blazeFramebufferTarget();
-                if (target == null) {
-                    // Let Minecraft's normal cloud pass handle unsupported DH targets.
-                    return;
-                }
-                RenderSystem.outputColorTextureOverride = target.colorView();
-                RenderSystem.outputDepthTextureOverride = target.depthView();
-                callback.accept(DH_PROJECTION_MATRIX_VALUES, DH_MODEL_VIEW_MATRIX_VALUES);
-            } finally {
-                RenderSystem.outputColorTextureOverride = previousColorOverride;
-                RenderSystem.outputDepthTextureOverride = previousDepthOverride;
-                // Render passes can change framebuffer bindings when they close; DH's
-                // apply shader expects its framebuffer to remain bound for the composite.
-                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
-                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer);
-            }
+            renderClouds(event.value);
         }
     };
 
     private DistantHorizonsApiCompat() {
+    }
+
+    public static void renderClouds(DhApiRenderParam params) {
+        if (cloudCallbackInvoked) {
+            return;
+        }
+        BiConsumer<float[], float[]> callback = beforeApplyShaderCallback;
+        if (callback == null) {
+            return;
+        }
+
+        params.dhProjectionMatrix.putValuesInArray(DH_PROJECTION_MATRIX_VALUES);
+        params.dhModelViewMatrix.putValuesInArray(DH_MODEL_VIEW_MATRIX_VALUES);
+        int drawFramebuffer = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+        int readFramebuffer = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
+        GpuTextureView previousColorOverride = RenderSystem.outputColorTextureOverride;
+        GpuTextureView previousDepthOverride = RenderSystem.outputDepthTextureOverride;
+        try {
+            ExternalFramebufferTarget target = blazeFramebufferTarget();
+            if (target == null) {
+                // Let Minecraft's normal cloud pass handle unsupported DH targets.
+                return;
+            }
+            RenderSystem.outputColorTextureOverride = target.colorView();
+            RenderSystem.outputDepthTextureOverride = target.depthView();
+            cloudCallbackInvoked = true;
+            callback.accept(DH_PROJECTION_MATRIX_VALUES, DH_MODEL_VIEW_MATRIX_VALUES);
+        } finally {
+            RenderSystem.outputColorTextureOverride = previousColorOverride;
+            RenderSystem.outputDepthTextureOverride = previousDepthOverride;
+            // Render passes can change framebuffer bindings when they close; DH's
+            // apply shader expects its framebuffer to remain bound for the composite.
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer);
+        }
     }
 
     static int beginFrame(
@@ -92,6 +101,7 @@ final class DistantHorizonsApiCompat {
 
     static void setBeforeApplyShaderCallback(BiConsumer<float[], float[]> callback) {
         beforeApplyShaderCallback = callback;
+        cloudCallbackInvoked = false;
     }
 
     private static void refreshConfigHandles() {
