@@ -13,6 +13,7 @@ layout(std140) uniform CirrusParams {
     float CirrusSkyGradientIntensity;
     float CirrusSkyGradientHeight;
     float CirrusMilkyWayRotation;
+    float CirrusMilkyWayAngledOrbit;
     vec3 CirrusSkyHorizonColor;
     vec3 CirrusSkyZenithColor;
 };
@@ -118,6 +119,13 @@ void main() {
         rotateAroundAxis(viewDirection, CIRRUS_STAR_AXIS, -CirrusMilkyWayRotation),
         CIRRUS_PI
     ));
+    if (CirrusMilkyWayAngledOrbit < 0.5) {
+        smoothCelestialDirection = normalize(rotateY(
+                rotateAroundAxis(rotateY(viewDirection, CIRRUS_PI * 0.5),
+                        vec3(1.0, 0.0, 0.0), -CirrusMilkyWayRotation),
+                CIRRUS_PI * 0.5
+        ));
+    }
     vec3 celestialDirection = mix(
         smoothCelestialDirection,
         pixelateDirection(smoothCelestialDirection),

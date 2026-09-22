@@ -97,6 +97,10 @@ public final class CirrusConfig {
     public static final CirrusConfigSpec.DoubleValue TOP_LAYER_OPACITY;
     public static final CirrusConfigSpec.BooleanValue SMOOTH_TIME_TRANSITIONS;
     public static final CirrusConfigSpec.DoubleValue TIME_TRANSITION_SPEED;
+    public static final CirrusConfigSpec.BooleanValue SUN_ANGLED_ORBIT;
+    public static final CirrusConfigSpec.BooleanValue MOON_ANGLED_ORBIT;
+    public static final CirrusConfigSpec.BooleanValue STARS_ANGLED_ORBIT;
+    public static final CirrusConfigSpec.BooleanValue MILKY_WAY_ANGLED_ORBIT;
     public static final CirrusConfigSpec.BooleanValue CUSTOM_STARS_ENABLED;
     public static final CirrusConfigSpec.IntValue STAR_DENSITY;
     public static final CirrusConfigSpec.DoubleValue STAR_MIN_OPACITY;
@@ -297,6 +301,18 @@ public final class CirrusConfig {
                 "timeTransitionSpeed",
                 "Speed multiplier for smooth time transitions. Higher values complete transitions faster."
         );
+        SUN_ANGLED_ORBIT = builder
+                .comment("Rotate the sun around Cirrus' tilted polar axis instead of the vanilla axis.")
+                .define("sunAngledOrbit", true);
+        MOON_ANGLED_ORBIT = builder
+                .comment("Rotate the moon around Cirrus' tilted polar axis instead of the vanilla axis.")
+                .define("moonAngledOrbit", true);
+        STARS_ANGLED_ORBIT = builder
+                .comment("Rotate shader stars around Cirrus' tilted polar axis instead of the vanilla axis.")
+                .define("starsAngledOrbit", true);
+        MILKY_WAY_ANGLED_ORBIT = builder
+                .comment("Rotate the Milky Way around Cirrus' tilted polar axis instead of the vanilla axis.")
+                .define("milkyWayAngledOrbit", true);
         CUSTOM_STARS_ENABLED = builder
                 .comment("Replace vanilla stars with Cirrus' shader-driven star field.")
                 .define("customStarsEnabled", true);

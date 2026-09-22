@@ -6,6 +6,7 @@ import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.config.CirrusConfig;
+import com.jvn.cirrus.client.util.CirrusCelestialTransform;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -173,11 +174,12 @@ public abstract class FogRendererMixin {
                     .getValue(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, partialTick);
             float sunriseColorAlpha = sunriseColor.w();
             if (sunriseColorAlpha > 0.0F) {
-                float sunDirection = Mth.sin(CirrusRenderContext.sunAngle(partialTick)) > 0.0F
-                        ? -1.0F
-                        : 1.0F;
                 float sunriseAlpha = Mth.clamp(
-                        camera.forwardVector().x() * sunDirection,
+                        CirrusCelestialTransform.sunViewAlignment(
+                                CirrusRenderContext.sunAngle(partialTick) / Mth.TWO_PI,
+                                CirrusConfig.SUN_ANGLED_ORBIT.get(),
+                                camera.forwardVector().x(), camera.forwardVector().z()
+                        ),
                         0.0F,
                         1.0F
                 ) * sunriseColorAlpha;

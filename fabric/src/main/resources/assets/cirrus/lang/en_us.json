@@ -235,5 +235,14 @@
   "cirrus.shaderpack.unknown.prompt": "Cirrus does not fully support shaders. Unknown shader detected: %s. Cirrus may not work as intended. Disable the shader pack's clouds and cloud fog in Shader Pack Settings.",
   "cirrus.shaderpack.unknown.prompt.distantHorizons": "Cirrus does not fully support shaders with Distant Horizons. Disable shader-pack clouds and cloud fog in Shader Pack Settings. Cirrus clouds may still appear gray with %s.",
   "cirrus.shaderpack.distantHorizons.prompt": "Cirrus does not fully support shaders with Distant Horizons. Keep shader-pack clouds and cloud fog disabled. Cirrus clouds may still appear gray while %s is active.",
-  "cirrus.shaderpack.fix.failed": "Cirrus could not update the settings for %s. Check the log for details."
+  "cirrus.shaderpack.fix.failed": "Cirrus could not update the settings for %s. Check the log for details.",
+  "cirrus.config.group.celestialOrbits": "Celestial Orbits",
+  "cirrus.config.sky.sunAngledOrbit": "Angled Sun Orbit",
+  "cirrus.config.sky.sunAngledOrbit.description": "Rotates the sun and its sunrise glow around the same tilted polar axis as the Cirrus night sky. Disable for the vanilla orbit.",
+  "cirrus.config.sky.moonAngledOrbit": "Angled Moon Orbit",
+  "cirrus.config.sky.moonAngledOrbit.description": "Rotates the moon around the same tilted polar axis as the Cirrus night sky. Disable for the vanilla orbit.",
+  "cirrus.config.sky.starsAngledOrbit": "Angled Star Orbit",
+  "cirrus.config.sky.starsAngledOrbit.description": "Rotates shader stars around Cirrus' tilted polar axis. Disable for the vanilla orbit.",
+  "cirrus.config.sky.milkyWayAngledOrbit": "Angled Milky Way Orbit",
+  "cirrus.config.sky.milkyWayAngledOrbit.description": "Rotates the Milky Way around Cirrus' tilted polar axis. Disable for the vanilla orbit."
 }

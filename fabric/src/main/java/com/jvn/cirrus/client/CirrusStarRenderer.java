@@ -4,6 +4,7 @@ import com.jvn.cirrus.client.render.CirrusRenderContext;
 import static com.jvn.cirrus.client.util.CirrusRandom.signedFloat;
 
 import com.jvn.cirrus.config.CirrusConfig;
+import com.jvn.cirrus.client.util.CirrusCelestialTransform;
 import com.jvn.cirrus.client.render.CirrusUniform;
 import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -147,9 +148,10 @@ public final class CirrusStarRenderer implements AutoCloseable {
         }
 
         if (renderStarField) {
-            starModelViewMatrix.set(fixedSkyModelViewMatrix).rotate(
-                    CirrusRenderContext.sunAngle(partialTick),
-                    0.0F, NORTH_STAR_Y, NORTH_STAR_Z
+            CirrusCelestialTransform.skyModelView(
+                    starModelViewMatrix, fixedSkyModelViewMatrix,
+                    CirrusRenderContext.sunAngle(partialTick) / Mth.TWO_PI,
+                    CirrusConfig.STARS_ANGLED_ORBIT.get()
             );
             starBuffer.drawWithShader(starModelViewMatrix, projectionMatrix, shader);
         }
@@ -161,8 +163,6 @@ public final class CirrusStarRenderer implements AutoCloseable {
             shootingStarBuffer.drawWithShader(fixedSkyModelViewMatrix, projectionMatrix, shader);
         }
 
-        // Polaris is world-fixed instead of following the rotating
-        // celestial matrix. Keep it bright, large, and gently twinkling.
         if (renderStarField) {
             if (appearance != null) {
                 appearance.set(
@@ -175,7 +175,10 @@ public final class CirrusStarRenderer implements AutoCloseable {
             if (renderMode != null) {
                 renderMode.set(1.0F);
             }
-            northStarBuffer.drawWithShader(fixedSkyModelViewMatrix, projectionMatrix, shader);
+            northStarBuffer.drawWithShader(
+                    CirrusConfig.STARS_ANGLED_ORBIT.get() ? fixedSkyModelViewMatrix : starModelViewMatrix,
+                    projectionMatrix, shader
+            );
         }
     }
 

@@ -33,6 +33,7 @@ public final class CirrusShaders {
             uniform("CirrusLightDirection", 2, 0.0F, 0.0F),
             uniform("CirrusSunWeight", 1, 1.0F),
             uniform("CirrusLightViewDirection", 4, 0.0F, 1.0F, 0.0F, 0.0F),
+            uniform("CirrusMoonViewDirection", 4, 0.0F, -1.0F, 0.0F, 0.0F),
             uniform("CirrusRainLevel", 1, 0.0F),
             uniform("CirrusThunderLevel", 1, 0.0F),
             uniform("CirrusRainCloudCoverage", 1, 0.0F),
@@ -86,6 +87,7 @@ public final class CirrusShaders {
             uniform("CirrusSkyGradientIntensity", 1, 0.0F),
             uniform("CirrusSkyGradientHeight", 1, 0.55F),
             uniform("CirrusMilkyWayRotation", 1, 0.0F),
+            uniform("CirrusMilkyWayAngledOrbit", 1, 1.0F),
             uniform("CirrusSkyHorizonColor", 3, 1.0F, 0.62F, 0.47F),
             uniform("CirrusSkyZenithColor", 3, 0.45F, 0.59F, 0.80F)
     );

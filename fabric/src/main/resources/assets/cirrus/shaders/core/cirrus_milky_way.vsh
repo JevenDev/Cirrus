@@ -13,6 +13,7 @@ layout(std140) uniform CirrusParams {
     float CirrusSkyGradientIntensity;
     float CirrusSkyGradientHeight;
     float CirrusMilkyWayRotation;
+    float CirrusMilkyWayAngledOrbit;
     vec3 CirrusSkyHorizonColor;
     vec3 CirrusSkyZenithColor;
 };
