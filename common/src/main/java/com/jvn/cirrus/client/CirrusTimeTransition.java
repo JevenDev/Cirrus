@@ -102,6 +102,13 @@ public final class CirrusTimeTransition {
                 && trackedLevel.getLevelData() == levelData;
     }
 
+    public static boolean canUseVisualTime(ClientLevel level) {
+        return level != null
+                && trackedLevel == level
+                && CirrusConfig.SMOOTH_TIME_TRANSITIONS.get()
+                && !level.dimensionType().hasFixedTime();
+    }
+
     public static long visualDayTime() {
         return visualDayTime;
     }
