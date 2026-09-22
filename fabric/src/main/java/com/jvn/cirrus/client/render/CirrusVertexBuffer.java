@@ -1,6 +1,7 @@
 package com.jvn.cirrus.client.render;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -118,9 +119,9 @@ public final class CirrusVertexBuffer implements AutoCloseable {
                 ? RenderSystem.outputDepthTextureOverride
                 : target.getDepthTextureView();
 
-        try (GpuBuffer matrices = shader.createMatricesBuffer(modelView, projection);
-             GpuBuffer parameters = shader.createUniformBuffer();
-             RenderPass pass = RenderSystem.getDevice()
+        GpuBufferSlice matrices = shader.writeMatrices(modelView, projection);
+        GpuBufferSlice parameters = shader.writeParameters();
+        try (RenderPass pass = RenderSystem.getDevice()
                      .createCommandEncoder()
                      .createRenderPass(
                              () -> "Cirrus custom sky",
