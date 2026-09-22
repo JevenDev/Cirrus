@@ -285,28 +285,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         double cloudTime = ticks + partialTick;
         double windSample = cloudTime * 0.03 / WORLD_SCALE;
         boolean shaderPackInUse = CirrusShaderPackCompat.isShaderPackInUse();
-        float celestialAngle = CirrusRenderContext.sunAngle(partialTick);
-        Vector3f sunDirection = CirrusCelestialRenderState.sunDirection(
-                new Vector3f(), celestialAngle / Mth.TWO_PI, CirrusConfig.SUN_ANGLED_ORBIT.get()
-        );
-        float sunWeight = celestialSunWeight(sunDirection.y);
-        Vector3f celestialViewDirection = frustumMatrix.transformDirection(new Vector3f(sunDirection)).normalize();
-        Vector3f moonViewDirection = CirrusCelestialRenderState.moonDirection(
-                new Vector3f(), celestialAngle / Mth.TWO_PI, CirrusConfig.MOON_ANGLED_ORBIT.get()
-        );
-        frustumMatrix.transformDirection(moonViewDirection).normalize();
         float rainLevel = smoothWeatherLevel(level.getRainLevel(partialTick));
         float thunderLevel = smoothWeatherLevel(level.getThunderLevel(partialTick));
         CloudTexture cloudTexture = cloudTexture(shaderPackInUse, rainLevel, thunderLevel);
-        LightningState lightning = lightningState(
-                level,
-                frustumMatrix,
-                partialTick,
-                cameraX,
-                cameraY,
-                cameraZ,
-                distanceChunks * 16.0F
-        );
 
         prepareLayer(lowerMesh, LOWER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, shaderPackInUse);
         boolean upperEnabled = CirrusConfig.UPPER_LAYER_ENABLED.get();
@@ -325,7 +306,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             return;
         }
 
-        Vec3 cloudColor = CirrusRenderContext.cloudColor(partialTick);
+        Vec3 cloudColor = depthOnly ? Vec3.ZERO : CirrusRenderContext.cloudColor(partialTick);
         double lowerHeight = cloudHeight
                 + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                 - cameraY
@@ -341,18 +322,46 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 ? (translucentLayerOverlap ? Math.abs(topHeight) : 1.0)
                 : -1.0;
         int enabledLayerCount = 1 + (upperEnabled ? 1 : 0) + (topEnabled ? 1 : 0);
-        CirrusShader cloudShader = CirrusShaders.clouds();
-        setCloudEnvironment(
-                cloudShader,
-                sunDirection,
-                sunWeight,
-                celestialViewDirection,
-                moonViewDirection,
-                rainLevel,
-                thunderLevel,
-                lightning,
-                cloudTexture.weatherPrecomposed()
-        );
+        CirrusShader cloudShader = depthOnly ? CirrusShaders.cloudDepth() : CirrusShaders.clouds();
+        if (depthOnly) {
+            CirrusShaderUniforms.setUniform(cloudShader, "CirrusRainCloudCoverage",
+                    cloudTexture.weatherPrecomposed() ? 0.0F
+                            : rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue());
+            CirrusShaderUniforms.setUniform(cloudShader, "CirrusThunderCloudCoverage",
+                    cloudTexture.weatherPrecomposed() ? 0.0F
+                            : thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue());
+        } else {
+            float celestialAngle = CirrusRenderContext.sunAngle(partialTick);
+            Vector3f sunDirection = CirrusCelestialRenderState.sunDirection(
+                    new Vector3f(), celestialAngle / Mth.TWO_PI, CirrusConfig.SUN_ANGLED_ORBIT.get()
+            );
+            float sunWeight = celestialSunWeight(sunDirection.y);
+            Vector3f celestialViewDirection = frustumMatrix.transformDirection(new Vector3f(sunDirection)).normalize();
+            Vector3f moonViewDirection = CirrusCelestialRenderState.moonDirection(
+                    new Vector3f(), celestialAngle / Mth.TWO_PI, CirrusConfig.MOON_ANGLED_ORBIT.get()
+            );
+            frustumMatrix.transformDirection(moonViewDirection).normalize();
+            LightningState lightning = lightningState(
+                    level,
+                    frustumMatrix,
+                    partialTick,
+                    cameraX,
+                    cameraY,
+                    cameraZ,
+                    distanceChunks * 16.0F
+            );
+            setCloudEnvironment(
+                    cloudShader,
+                    sunDirection,
+                    sunWeight,
+                    celestialViewDirection,
+                    moonViewDirection,
+                    rainLevel,
+                    thunderLevel,
+                    lightning,
+                    cloudTexture.weatherPrecomposed()
+            );
+        }
 
         for (int layerIndex = 0; layerIndex < enabledLayerCount; layerIndex++) {
             LayerMesh mesh;
@@ -386,12 +395,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     cameraSampleZ,
                     windSample,
                     cloudColor,
-                    celestialAngle,
-                    sunWeight,
-                    celestialViewDirection,
                     rainLevel,
                     thunderLevel,
-                    lightning,
                     cloudTexture,
                     depthOnly
             );
@@ -460,12 +465,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             double cameraSampleZ,
             double windSample,
             Vec3 cloudColor,
-            float celestialAngle,
-            float sunWeight,
-            Vector3f celestialViewDirection,
             float rainLevel,
             float thunderLevel,
-            LightningState lightning,
             CloudTexture cloudTexture,
             boolean depthOnly
     ) {
