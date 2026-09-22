@@ -120,7 +120,7 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
                 CirrusConfig.AURORA_MOVEMENT.get().floatValue(),
                 CirrusConfig.AURORA_RIBBON_WIDTH.get().floatValue(),
                 (float)Math.toRadians(CirrusConfig.AURORA_HEIGHT_DEGREES.get()),
-                0.0F
+                CirrusConfig.AURORA_CUSTOM_COLORS.get() ? 1.0F : 0.0F
         );
 
         float[] previousColor = RenderSystem.getShaderColor();

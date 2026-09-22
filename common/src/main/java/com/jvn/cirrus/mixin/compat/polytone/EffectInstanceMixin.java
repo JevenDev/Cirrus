@@ -40,10 +40,6 @@ public abstract class EffectInstanceMixin {
         float timeOfDay = minecraft.level.getTimeOfDay(partialTick);
         CirrusCelestialRenderState.sunDirection(cirrus$sunDirection, timeOfDay, CirrusConfig.SUN_ANGLED_ORBIT.get());
         CirrusCelestialRenderState.moonDirection(cirrus$moonDirection, timeOfDay, CirrusConfig.MOON_ANGLED_ORBIT.get());
-        Uniform angle = ((EffectInstance)(Object)this).getUniform("PolySunAngle");
-        if (angle != null) {
-            angle.set((float)-Math.asin(Math.clamp(cirrus$sunDirection.y, -1.0F, 1.0F)));
-        }
     }
 
     @Inject(method = "apply", at = @At("RETURN"))

@@ -242,5 +242,7 @@
   "cirrus.shaderpack.unknown.prompt": "Cirrus does not fully support shaders. Unknown shader detected: %s. Cirrus may not work as intended. Disable the shader pack's clouds and cloud fog in Shader Pack Settings.",
   "cirrus.shaderpack.unknown.prompt.distantHorizons": "Cirrus does not fully support shaders with Distant Horizons. Clouds may appear gray. Unknown shader detected: %s. Disable the shader pack's clouds and cloud fog in Shader Pack Settings.",
   "cirrus.shaderpack.distantHorizons.prompt": "Cirrus does not fully support shaders with Distant Horizons. Clouds may appear gray while %s is active.",
-  "cirrus.shaderpack.fix.failed": "Cirrus could not update the settings for %s. Check the log for details."
+  "cirrus.shaderpack.fix.failed": "Cirrus could not update the settings for %s. Check the log for details.",
+  "cirrus.config.sky.auroraCustomColors": "Custom Colors",
+  "cirrus.config.sky.auroraCustomColors.description": "Uses the three colors below for the northern lights. Disable this to restore the animated green, cyan, and violet palette."
 }

@@ -149,6 +149,7 @@ public final class CirrusConfig {
     public static final CirrusConfigSpec.IntValue AURORA_PIXELATION_RESOLUTION;
     public static final CirrusConfigSpec.BooleanValue AURORA_COLD_BIOMES_ONLY;
     public static final CirrusConfigSpec.DoubleValue AURORA_OPACITY;
+    public static final CirrusConfigSpec.BooleanValue AURORA_CUSTOM_COLORS;
     public static final CirrusConfigSpec.IntValue AURORA_LOWER_COLOR;
     public static final CirrusConfigSpec.IntValue AURORA_MIDDLE_COLOR;
     public static final CirrusConfigSpec.IntValue AURORA_UPPER_COLOR;
@@ -510,6 +511,9 @@ public final class CirrusConfig {
                 "auroraOpacity",
                 "Maximum opacity of the northern lights."
         );
+        AURORA_CUSTOM_COLORS = builder
+                .comment("Use custom lower, middle, and upper colors instead of the animated aurora palette.")
+                .define("auroraCustomColors", true);
         AURORA_LOWER_COLOR = defineColor(
                 builder, "auroraLowerColor", 0x1EFA72, "RGB color of the lower aurora curtains."
         );
