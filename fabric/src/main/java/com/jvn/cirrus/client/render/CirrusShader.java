@@ -4,6 +4,7 @@ import com.jvn.cirrus.Cirrus;
 import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
 import com.mojang.renderpearl.api.pipeline.BlendFunction;
@@ -12,13 +13,13 @@ import com.mojang.renderpearl.api.pipeline.DepthStencilState;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.mojang.renderpearl.api.pipeline.CompareOp;
 import com.mojang.renderpearl.api.pipeline.UniformType;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.vertex.VertexFormat;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.client.renderer.DynamicGpuDataStorageMapped;
+import net.minecraft.client.renderer.DynamicGpuDataStorage;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.oit.OitPipelineSet;
 import net.minecraft.resources.Identifier;
@@ -33,6 +34,8 @@ public final class CirrusShader {
     private final RenderPipeline depthPipeline;
     private final OitPipelineSet oitPipelines;
     private final int uniformBufferSize;
+    private DynamicGpuDataStorageMapped<Matrices> matrices;
+    private DynamicGpuDataStorageMapped<Parameters> parameters;
 
     public CirrusShader(
             String name,
@@ -101,42 +104,75 @@ public final class CirrusShader {
         return mode == DrawMode.COLOR ? colorPipeline : depthPipeline;
     }
 
-    GpuBuffer createMatricesBuffer(Matrix4f modelView, Matrix4f projection) {
-        ByteBuffer data = ByteBuffer.allocateDirect(128).order(ByteOrder.nativeOrder());
-        Std140Builder.intoBuffer(data)
-                .putMat4f(modelView)
-                .putMat4f(projection)
-                .get();
-        return RenderSystem.getDevice().createBuffer(
-                () -> "Cirrus " + name + " matrices",
-                GpuBuffer.USAGE_UNIFORM,
-                data
-        );
+    GpuBufferSlice writeMatrices(Matrix4f modelView, Matrix4f projection) {
+        if (matrices == null) {
+            matrices = new DynamicGpuDataStorageMapped<>("Cirrus " + name + " matrices", 128, GpuBuffer.USAGE_UNIFORM, 16);
+        }
+        return matrices.writeData(new Matrices(modelView, projection));
     }
 
-    GpuBuffer createUniformBuffer() {
+    GpuBufferSlice writeParameters() {
         if (uniformBufferSize == 0) {
             return null;
         }
-
-        ByteBuffer data = ByteBuffer.allocateDirect(uniformBufferSize).order(ByteOrder.nativeOrder());
-        Std140Builder builder = Std140Builder.intoBuffer(data);
-        for (CirrusUniform uniform : uniforms.values()) {
-            float[] values = uniform.values();
-            switch (uniform.components()) {
-                case 1 -> builder.putFloat(values[0]);
-                case 2 -> builder.putVec2(values[0], values[1]);
-                case 3 -> builder.putVec3(values[0], values[1], values[2]);
-                case 4 -> builder.putVec4(values[0], values[1], values[2], values[3]);
-                default -> throw new IllegalStateException("Unsupported uniform size");
-            }
+        if (parameters == null) {
+            parameters = new DynamicGpuDataStorageMapped<>("Cirrus " + name + " parameters", uniformBufferSize, GpuBuffer.USAGE_UNIFORM, 16);
         }
-        builder.align(16).get();
-        return RenderSystem.getDevice().createBuffer(
-                () -> "Cirrus " + name + " parameters",
-                GpuBuffer.USAGE_UNIFORM,
-                data
-        );
+        return parameters.writeData(new Parameters());
+    }
+
+    public void endFrame() {
+        if (matrices != null) {
+            matrices.endFrame();
+        }
+        if (parameters != null) {
+            parameters.endFrame();
+        }
+    }
+
+    public void closeBuffers() {
+        if (matrices != null) {
+            matrices.close();
+            matrices = null;
+        }
+        if (parameters != null) {
+            parameters.close();
+            parameters = null;
+        }
+    }
+
+    // storage writes immediately and compares identities so mutable inputs never reuse stale data
+    private static final class Matrices implements DynamicGpuDataStorage.DynamicGpuData {
+        private final Matrix4f modelView;
+        private final Matrix4f projection;
+
+        private Matrices(Matrix4f modelView, Matrix4f projection) {
+            this.modelView = modelView;
+            this.projection = projection;
+        }
+
+        @Override
+        public void write(ByteBuffer buffer) {
+            Std140Builder.intoBuffer(buffer).putMat4f(modelView).putMat4f(projection);
+        }
+    }
+
+    private final class Parameters implements DynamicGpuDataStorage.DynamicGpuData {
+        @Override
+        public void write(ByteBuffer buffer) {
+            Std140Builder builder = Std140Builder.intoBuffer(buffer);
+            for (CirrusUniform uniform : uniforms.values()) {
+                float[] values = uniform.values();
+                switch (uniform.components()) {
+                    case 1 -> builder.putFloat(values[0]);
+                    case 2 -> builder.putVec2(values[0], values[1]);
+                    case 3 -> builder.putVec3(values[0], values[1], values[2]);
+                    case 4 -> builder.putVec4(values[0], values[1], values[2], values[3]);
+                    default -> throw new IllegalStateException("Unsupported uniform size");
+                }
+            }
+            builder.align(16).get();
+        }
     }
 
     private RenderPipeline.Builder createPipeline(

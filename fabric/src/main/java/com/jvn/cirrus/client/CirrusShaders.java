@@ -154,6 +154,10 @@ public final class CirrusShaders {
             .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true))
             .build());
 
+    private static final CirrusShader[] ALL = {
+            CLOUDS, CLOUD_MASK, AURORA, MILKY_WAY, STARS, END_SKY, LIGHTNING_SKY
+    };
+
     private static boolean samplerTexturesLoaded;
 
     private CirrusShaders() {
@@ -166,6 +170,18 @@ public final class CirrusShaders {
     public static void clearSunMask(RenderPass renderPass) {
         renderPass.setPipeline(RenderSystem.getCompiledPipeline(CLEAR_SUN_MASK));
         renderPass.draw(3, 1, 0, 0);
+    }
+
+    public static void endFrame() {
+        for (CirrusShader shader : ALL) {
+            shader.endFrame();
+        }
+    }
+
+    public static void closeBuffers() {
+        for (CirrusShader shader : ALL) {
+            shader.closeBuffers();
+        }
     }
 
     public static void preloadSamplerTextures(Minecraft minecraft) {

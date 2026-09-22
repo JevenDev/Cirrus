@@ -1,6 +1,7 @@
 package com.jvn.cirrus.client.render;
 
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
@@ -103,36 +104,35 @@ public final class CirrusVertexBuffer implements AutoCloseable {
         }
         Minecraft minecraft = Minecraft.getInstance();
         RenderPass pass = Objects.requireNonNull(CirrusRenderContext.renderPass());
-        try (GpuBuffer matrices = shader.createMatricesBuffer(modelView, projection);
-             GpuBuffer parameters = shader.createUniformBuffer()) {
-            pass.setPipeline(RenderSystem.getCompiledPipeline(shader.pipeline(mode)));
-            if (shader.usesVanillaFog()) {
-                pass.setUniform("Fog", RenderSystem.getShaderFog());
-            }
-            if (scissor != null) {
-                pass.enableScissor(scissor.x(), scissor.y(), scissor.width(), scissor.height());
-            }
-            pass.setUniform("CirrusMatrices", matrices);
-            if (parameters != null) {
-                pass.setUniform("CirrusParams", parameters);
-            }
-            if (textureOverride != null || shader.texture() != null) {
-                AbstractTexture texture = textureOverride != null
-                        ? textureOverride
-                        : minecraft.getTextureManager().getTexture(shader.texture());
-                pass.setUniform("Sampler0", texture.getTextureView(), texture.getSampler());
-            }
-            pass.setVertexBuffer(0, vertexBuffer.slice());
-            if (indexBuffer != null) {
-                pass.setIndexBuffer(indexBuffer, drawState.indexType());
-            } else {
-                RenderSystem.AutoStorageIndexBuffer sequential = RenderSystem.getSequentialBuffer(drawState.primitiveTopology());
-                pass.setIndexBuffer(sequential.getBuffer(drawState.indexCount()), sequential.type());
-            }
-            pass.drawIndexed(drawState.indexCount(), 1, 0, 0, 0);
-            if (scissor != null) {
-                pass.disableScissor();
-            }
+        GpuBufferSlice matrices = shader.writeMatrices(modelView, projection);
+        GpuBufferSlice parameters = shader.writeParameters();
+        pass.setPipeline(RenderSystem.getCompiledPipeline(shader.pipeline(mode)));
+        if (shader.usesVanillaFog()) {
+            pass.setUniform("Fog", RenderSystem.getShaderFog());
+        }
+        if (scissor != null) {
+            pass.enableScissor(scissor.x(), scissor.y(), scissor.width(), scissor.height());
+        }
+        pass.setUniform("CirrusMatrices", matrices);
+        if (parameters != null) {
+            pass.setUniform("CirrusParams", parameters);
+        }
+        if (textureOverride != null || shader.texture() != null) {
+            AbstractTexture texture = textureOverride != null
+                    ? textureOverride
+                    : minecraft.getTextureManager().getTexture(shader.texture());
+            pass.setUniform("Sampler0", texture.getTextureView(), texture.getSampler());
+        }
+        pass.setVertexBuffer(0, vertexBuffer.slice());
+        if (indexBuffer != null) {
+            pass.setIndexBuffer(indexBuffer, drawState.indexType());
+        } else {
+            RenderSystem.AutoStorageIndexBuffer sequential = RenderSystem.getSequentialBuffer(drawState.primitiveTopology());
+            pass.setIndexBuffer(sequential.getBuffer(drawState.indexCount()), sequential.type());
+        }
+        pass.drawIndexed(drawState.indexCount(), 1, 0, 0, 0);
+        if (scissor != null) {
+            pass.disableScissor();
         }
     }
 
