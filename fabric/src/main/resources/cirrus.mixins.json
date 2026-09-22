@@ -13,6 +13,10 @@
     "CloudRendererMixin",
     "MinecraftAccessor",
     "SkyRendererMixin",
+    "SkyRendererCelestialMixin",
+    "compat.polytone.ShaderSourceMixin",
+    "compat.polytone.PostChainMixin",
+    "compat.polytone.PostPassMixin",
     "LightningBoltMixin",
     "LightningBoltRendererMixin",
     "LightningBoltRenderStateMixin"

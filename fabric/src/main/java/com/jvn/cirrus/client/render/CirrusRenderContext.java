@@ -1,6 +1,7 @@
 package com.jvn.cirrus.client.render;
 
 import net.minecraft.client.Camera;
+import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.util.ARGB;
@@ -40,6 +41,7 @@ public final class CirrusRenderContext {
             int capturedTicks,
             long capturedCloudTicks
     ) {
+        CirrusCelestialRenderState.beginFrame(capturedFrustum);
         level = capturedLevel;
         camera = capturedCamera;
         frustumMatrix = new Matrix4f(capturedFrustum);
