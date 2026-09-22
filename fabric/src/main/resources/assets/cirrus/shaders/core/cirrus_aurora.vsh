@@ -12,6 +12,9 @@ layout(std140) uniform CirrusParams {
     float CirrusAuroraPixelationResolution;
     vec4 CirrusAuroraVariant;
     vec4 CirrusAuroraSettings;
+    vec3 CirrusAuroraLowerColor;
+    vec3 CirrusAuroraMiddleColor;
+    vec3 CirrusAuroraUpperColor;
 };
 
 

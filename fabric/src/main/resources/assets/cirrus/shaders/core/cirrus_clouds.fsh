@@ -13,6 +13,7 @@ layout(std140) uniform CirrusParams {
     vec2 CirrusLightDirection;
     float CirrusSunWeight;
     vec4 CirrusLightViewDirection;
+    vec4 CirrusMoonViewDirection;
     float CirrusRainLevel;
     float CirrusThunderLevel;
     float CirrusRainCloudCoverage;
@@ -80,7 +81,7 @@ void main() {
         vec3 normalizedViewDirection = normalize(viewDirection);
         vec3 sunViewDirection = normalize(CirrusLightViewDirection.xyz);
         float sunAlignment = dot(normalizedViewDirection, sunViewDirection);
-        float moonAlignment = dot(normalizedViewDirection, -sunViewDirection);
+        float moonAlignment = dot(normalizedViewDirection, normalize(CirrusMoonViewDirection.xyz));
         vec3 worldUpViewDirection = normalize(CirrusWorldUpViewDirection.xyz);
 
         float sunIllumination = smoothstep(COS_30_DEGREES, COS_7_DEGREES, sunAlignment);

@@ -286,6 +286,25 @@ public final class CirrusConfigScreen {
                         ))
                         .build())
                 .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.celestialOrbits"))
+                        .option(booleanOption(
+                                "cirrus.config.sky.sunAngledOrbit",
+                                CirrusConfig.SUN_ANGLED_ORBIT
+                        ))
+                        .option(booleanOption(
+                                "cirrus.config.sky.moonAngledOrbit",
+                                CirrusConfig.MOON_ANGLED_ORBIT
+                        ))
+                        .option(booleanOption(
+                                "cirrus.config.sky.starsAngledOrbit",
+                                CirrusConfig.STARS_ANGLED_ORBIT
+                        ))
+                        .option(booleanOption(
+                                "cirrus.config.sky.milkyWayAngledOrbit",
+                                CirrusConfig.MILKY_WAY_ANGLED_ORBIT
+                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.stars"))
                         .option(booleanOption(
                                 "cirrus.config.sky.customStarsEnabled",
@@ -446,6 +465,22 @@ public final class CirrusConfigScreen {
                                 "cirrus.config.sky.auroraOpacity",
                                 CirrusConfig.AURORA_OPACITY,
                                 CirrusConfig.AURORA_OPACITY_SETTING
+                        ))
+                        .option(booleanOption(
+                                "cirrus.config.sky.auroraCustomColors",
+                                CirrusConfig.AURORA_CUSTOM_COLORS
+                        ))
+                        .option(colorOption(
+                                "cirrus.config.sky.auroraLowerColor",
+                                CirrusConfig.AURORA_LOWER_COLOR
+                        ))
+                        .option(colorOption(
+                                "cirrus.config.sky.auroraMiddleColor",
+                                CirrusConfig.AURORA_MIDDLE_COLOR
+                        ))
+                        .option(colorOption(
+                                "cirrus.config.sky.auroraUpperColor",
+                                CirrusConfig.AURORA_UPPER_COLOR
                         ))
                         .option(doubleOption(
                                 "cirrus.config.sky.auroraAnimationSpeed",

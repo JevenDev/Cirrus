@@ -11,6 +11,7 @@ layout(std140) uniform CirrusParams {
     vec2 CirrusLightDirection;
     float CirrusSunWeight;
     vec4 CirrusLightViewDirection;
+    vec4 CirrusMoonViewDirection;
     float CirrusRainLevel;
     float CirrusThunderLevel;
     float CirrusRainCloudCoverage;
