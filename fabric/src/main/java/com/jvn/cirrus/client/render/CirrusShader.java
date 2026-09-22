@@ -1,6 +1,7 @@
 package com.jvn.cirrus.client.render;
 
 import com.jvn.cirrus.Cirrus;
+import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.pipeline.BlendFunction;
@@ -24,6 +25,8 @@ public final class CirrusShader {
     private final Map<String, CirrusUniform> uniforms = new LinkedHashMap<>();
     private final RenderPipeline colorPipeline;
     private final RenderPipeline depthPipeline;
+    private final RenderPipeline reversedColorPipeline;
+    private final RenderPipeline reversedDepthPipeline;
     private final int uniformBufferSize;
 
     public CirrusShader(
@@ -48,11 +51,21 @@ public final class CirrusShader {
         }
         this.uniformBufferSize = align(size, 16);
         this.colorPipeline = createPipeline(
-                name, vertexFormat, blend, texture != null, colorWrite, depthWrite, false
+                name, vertexFormat, blend, texture != null, colorWrite, depthWrite, false,
+                DepthTestFunction.LEQUAL_DEPTH_TEST
         );
         this.depthPipeline = createPipeline(
-                name + "_depth", vertexFormat, Blend.NONE, texture != null, false, true, true
+                name + "_depth", vertexFormat, Blend.NONE, texture != null, false, true, true,
+                DepthTestFunction.LEQUAL_DEPTH_TEST
         );
+        this.reversedColorPipeline = target == Target.CLOUDS ? createPipeline(
+                name + "_dh_reversed", vertexFormat, blend, texture != null,
+                colorWrite, depthWrite, false, DepthTestFunction.EQUAL_DEPTH_TEST
+        ) : colorPipeline;
+        this.reversedDepthPipeline = target == Target.CLOUDS ? createPipeline(
+                name + "_dh_reversed_depth", vertexFormat, Blend.NONE, texture != null,
+                false, true, true, DepthTestFunction.GREATER_DEPTH_TEST
+        ) : depthPipeline;
     }
 
     public CirrusUniform getUniform(String uniformName) {
@@ -68,6 +81,9 @@ public final class CirrusShader {
     }
 
     RenderPipeline pipeline(DrawMode mode) {
+        if (target == Target.CLOUDS && DistantHorizonsCompat.isRenderingWithReversedDepth()) {
+            return mode == DrawMode.COLOR ? reversedColorPipeline : reversedDepthPipeline;
+        }
         return mode == DrawMode.COLOR ? colorPipeline : depthPipeline;
     }
 
@@ -116,14 +132,15 @@ public final class CirrusShader {
             boolean textured,
             boolean colorWrite,
             boolean depthWrite,
-            boolean depthVariant
+            boolean depthVariant,
+            DepthTestFunction depthTest
     ) {
         RenderPipeline.Builder builder = RenderPipeline.builder()
                 .withLocation(Cirrus.id("pipeline/" + pipelineName))
                 .withVertexShader(Cirrus.id("core/" + name))
                 .withFragmentShader(Cirrus.id("core/" + name))
                 .withUniform("CirrusMatrices", UniformType.UNIFORM_BUFFER)
-                .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
+                .withDepthTestFunction(depthTest)
                 .withCull(false)
                 .withColorWrite(colorWrite)
                 .withDepthWrite(depthWrite)

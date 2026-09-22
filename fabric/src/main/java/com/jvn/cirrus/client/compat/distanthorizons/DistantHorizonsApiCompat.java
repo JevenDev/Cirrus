@@ -33,6 +33,7 @@ final class DistantHorizonsApiCompat {
     private static boolean overrideApplied;
     private static boolean beforeApplyShaderEventRegistered;
     private static Consumer<float[]> beforeApplyShaderCallback;
+    private static boolean renderingWithReversedDepth;
     private static ExternalFramebufferTarget externalFramebufferTarget;
     private static final DhApiBeforeApplyShaderRenderEvent BEFORE_APPLY_SHADER_EVENT =
             new DhApiBeforeApplyShaderRenderEvent() {
@@ -65,7 +66,13 @@ final class DistantHorizonsApiCompat {
                         RenderSystem.outputColorTextureOverride = target.colorView;
                         RenderSystem.outputDepthTextureOverride = target.depthView;
                     }
-                    callback.accept(DH_PROJECTION_MATRIX_VALUES);
+                    // DH can use reversed depth even when Minecraft uses forward depth
+                    renderingWithReversedDepth = event.value.dhProjectionMatrix.m22 >= 0.0F;
+                    try {
+                        callback.accept(DH_PROJECTION_MATRIX_VALUES);
+                    } finally {
+                        renderingWithReversedDepth = false;
+                    }
                 } finally {
                     RenderSystem.outputColorTextureOverride = previousColorOverride;
                     RenderSystem.outputDepthTextureOverride = previousDepthOverride;
@@ -98,6 +105,10 @@ final class DistantHorizonsApiCompat {
 
     static void setBeforeApplyShaderCallback(Consumer<float[]> callback) {
         beforeApplyShaderCallback = callback;
+    }
+
+    static boolean isRenderingWithReversedDepth() {
+        return renderingWithReversedDepth;
     }
 
     private static void refreshConfigHandles() {

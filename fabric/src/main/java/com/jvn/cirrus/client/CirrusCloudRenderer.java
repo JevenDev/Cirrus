@@ -263,7 +263,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             int ticks,
             double cameraX,
             double cameraY,
-            double cameraZ
+            double cameraZ,
+            boolean depthOnly
     ) {
         float cloudHeight = CirrusRenderContext.cloudHeight(level);
         if (Float.isNaN(cloudHeight)) {
@@ -392,7 +393,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     rainLevel,
                     thunderLevel,
                     lightning,
-                    cloudTexture
+                    cloudTexture,
+                    depthOnly
             );
         }
     }
@@ -465,7 +467,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             float rainLevel,
             float thunderLevel,
             LightningState lightning,
-            CloudTexture cloudTexture
+            CloudTexture cloudTexture,
+            boolean depthOnly
     ) {
         if (mesh.buffer == null) {
             return;
@@ -490,9 +493,17 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     (float)cloudColor.z,
                     definition.opacity(rainLevel, thunderLevel)
             );
+            if (depthOnly) {
+                mesh.buffer.drawWithShader(
+                        poseStack.last().pose(), projectionMatrix, shader,
+                        CirrusShader.DrawMode.MAIN_DEPTH_ONLY, cloudTexture.texture()
+                );
+                return;
+            }
             boolean renderingForDistantHorizons =
                     CirrusRenderContext.renderingCloudsForDistantHorizons();
-            if (definition.style() == CirrusConfig.CloudStyle.FANCY) {
+            if (definition.style() == CirrusConfig.CloudStyle.FANCY
+                    || DistantHorizonsCompat.isRenderingWithReversedDepth()) {
                 mesh.buffer.drawWithShader(
                         poseStack.last().pose(),
                         projectionMatrix,
