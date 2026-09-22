@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
-final class DistantHorizonsApiCompat {
+public final class DistantHorizonsApiCompat {
     private static final float[] DH_PROJECTION_MATRIX_VALUES = new float[16];
     private static IDhApiConfig configs;
     private static IDhApiConfigValue<Boolean> cloudRendering;
@@ -21,33 +21,42 @@ final class DistantHorizonsApiCompat {
     private static boolean overrideApplied;
     private static boolean beforeApplyShaderEventRegistered;
     private static Consumer<float[]> beforeApplyShaderCallback;
+    private static boolean cloudCallbackInvoked;
     private static boolean renderingWithReversedDepth;
     private static boolean renderingClouds;
     private static final DhApiBeforeApplyShaderRenderEvent BEFORE_APPLY_SHADER_EVENT =
             new DhApiBeforeApplyShaderRenderEvent() {
         @Override
         public void beforeRender(DhApiCancelableEventParam<DhApiRenderParam> event) {
-            Consumer<float[]> callback = beforeApplyShaderCallback;
-            if (callback != null) {
-                event.value.dhProjectionMatrix.putValuesInArray(DH_PROJECTION_MATRIX_VALUES);
-                int drawFramebuffer = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-                int readFramebuffer = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
-                renderingClouds = true;
-                // DH can use reversed depth even when Minecraft uses forward depth
-                renderingWithReversedDepth = event.value.dhProjectionMatrix.m22 >= 0.0F;
-                try {
-                    callback.accept(DH_PROJECTION_MATRIX_VALUES);
-                } finally {
-                    renderingWithReversedDepth = false;
-                    renderingClouds = false;
-                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
-                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer);
-                }
-            }
+            renderClouds(event.value);
         }
     };
 
     private DistantHorizonsApiCompat() {
+    }
+
+    public static void renderClouds(DhApiRenderParam params) {
+        if (cloudCallbackInvoked) {
+            return;
+        }
+        Consumer<float[]> callback = beforeApplyShaderCallback;
+        if (callback != null) {
+            params.dhProjectionMatrix.putValuesInArray(DH_PROJECTION_MATRIX_VALUES);
+            int drawFramebuffer = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+            int readFramebuffer = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
+            renderingClouds = true;
+            // DH can use reversed depth even when Minecraft uses forward depth
+            renderingWithReversedDepth = params.dhProjectionMatrix.m22 >= 0.0F;
+            try {
+                cloudCallbackInvoked = true;
+                callback.accept(DH_PROJECTION_MATRIX_VALUES);
+            } finally {
+                renderingWithReversedDepth = false;
+                renderingClouds = false;
+                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
+                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer);
+            }
+        }
     }
 
     static int beginFrame(
@@ -68,6 +77,7 @@ final class DistantHorizonsApiCompat {
 
     static void setBeforeApplyShaderCallback(Consumer<float[]> callback) {
         beforeApplyShaderCallback = callback;
+        cloudCallbackInvoked = false;
     }
 
     static boolean isRenderingClouds() {
