@@ -22,7 +22,7 @@ import org.lwjgl.opengl.GL30;
 
 import java.util.function.BiConsumer;
 
-final class DistantHorizonsApiCompat {
+public final class DistantHorizonsApiCompat {
     private static final float[] DH_PROJECTION_MATRIX_VALUES = new float[16];
     private static final float[] DH_MODEL_VIEW_MATRIX_VALUES = new float[16];
     private static IDhApiConfig configs;
@@ -32,43 +32,52 @@ final class DistantHorizonsApiCompat {
     private static boolean overrideApplied;
     private static boolean beforeApplyShaderEventRegistered;
     private static BiConsumer<float[], float[]> beforeApplyShaderCallback;
+    private static boolean cloudCallbackInvoked;
     private static final DhApiBeforeApplyShaderRenderEvent BEFORE_APPLY_SHADER_EVENT =
             new DhApiBeforeApplyShaderRenderEvent() {
         @Override
         public void beforeRender(DhApiCancelableEventParam<DhApiRenderParam> event) {
-            BiConsumer<float[], float[]> callback = beforeApplyShaderCallback;
-            if (callback == null) {
-                return;
-            }
-
-            ExternalFramebufferTarget target = blazeFramebufferTarget();
-            if (target == null) {
-                return;
-            }
-            event.value.dhProjectionMatrix.putValuesInArray(DH_PROJECTION_MATRIX_VALUES);
-            event.value.dhModelViewMatrix.putValuesInArray(DH_MODEL_VIEW_MATRIX_VALUES);
-            boolean openGl = "OpenGL".equals(RenderSystem.getDevice().getDeviceInfo().backendName());
-            int drawFramebuffer = openGl ? GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING) : 0;
-            int readFramebuffer = openGl ? GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING) : 0;
-            try {
-                try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
-                        () -> "Cirrus Distant Horizons clouds", target.colorView(), Optional.empty(),
-                        target.depthView(), OptionalDouble.empty()
-                )) {
-                    CirrusRenderContext.renderInPass(pass, null,
-                            () -> callback.accept(DH_PROJECTION_MATRIX_VALUES, DH_MODEL_VIEW_MATRIX_VALUES));
-                }
-            } finally {
-                if (openGl) {
-                    // closing the cloud pass can change the framebuffer DH expects for compositing
-                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
-                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer);
-                }
-            }
+            renderClouds(event.value);
         }
     };
 
     private DistantHorizonsApiCompat() {
+    }
+
+    public static void renderClouds(DhApiRenderParam params) {
+        if (cloudCallbackInvoked) {
+            return;
+        }
+        BiConsumer<float[], float[]> callback = beforeApplyShaderCallback;
+        if (callback == null) {
+            return;
+        }
+
+        ExternalFramebufferTarget target = blazeFramebufferTarget();
+        if (target == null) {
+            return;
+        }
+        params.dhProjectionMatrix.putValuesInArray(DH_PROJECTION_MATRIX_VALUES);
+        params.dhModelViewMatrix.putValuesInArray(DH_MODEL_VIEW_MATRIX_VALUES);
+        boolean openGl = "OpenGL".equals(RenderSystem.getDevice().getDeviceInfo().backendName());
+        int drawFramebuffer = openGl ? GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING) : 0;
+        int readFramebuffer = openGl ? GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING) : 0;
+        try {
+            try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
+                    () -> "Cirrus Distant Horizons clouds", target.colorView(), Optional.empty(),
+                    target.depthView(), OptionalDouble.empty()
+            )) {
+                cloudCallbackInvoked = true;
+                CirrusRenderContext.renderInPass(pass, null,
+                        () -> callback.accept(DH_PROJECTION_MATRIX_VALUES, DH_MODEL_VIEW_MATRIX_VALUES));
+            }
+        } finally {
+            if (openGl) {
+                // closing the cloud pass can change the framebuffer DH expects for compositing
+                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
+                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer);
+            }
+        }
     }
 
     static int beginFrame(
@@ -89,6 +98,7 @@ final class DistantHorizonsApiCompat {
 
     static void setBeforeApplyShaderCallback(BiConsumer<float[], float[]> callback) {
         beforeApplyShaderCallback = callback;
+        cloudCallbackInvoked = false;
     }
 
     private static void refreshConfigHandles() {
