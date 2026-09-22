@@ -4,12 +4,16 @@ import com.jvn.cirrus.Cirrus;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.seibel.distanthorizons.api.DhApi;
+import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingEngine;
 import com.seibel.distanthorizons.api.interfaces.config.IDhApiConfig;
 import com.seibel.distanthorizons.api.interfaces.config.IDhApiConfigValue;
+import com.seibel.distanthorizons.api.interfaces.render.IDhApiBlazeTextureWrapper;
+import com.seibel.distanthorizons.api.interfaces.render.IDhApiRenderProxy;
 import com.seibel.distanthorizons.api.methods.events.DhApiEventRegister;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeApplyShaderRenderEvent;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiCancelableEventParam;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
+import com.seibel.distanthorizons.api.objects.DhApiResult;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
@@ -138,6 +142,37 @@ final class DistantHorizonsApiCompat {
     }
 
     private static ExternalFramebufferTarget blazeFramebufferTarget() {
+        if (DhApi.getApiMajorVersion() == 7 && DhApi.getApiMinorVersion() < 1) {
+            return legacyBlazeRenderTarget();
+        }
+
+        IDhApiRenderProxy renderProxy = DhApi.Delayed.renderProxy;
+        if (renderProxy == null || renderProxy.getRenderingEngine() != EDhApiRenderingEngine.BLAZE_3D) {
+            return null;
+        }
+        GpuTextureView colorView = blazeTextureView(renderProxy.getDhColorTextureBlazeWrapper());
+        GpuTextureView depthView = blazeTextureView(renderProxy.getDhDepthTextureBlazeWrapper());
+        if (colorView == null || depthView == null) {
+            return null;
+        }
+        return new ExternalFramebufferTarget(colorView, depthView);
+    }
+
+    private static GpuTextureView blazeTextureView(DhApiResult<IDhApiBlazeTextureWrapper> result) {
+        if (!result.success || result.payload == null) {
+            return null;
+        }
+
+        // DH owns the texture and view exposed by this wrapper
+        Object wrapped = result.payload.getWrappedMcObject();
+        if (!(wrapped instanceof Object[] objects) || objects.length < 2
+                || !(objects[1] instanceof GpuTextureView view) || view.isClosed()) {
+            return null;
+        }
+        return view;
+    }
+
+    private static ExternalFramebufferTarget legacyBlazeRenderTarget() {
         if (blazeRendererLookupFailed) {
             return null;
         }
