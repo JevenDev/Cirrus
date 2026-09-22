@@ -125,7 +125,8 @@ public abstract class LevelRendererCloudMixin {
                     ticks,
                     CirrusRenderContext.camera().position().x,
                     CirrusRenderContext.camera().position().y,
-                    CirrusRenderContext.camera().position().z
+                    CirrusRenderContext.camera().position().z,
+                    false
             );
         } finally {
             CirrusRenderContext.endRenderingCloudsForDistantHorizons();

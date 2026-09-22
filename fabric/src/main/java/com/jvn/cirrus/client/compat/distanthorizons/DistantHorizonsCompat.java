@@ -58,6 +58,10 @@ public final class DistantHorizonsCompat {
         }
     }
 
+    public static boolean isRenderingWithReversedDepth() {
+        return LOADED && DistantHorizonsApiCompat.isRenderingWithReversedDepth();
+    }
+
     private static void ensureInitialized() {
         if (!initialized) {
             beginFrame();
