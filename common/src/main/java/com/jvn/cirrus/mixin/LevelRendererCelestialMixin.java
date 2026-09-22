@@ -1,6 +1,7 @@
 package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.util.CirrusCelestialTransform;
+import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
 import com.jvn.cirrus.config.CirrusConfig;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -109,7 +110,9 @@ public abstract class LevelRendererCelestialMixin {
             index = 0
     )
     private Matrix4f cirrus$rotateSun(Matrix4f original) {
-        return cirrus$sunAngledOrbit ? cirrus$sunModelView : original;
+        Matrix4f modelView = cirrus$sunAngledOrbit ? cirrus$sunModelView : original;
+        CirrusCelestialRenderState.captureSun(modelView);
+        return modelView;
     }
 
     @ModifyArg(
@@ -136,6 +139,8 @@ public abstract class LevelRendererCelestialMixin {
             index = 0
     )
     private Matrix4f cirrus$rotateMoon(Matrix4f original) {
-        return cirrus$moonAngledOrbit ? cirrus$moonModelView : original;
+        Matrix4f modelView = cirrus$moonAngledOrbit ? cirrus$moonModelView : original;
+        CirrusCelestialRenderState.captureMoon(modelView);
+        return modelView;
     }
 }

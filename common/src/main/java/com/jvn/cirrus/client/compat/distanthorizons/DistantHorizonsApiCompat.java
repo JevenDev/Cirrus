@@ -9,6 +9,8 @@ import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhAp
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 
 import java.util.function.Consumer;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 
 final class DistantHorizonsApiCompat {
     private static final float[] DH_PROJECTION_MATRIX_VALUES = new float[16];
@@ -19,6 +21,8 @@ final class DistantHorizonsApiCompat {
     private static boolean overrideApplied;
     private static boolean beforeApplyShaderEventRegistered;
     private static Consumer<float[]> beforeApplyShaderCallback;
+    private static boolean renderingWithReversedDepth;
+    private static boolean renderingClouds;
     private static final DhApiBeforeApplyShaderRenderEvent BEFORE_APPLY_SHADER_EVENT =
             new DhApiBeforeApplyShaderRenderEvent() {
         @Override
@@ -26,7 +30,19 @@ final class DistantHorizonsApiCompat {
             Consumer<float[]> callback = beforeApplyShaderCallback;
             if (callback != null) {
                 event.value.dhProjectionMatrix.putValuesInArray(DH_PROJECTION_MATRIX_VALUES);
-                callback.accept(DH_PROJECTION_MATRIX_VALUES);
+                int drawFramebuffer = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+                int readFramebuffer = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
+                renderingClouds = true;
+                // DH can use reversed depth even when Minecraft uses forward depth
+                renderingWithReversedDepth = event.value.dhProjectionMatrix.m22 >= 0.0F;
+                try {
+                    callback.accept(DH_PROJECTION_MATRIX_VALUES);
+                } finally {
+                    renderingWithReversedDepth = false;
+                    renderingClouds = false;
+                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
+                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer);
+                }
             }
         }
     };
@@ -52,6 +68,14 @@ final class DistantHorizonsApiCompat {
 
     static void setBeforeApplyShaderCallback(Consumer<float[]> callback) {
         beforeApplyShaderCallback = callback;
+    }
+
+    static boolean isRenderingClouds() {
+        return renderingClouds;
+    }
+
+    static boolean isRenderingWithReversedDepth() {
+        return renderingWithReversedDepth;
     }
 
     private static void refreshConfigHandles() {

@@ -5,16 +5,17 @@ import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusCelestialTransform;
+import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.shaders.FogShape;
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import java.io.IOException;
@@ -38,6 +39,8 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 
 public final class CirrusCloudRenderer implements AutoCloseable {
     private static final float WORLD_SCALE = 12.0F;
@@ -197,12 +200,12 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         }
 
         float timeOfDay = level.getTimeOfDay(partialTick);
-        Matrix4f sunPose = CirrusCelestialTransform.bodyModelView(
-                new Matrix4f(),
-                frustumMatrix,
-                timeOfDay,
-                CirrusConfig.SUN_ANGLED_ORBIT.get()
-        );
+        Matrix4f sunPose = CirrusCelestialRenderState.sunModelView();
+        if (sunPose == null) {
+            sunPose = CirrusCelestialTransform.bodyModelView(
+                    new Matrix4f(), frustumMatrix, timeOfDay, CirrusConfig.SUN_ANGLED_ORBIT.get()
+            );
+        }
         Matrix4f clipTransform = new Matrix4f(projectionMatrix).mul(sunPose);
         float minimumX = Float.POSITIVE_INFINITY;
         float minimumY = Float.POSITIVE_INFINITY;
@@ -312,7 +315,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             int ticks,
             double cameraX,
             double cameraY,
-            double cameraZ
+            double cameraZ,
+            boolean depthOnlyPass
     ) {
         float cloudHeight = level.effects().getCloudHeight();
         if (Float.isNaN(cloudHeight)) {
@@ -326,7 +330,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         double windSample = cloudTime * 0.03 / WORLD_SCALE;
         boolean shaderPackInUse = CirrusShaderPackCompat.isShaderPackInUse();
         float timeOfDay = level.getTimeOfDay(partialTick);
-        Vector3f sunWorldDirection = CirrusCelestialTransform.sunDirection(
+        Vector3f sunWorldDirection = CirrusCelestialRenderState.sunDirection(
                 new Vector3f(),
                 timeOfDay,
                 CirrusConfig.SUN_ANGLED_ORBIT.get()
@@ -335,7 +339,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         Vector3f sunViewDirection = frustumMatrix
                 .transformDirection(new Vector3f(sunWorldDirection))
                 .normalize();
-        Vector3f moonViewDirection = CirrusCelestialTransform.moonDirection(
+        Vector3f moonViewDirection = CirrusCelestialRenderState.moonDirection(
                 new Vector3f(),
                 timeOfDay,
                 CirrusConfig.MOON_ANGLED_ORBIT.get()
@@ -464,7 +468,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                         lightning,
                         cloudTexture,
                         uniformFrame,
-                        shaderPackInUse
+                        shaderPackInUse,
+                        depthOnlyPass
                 );
             }
         } finally {
@@ -521,18 +526,22 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         }
 
         mesh.closeBuffer();
-        MeshData builtMesh = buildMesh(
-                distanceChunks,
-                detailedRadiusChunks,
-                anchorX,
-                anchorZ,
-                style,
-                shaderPackDistanceFade
-        );
-        mesh.buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
-        mesh.buffer.bind();
-        mesh.buffer.upload(builtMesh);
-        VertexBuffer.unbind();
+        // the sun mesh still owns the shared tesselator while its cloud mask is built
+        try (ByteBufferBuilder sourceBuffer = new ByteBufferBuilder(262144)) {
+            MeshData builtMesh = buildMesh(
+                    sourceBuffer,
+                    distanceChunks,
+                    detailedRadiusChunks,
+                    anchorX,
+                    anchorZ,
+                    style,
+                    shaderPackDistanceFade
+            );
+            mesh.buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
+            mesh.buffer.bind();
+            mesh.buffer.upload(builtMesh);
+            VertexBuffer.unbind();
+        }
         mesh.cachedLevel = level;
         mesh.cachedDistanceChunks = distanceChunks;
         mesh.cachedDetailedRadiusChunks = detailedRadiusChunks;
@@ -562,7 +571,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             LightningState lightning,
             CloudTexture cloudTexture,
             long uniformFrame,
-            boolean shaderPackInUse
+            boolean shaderPackInUse,
+            boolean depthOnlyPass
     ) {
         if (mesh.buffer == null) {
             return;
@@ -586,9 +596,19 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             );
 
             mesh.buffer.bind();
-            if (definition.style() == CirrusConfig.CloudStyle.FANCY) {
+            boolean renderingForDistantHorizons = DistantHorizonsCompat.isRenderingClouds();
+            int framebuffer = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+            if (depthOnlyPass || definition.style() == CirrusConfig.CloudStyle.FANCY) {
                 RenderType depthOnly = RenderType.cloudsDepthOnly();
                 depthOnly.setupRenderState();
+                if (depthOnlyPass) {
+                    Minecraft.getInstance().getMainRenderTarget().bindWrite(false);
+                } else if (renderingForDistantHorizons) {
+                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, framebuffer);
+                }
+                if (DistantHorizonsCompat.isRenderingWithReversedDepth()) {
+                    RenderSystem.depthFunc(GL11.GL_GEQUAL);
+                }
                 try {
                     RenderSystem.setShaderTexture(0, cloudTexture.textureId());
                     ShaderInstance shader = cloudShader(shaderPackInUse);
@@ -609,8 +629,17 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     depthOnly.clearRenderState();
                 }
             }
+            if (depthOnlyPass) {
+                return;
+            }
             RenderType clouds = RenderType.clouds();
             clouds.setupRenderState();
+            if (renderingForDistantHorizons) {
+                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, framebuffer);
+            }
+            if (DistantHorizonsCompat.isRenderingWithReversedDepth()) {
+                RenderSystem.depthFunc(GL11.GL_GEQUAL);
+            }
             try {
                 RenderSystem.setShaderTexture(0, cloudTexture.textureId());
                 ShaderInstance shader = cloudShader(shaderPackInUse);
@@ -630,7 +659,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             } finally {
                 clouds.clearRenderState();
             }
-            if (Minecraft.useShaderTransparency()) {
+            if (Minecraft.useShaderTransparency() && !renderingForDistantHorizons) {
                 RenderType depthOnly = RenderType.cloudsDepthOnly();
                 depthOnly.setupRenderState();
                 try {
@@ -895,6 +924,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     }
 
     private MeshData buildMesh(
+            ByteBufferBuilder sourceBuffer,
             int distanceChunks,
             int detailedRadiusChunks,
             int anchorX,
@@ -902,7 +932,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             CirrusConfig.CloudStyle style,
             boolean shaderPackDistanceFade
     ) {
-        BufferBuilder bufferBuilder = Tesselator.getInstance().begin(
+        BufferBuilder bufferBuilder = new BufferBuilder(
+                sourceBuffer,
                 VertexFormat.Mode.QUADS,
                 DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL
         );

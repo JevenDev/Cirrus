@@ -1,6 +1,8 @@
 package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.CirrusAuroraRenderer;
+import com.jvn.cirrus.client.CirrusSunMask;
+import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
 import com.jvn.cirrus.client.CirrusCloudRenderer;
 import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusCloudAttachment;
@@ -39,7 +41,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.function.Consumer;
 
 @Mixin(LevelRenderer.class)
-public abstract class LevelRendererCloudMixin {
+public abstract class LevelRendererCloudMixin implements CirrusSunMask {
     @Shadow private ClientLevel level;
     @Shadow private int ticks;
     @Unique private final CirrusCloudRenderer cirrus$cloudRenderer = new CirrusCloudRenderer();
@@ -54,6 +56,7 @@ public abstract class LevelRendererCloudMixin {
     @Unique private final Consumer<float[]> cirrus$renderCloudsIntoDistantHorizons =
             this::cirrus$renderCloudsIntoDistantHorizons;
     @Unique private Matrix4f cirrus$frameFrustumMatrix;
+    @Unique private Matrix4f cirrus$frameProjectionMatrix;
     @Unique private final Matrix4f cirrus$dhProjectionMatrix = new Matrix4f();
     @Unique private float cirrus$framePartialTick;
     @Unique private double cirrus$frameCameraX;
@@ -73,8 +76,10 @@ public abstract class LevelRendererCloudMixin {
             CallbackInfo ci
     ) {
         CirrusCloudAttachment.updateRenderTicks(ticks);
+        CirrusCelestialRenderState.beginFrame(frustumMatrix);
         cirrus$cloudsRenderedIntoDistantHorizons = false;
         cirrus$frameFrustumMatrix = frustumMatrix;
+        cirrus$frameProjectionMatrix = projectionMatrix;
         cirrus$framePartialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
         cirrus$frameCameraX = camera.getPosition().x;
         cirrus$frameCameraY = camera.getPosition().y;
@@ -134,7 +139,7 @@ public abstract class LevelRendererCloudMixin {
             return;
         }
         ci.cancel();
-        if (level != null && !cirrus$cloudsRenderedIntoDistantHorizons) {
+        if (level != null) {
             cirrus$cloudRenderer.render(
                     level,
                     poseStack,
@@ -144,7 +149,8 @@ public abstract class LevelRendererCloudMixin {
                     ticks,
                     cameraX,
                     cameraY,
-                    cameraZ
+                    cameraZ,
+                    cirrus$cloudsRenderedIntoDistantHorizons
             );
         }
     }
@@ -169,7 +175,8 @@ public abstract class LevelRendererCloudMixin {
                 ticks,
                 cirrus$frameCameraX,
                 cirrus$frameCameraY,
-                cirrus$frameCameraZ
+                cirrus$frameCameraZ,
+                false
         );
     }
 
@@ -281,9 +288,10 @@ public abstract class LevelRendererCloudMixin {
             method = "renderSky",
             at = @At(
                     value = "INVOKE",
-                    target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V",
-                    ordinal = 0,
-                    shift = At.Shift.AFTER
+                    target = "Lcom/mojang/blaze3d/vertex/BufferUploader;drawWithShader("
+                            + "Lcom/mojang/blaze3d/vertex/MeshData;)V",
+                    ordinal = 1,
+                    shift = At.Shift.BEFORE
             )
     )
     private void cirrus$maskSunBehindClouds(
@@ -295,26 +303,40 @@ public abstract class LevelRendererCloudMixin {
             Runnable skyFogSetup,
             CallbackInfo ci
     ) {
+        if (!CirrusCelestialRenderState.hasExternalSun()) {
+            cirrus$beginSunMask();
+        }
+    }
+
+    @Override
+    public boolean cirrus$beginSunMask() {
         if (level == null
                 || CirrusShaderPackCompat.isShaderPackInUse()
                 || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
-            return;
+            return false;
         }
         boolean maskRendered = cirrus$cloudRenderer.renderSunMask(
                 level,
-                frustumMatrix,
-                projectionMatrix,
-                partialTick,
+                cirrus$frameFrustumMatrix,
+                cirrus$frameProjectionMatrix,
+                cirrus$framePartialTick,
                 ticks,
-                camera.getPosition().x,
-                camera.getPosition().y,
-                camera.getPosition().z
+                cirrus$frameCameraX,
+                cirrus$frameCameraY,
+                cirrus$frameCameraZ
         );
         if (!maskRendered) {
-            return;
+            return false;
         }
         RenderSystem.setShader(CirrusShaders::sunOcclusion);
         cirrus$sunMaskActive = true;
+        return true;
+    }
+
+    @Override
+    public void cirrus$endSunMask() {
+        cirrus$clearSunMask();
+        RenderSystem.depthMask(false);
     }
 
     @Inject(

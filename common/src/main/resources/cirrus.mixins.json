@@ -3,6 +3,7 @@
   "package": "com.jvn.cirrus.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "compat.caelum.CelestialRendererMixin",
     "compat.polytone.PostShaderRendererMixin",
     "ClientLevelMixin",
     "ClientLevelDataMixin",
