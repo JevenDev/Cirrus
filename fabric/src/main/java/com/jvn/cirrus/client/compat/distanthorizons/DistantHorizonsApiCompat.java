@@ -1,6 +1,5 @@
 package com.jvn.cirrus.client.compat.distanthorizons;
 
-import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.mojang.renderpearl.api.commands.RenderPass;
 import java.util.Optional;
@@ -8,17 +7,19 @@ import java.util.OptionalDouble;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.textures.GpuTextureView;
 import com.seibel.distanthorizons.api.DhApi;
+import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingEngine;
 import com.seibel.distanthorizons.api.interfaces.config.IDhApiConfig;
 import com.seibel.distanthorizons.api.interfaces.config.IDhApiConfigValue;
+import com.seibel.distanthorizons.api.interfaces.render.IDhApiBlazeTextureWrapper;
+import com.seibel.distanthorizons.api.interfaces.render.IDhApiRenderProxy;
 import com.seibel.distanthorizons.api.methods.events.DhApiEventRegister;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeApplyShaderRenderEvent;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiCancelableEventParam;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
+import com.seibel.distanthorizons.api.objects.DhApiResult;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.function.BiConsumer;
 
 final class DistantHorizonsApiCompat {
@@ -31,30 +32,25 @@ final class DistantHorizonsApiCompat {
     private static boolean overrideApplied;
     private static boolean beforeApplyShaderEventRegistered;
     private static BiConsumer<float[], float[]> beforeApplyShaderCallback;
-    private static boolean blazeRendererLookupFailed;
-    private static Object blazeMetaRenderer;
-    private static Field blazeColorWrapperField;
-    private static Field blazeDepthWrapperField;
-    private static Method blazeTextureViewMethod;
     private static final DhApiBeforeApplyShaderRenderEvent BEFORE_APPLY_SHADER_EVENT =
             new DhApiBeforeApplyShaderRenderEvent() {
         @Override
         public void beforeRender(DhApiCancelableEventParam<DhApiRenderParam> event) {
             BiConsumer<float[], float[]> callback = beforeApplyShaderCallback;
-            if (callback == null || !"OpenGL".equals(RenderSystem.getDevice().getDeviceInfo().backendName())) {
+            if (callback == null) {
                 return;
             }
 
+            ExternalFramebufferTarget target = blazeFramebufferTarget();
+            if (target == null) {
+                return;
+            }
             event.value.dhProjectionMatrix.putValuesInArray(DH_PROJECTION_MATRIX_VALUES);
             event.value.dhModelViewMatrix.putValuesInArray(DH_MODEL_VIEW_MATRIX_VALUES);
-            int drawFramebuffer = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-            int readFramebuffer = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
+            boolean openGl = "OpenGL".equals(RenderSystem.getDevice().getDeviceInfo().backendName());
+            int drawFramebuffer = openGl ? GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING) : 0;
+            int readFramebuffer = openGl ? GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING) : 0;
             try {
-                ExternalFramebufferTarget target = blazeFramebufferTarget();
-                if (target == null) {
-                    // Let Minecraft's normal cloud pass handle unsupported DH targets.
-                    return;
-                }
                 try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
                         () -> "Cirrus Distant Horizons clouds", target.colorView(), Optional.empty(),
                         target.depthView(), OptionalDouble.empty()
@@ -63,10 +59,11 @@ final class DistantHorizonsApiCompat {
                             () -> callback.accept(DH_PROJECTION_MATRIX_VALUES, DH_MODEL_VIEW_MATRIX_VALUES));
                 }
             } finally {
-                // Render passes can change framebuffer bindings when they close; DH's
-                // apply shader expects its framebuffer to remain bound for the composite.
-                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
-                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer);
+                if (openGl) {
+                    // closing the cloud pass can change the framebuffer DH expects for compositing
+                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
+                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer);
+                }
             }
         }
     };
@@ -142,46 +139,30 @@ final class DistantHorizonsApiCompat {
     }
 
     private static ExternalFramebufferTarget blazeFramebufferTarget() {
-        if (blazeRendererLookupFailed) {
+        IDhApiRenderProxy renderProxy = DhApi.Delayed.renderProxy;
+        if (renderProxy == null || renderProxy.getRenderingEngine() != EDhApiRenderingEngine.BLAZE_3D) {
+            return null;
+        }
+        GpuTextureView colorView = blazeTextureView(renderProxy.getDhColorTextureBlazeWrapper());
+        GpuTextureView depthView = blazeTextureView(renderProxy.getDhDepthTextureBlazeWrapper());
+        if (colorView == null || depthView == null) {
+            return null;
+        }
+        return new ExternalFramebufferTarget(colorView, depthView);
+    }
+
+    private static GpuTextureView blazeTextureView(DhApiResult<IDhApiBlazeTextureWrapper> result) {
+        if (!result.success || result.payload == null) {
             return null;
         }
 
-        try {
-            if (blazeMetaRenderer == null) {
-                Class<?> metaRendererClass = Class.forName(
-                        "com.seibel.distanthorizons.common.render.blaze.BlazeDhMetaRenderer"
-                );
-                blazeMetaRenderer = metaRendererClass.getField("INSTANCE").get(null);
-                blazeColorWrapperField = metaRendererClass.getField("dhColorTextureWrapper");
-                blazeDepthWrapperField = metaRendererClass.getField("dhDepthTextureWrapper");
-            }
-
-            Object colorWrapper = blazeColorWrapperField.get(blazeMetaRenderer);
-            Object depthWrapper = blazeDepthWrapperField.get(blazeMetaRenderer);
-            if (colorWrapper == null || depthWrapper == null) {
-                return null;
-            }
-            if (blazeTextureViewMethod == null) {
-                blazeTextureViewMethod = colorWrapper.getClass().getMethod("getTextureView");
-            }
-
-            GpuTextureView colorView =
-                    (GpuTextureView)blazeTextureViewMethod.invoke(colorWrapper);
-            GpuTextureView depthView =
-                    (GpuTextureView)blazeTextureViewMethod.invoke(depthWrapper);
-            if (colorView == null || depthView == null
-                    || colorView.isClosed() || depthView.isClosed()) {
-                return null;
-            }
-            return new ExternalFramebufferTarget(colorView, depthView);
-        } catch (ReflectiveOperationException | ClassCastException | LinkageError exception) {
-            blazeRendererLookupFailed = true;
-            Cirrus.LOGGER.warn(
-                    "Unable to access Distant Horizons Blaze textures; using Minecraft's normal cloud pass",
-                    exception
-            );
+        // DH exposes the texture, view and sampler in that order, and owns their lifetime
+        Object wrapped = result.payload.getWrappedMcObject();
+        if (!(wrapped instanceof Object[] objects) || objects.length < 2
+                || !(objects[1] instanceof GpuTextureView view) || view.isClosed()) {
             return null;
         }
+        return view;
     }
 
     private record ExternalFramebufferTarget(
