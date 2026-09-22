@@ -1,6 +1,10 @@
 package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.CirrusCloudMode;
+import com.jvn.cirrus.client.compat.polytone.SunbathingLegacyPostCompat;
+import com.mojang.blaze3d.resource.CrossFrameResourcePool;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Shadow;
 import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.CirrusTimeTransition;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
@@ -16,6 +20,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
+    @Shadow @Final private CrossFrameResourcePool resourcePool;
+
+    @Inject(method = "renderLevel", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/LevelRenderer;renderLevel(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Lnet/minecraft/client/DeltaTracker;ZLnet/minecraft/client/Camera;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Vector4f;Z)V",
+            shift = At.Shift.AFTER
+    ))
+    private void cirrus$renderSunbathing(DeltaTracker deltaTracker, CallbackInfo ci) {
+        SunbathingLegacyPostCompat.render(resourcePool, deltaTracker.getGameTimeDeltaPartialTick(false));
+    }
+
     @Inject(method = "renderLevel", at = @At("HEAD"))
     private void cirrus$beginTimeTransitionFrame(DeltaTracker deltaTracker, CallbackInfo ci) {
         DistantHorizonsCompat.beginFrame();

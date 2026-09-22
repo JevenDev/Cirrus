@@ -1,6 +1,8 @@
 package com.jvn.cirrus.client.render;
 
 import net.minecraft.client.Camera;
+import com.jvn.cirrus.client.compat.polytone.SunbathingLegacyPostCompat;
+import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.phys.Vec3;
@@ -31,12 +33,14 @@ public final class CirrusRenderContext {
             float capturedPartialTick,
             int capturedTicks
     ) {
+        CirrusCelestialRenderState.beginFrame(capturedFrustum);
         level = capturedLevel;
         camera = capturedCamera;
         frustumMatrix = new Matrix4f(capturedFrustum);
         projectionMatrix = new Matrix4f(capturedProjection);
         fogColor = new Vector4f(capturedFogColor);
         partialTick = capturedPartialTick;
+        SunbathingLegacyPostCompat.capture(projectionMatrix, frustumMatrix, sunAngle(partialTick));
         ticks = capturedTicks;
         cloudsRenderedIntoDistantHorizons = false;
         renderingCloudsForDistantHorizons = false;

@@ -3,6 +3,7 @@ package com.jvn.cirrus.mixin;
 import com.jvn.cirrus.client.CirrusSkyPalette;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.config.CirrusConfig;
+import com.jvn.cirrus.client.util.CirrusCelestialTransform;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
@@ -152,11 +153,12 @@ public abstract class FogRendererMixin {
                 int sunriseColor = level.effects().getSunriseOrSunsetColor(timeOfDay);
                 float sunriseColorAlpha = ARGB.alphaFloat(sunriseColor);
                 if (sunriseColorAlpha > 0.0F) {
-                    float sunDirection = Mth.sin(level.getSunAngle(partialTick)) > 0.0F
-                            ? -1.0F
-                            : 1.0F;
                     float sunriseAlpha = Mth.clamp(
-                            camera.getLookVector().x() * sunDirection,
+                            CirrusCelestialTransform.sunViewAlignment(
+                                    level.getSunAngle(partialTick) / Mth.TWO_PI,
+                                    CirrusConfig.SUN_ANGLED_ORBIT.get(),
+                                    camera.getLookVector().x(), camera.getLookVector().z()
+                            ),
                             0.0F,
                             1.0F
                     ) * sunriseColorAlpha;
