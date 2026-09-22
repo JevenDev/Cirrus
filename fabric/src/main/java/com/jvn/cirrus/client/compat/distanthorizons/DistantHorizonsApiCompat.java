@@ -1,8 +1,12 @@
 package com.jvn.cirrus.client.compat.distanthorizons;
 
 import com.jvn.cirrus.Cirrus;
+import com.jvn.cirrus.client.render.CirrusRenderContext;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import java.util.Optional;
+import java.util.OptionalDouble;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
 import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.api.interfaces.config.IDhApiConfig;
 import com.seibel.distanthorizons.api.interfaces.config.IDhApiConfigValue;
@@ -37,7 +41,7 @@ final class DistantHorizonsApiCompat {
         @Override
         public void beforeRender(DhApiCancelableEventParam<DhApiRenderParam> event) {
             BiConsumer<float[], float[]> callback = beforeApplyShaderCallback;
-            if (callback == null) {
+            if (callback == null || !"OpenGL".equals(RenderSystem.getDevice().getDeviceInfo().backendName())) {
                 return;
             }
 
@@ -45,20 +49,20 @@ final class DistantHorizonsApiCompat {
             event.value.dhModelViewMatrix.putValuesInArray(DH_MODEL_VIEW_MATRIX_VALUES);
             int drawFramebuffer = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
             int readFramebuffer = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
-            GpuTextureView previousColorOverride = RenderSystem.outputColorTextureOverride;
-            GpuTextureView previousDepthOverride = RenderSystem.outputDepthTextureOverride;
             try {
                 ExternalFramebufferTarget target = blazeFramebufferTarget();
                 if (target == null) {
                     // Let Minecraft's normal cloud pass handle unsupported DH targets.
                     return;
                 }
-                RenderSystem.outputColorTextureOverride = target.colorView();
-                RenderSystem.outputDepthTextureOverride = target.depthView();
-                callback.accept(DH_PROJECTION_MATRIX_VALUES, DH_MODEL_VIEW_MATRIX_VALUES);
+                try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
+                        () -> "Cirrus Distant Horizons clouds", target.colorView(), Optional.empty(),
+                        target.depthView(), OptionalDouble.empty()
+                )) {
+                    CirrusRenderContext.renderInPass(pass, null,
+                            () -> callback.accept(DH_PROJECTION_MATRIX_VALUES, DH_MODEL_VIEW_MATRIX_VALUES));
+                }
             } finally {
-                RenderSystem.outputColorTextureOverride = previousColorOverride;
-                RenderSystem.outputDepthTextureOverride = previousDepthOverride;
                 // Render passes can change framebuffer bindings when they close; DH's
                 // apply shader expects its framebuffer to remain bound for the composite.
                 GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);

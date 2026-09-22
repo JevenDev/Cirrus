@@ -1,4 +1,5 @@
 #version 330
+#extension GL_ARB_separate_shader_objects : require
 
 layout(std140) uniform CirrusMatrices {
     mat4 ModelViewMat;
@@ -15,10 +16,10 @@ layout(std140) uniform CirrusParams {
 };
 
 
-in vec3 Position;
+layout(location = 0) in vec3 Position;
 
 
-out vec3 worldDirection;
+layout(location = 0) out vec3 worldDirection;
 
 void main() {
     vec4 clipPosition = ProjMat * ModelViewMat * vec4(Position, 1.0);

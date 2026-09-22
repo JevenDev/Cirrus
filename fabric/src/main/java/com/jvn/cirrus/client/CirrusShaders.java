@@ -5,6 +5,16 @@ import static com.jvn.cirrus.client.render.CirrusShader.uniform;
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.client.render.CirrusShader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.GpuFormat;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
+import com.mojang.renderpearl.api.pipeline.CompareOp;
+import com.mojang.renderpearl.api.pipeline.DepthStencilState;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import net.minecraft.client.renderer.RenderPipelines;
+import java.util.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
@@ -127,6 +137,18 @@ public final class CirrusShaders {
             uniform("CirrusLightningSkyIntensity", 1, 0.0F)
     );
 
+    private static final RenderPipeline CLEAR_SUN_MASK = RenderPipelines.register(RenderPipeline.builder()
+            .withLocation(Cirrus.id("pipeline/clear_sun_mask"))
+            .withVertexShader(Cirrus.id("core/cirrus_clear_depth"))
+            .withFragmentShader(Cirrus.id("core/cirrus_clear_depth"))
+            .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
+            .withCull(false)
+            .withColorTargetState(new ColorTargetState(
+                    Optional.empty(), GpuFormat.RGBA8_UNORM, ColorTargetState.WRITE_NONE
+            ))
+            .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true))
+            .build());
+
     private static boolean samplerTexturesLoaded;
 
     private CirrusShaders() {
@@ -134,6 +156,11 @@ public final class CirrusShaders {
 
     public static void initialize() {
         // Forces pipeline registration during client initialization.
+    }
+
+    public static void clearSunMask(RenderPass renderPass) {
+        renderPass.setPipeline(RenderSystem.getCompiledPipeline(CLEAR_SUN_MASK));
+        renderPass.draw(3, 1, 0, 0);
     }
 
     public static void preloadSamplerTextures(Minecraft minecraft) {

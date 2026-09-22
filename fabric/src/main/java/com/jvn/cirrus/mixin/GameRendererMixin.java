@@ -50,11 +50,10 @@ public abstract class GameRendererMixin {
             method = "renderLevel",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/LevelRenderer;render(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Lnet/minecraft/client/DeltaTracker;ZLnet/minecraft/client/renderer/state/level/CameraRenderState;Lorg/joml/Matrix4fc;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Vector4f;Z)V"
+                    target = "Lnet/minecraft/client/renderer/LevelRenderer;render(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;ZLnet/minecraft/client/renderer/state/level/CameraRenderState;Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;Lorg/joml/Vector4f;ZZ)V"
             )
     )
     private void cirrus$captureWorldProjection(
-            DeltaTracker deltaTracker,
             CallbackInfo ci,
             @Local Matrix4f projectionMatrix
     ) {
@@ -62,7 +61,7 @@ public abstract class GameRendererMixin {
     }
 
     @Inject(method = "renderLevel", at = @At("HEAD"))
-    private void cirrus$beginTimeTransitionFrame(DeltaTracker deltaTracker, CallbackInfo ci) {
+    private void cirrus$beginTimeTransitionFrame(CallbackInfo ci) {
         DistantHorizonsCompat.beginFrame();
         ClientLevel level = Minecraft.getInstance().level;
         if (level != null) {
@@ -71,7 +70,7 @@ public abstract class GameRendererMixin {
     }
 
     @Inject(method = "renderLevel", at = @At("RETURN"))
-    private void cirrus$endTimeTransitionFrame(DeltaTracker deltaTracker, CallbackInfo ci) {
+    private void cirrus$endTimeTransitionFrame(CallbackInfo ci) {
         CirrusTimeTransition.endFrame();
     }
 }

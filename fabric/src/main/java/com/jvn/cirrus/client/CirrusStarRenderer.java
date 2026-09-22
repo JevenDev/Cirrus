@@ -5,7 +5,7 @@ import static com.jvn.cirrus.client.util.CirrusRandom.signedFloat;
 
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.render.CirrusUniform;
-import com.mojang.blaze3d.PrimitiveTopology;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;

@@ -1,4 +1,5 @@
 #version 330
+#extension GL_ARB_separate_shader_objects : require
 
 layout(std140) uniform CirrusMatrices {
     mat4 ModelViewMat;
@@ -23,8 +24,8 @@ layout(std140) uniform CirrusParams {
 
 uniform sampler2D Sampler0;
 
-in vec3 worldDirection;
-out vec4 fragColor;
+layout(location = 0) in vec3 worldDirection;
+layout(location = 0) out vec4 fragColor;
 
 const float PI = 3.14159265359;
 

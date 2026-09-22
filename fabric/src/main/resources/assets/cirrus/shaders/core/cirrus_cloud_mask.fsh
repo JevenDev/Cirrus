@@ -1,4 +1,5 @@
 #version 330
+#extension GL_ARB_separate_shader_objects : require
 
 layout(std140) uniform CirrusMatrices {
     mat4 ModelViewMat;
@@ -14,9 +15,9 @@ layout(std140) uniform CirrusParams {
 
 uniform sampler2D Sampler0;
 
-in vec2 texCoord0;
+layout(location = 0) in vec2 texCoord0;
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 const vec2 RAIN_CLOUD_PATTERN_OFFSET = vec2(83.0, 47.0);
 const vec2 THUNDER_CLOUD_PATTERN_OFFSET = vec2(157.0, 109.0);

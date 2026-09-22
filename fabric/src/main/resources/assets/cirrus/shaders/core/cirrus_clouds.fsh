@@ -1,10 +1,12 @@
 #version 330
+#extension GL_ARB_separate_shader_objects : require
 
-#moj_import <minecraft:fog.glsl>
+#include <minecraft:fog.glsl>
+#include <minecraft:oit.glsl>
 
 layout(std140) uniform CirrusMatrices {
     mat4 ModelViewMat;
-    mat4 ProjMat;
+    mat4 CirrusProjMat;
 };
 
 layout(std140) uniform CirrusParams {
@@ -27,12 +29,14 @@ layout(std140) uniform CirrusParams {
 uniform sampler2D Sampler0;
 
 
-in vec2 texCoord0;
-in float vertexDistance;
-in vec4 vertexColor;
-in vec3 viewDirection;
+layout(location = 0) in vec2 texCoord0;
+layout(location = 1) in float vertexDistance;
+layout(location = 2) in vec4 vertexColor;
+layout(location = 3) in vec3 viewDirection;
 
-out vec4 fragColor;
+#ifndef OIT_ALPHA_ONLY
+layout(location = 0) out vec4 fragColor;
+#endif
 
 const float COS_7_DEGREES = 0.9925462;
 const float COS_30_DEGREES = 0.8660254;
@@ -190,5 +194,11 @@ void main() {
     }
 
     color.a *= 1.0 - linear_fog_value(vertexDistance, 0.0, FogCloudsEnd);
+    #ifdef OIT_ALPHA_ONLY
+    executeAlphaOnlyPhase(gl_FragCoord.z, color.a);
+    #elif defined(OIT_ACCUMULATE)
+    fragColor = sampleColorForAccumulation(color);
+    #else
     fragColor = color;
+    #endif
 }

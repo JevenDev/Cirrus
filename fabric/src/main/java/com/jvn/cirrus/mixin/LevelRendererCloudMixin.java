@@ -7,18 +7,16 @@ import com.jvn.cirrus.client.CirrusRenderers;
 import com.jvn.cirrus.client.CirrusShaders;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CloudStatus;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.state.OptionsRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import org.joml.Matrix4f;
-import org.joml.Matrix4fc;
 import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -40,13 +38,12 @@ public abstract class LevelRendererCloudMixin {
     @Inject(method = "render", at = @At("HEAD"))
     private void cirrus$beginFrame(
             GraphicsResourceAllocator allocator,
-            DeltaTracker deltaTracker,
             boolean renderBlockOutline,
             CameraRenderState cameraState,
-            Matrix4fc modelViewMatrix,
             GpuBufferSlice shaderFog,
             Vector4f fogColor,
             boolean renderSky,
+            boolean consistentDepthRequired,
             CallbackInfo ci
     ) {
         Minecraft minecraft = Minecraft.getInstance();
@@ -58,10 +55,10 @@ public abstract class LevelRendererCloudMixin {
         int worldTicks = (int)level.getGameTime();
         // Server time corrections must not move cloud wind backward or forward.
         long cloudTicks = ((MinecraftAccessor)minecraft).cirrusGetClientTickCount();
-        float partialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
+        float partialTick = minecraft.gameRenderer.gameRenderState().levelRenderState.worldPartialTicks;
         Camera camera = minecraft.gameRenderer.mainCamera();
         CirrusRenderContext.capture(
-                level, camera, new Matrix4f(modelViewMatrix),
+                level, camera, new Matrix4f(cameraState.viewRotationMatrix),
                 cameraState.projectionMatrix, fogColor, partialTick, worldTicks, cloudTicks
         );
         CirrusCloudAttachment.updateRenderTicks(cloudTicks);
@@ -84,13 +81,12 @@ public abstract class LevelRendererCloudMixin {
     @Inject(method = "render", at = @At("RETURN"))
     private void cirrus$endFrame(
             GraphicsResourceAllocator allocator,
-            DeltaTracker deltaTracker,
             boolean renderBlockOutline,
             CameraRenderState cameraState,
-            Matrix4fc modelViewMatrix,
             GpuBufferSlice shaderFog,
             Vector4f fogColor,
             boolean renderSky,
+            boolean consistentDepthRequired,
             CallbackInfo ci
     ) {
         DistantHorizonsCompat.setBeforeApplyShaderCallback(null);
@@ -98,7 +94,7 @@ public abstract class LevelRendererCloudMixin {
     }
 
     @Redirect(
-            method = "render",
+            method = {"addMainPass", "prepareTranslucents", "executeOit", "executeClassicTransparency"},
             at = @At(
                     value = "FIELD",
                     target = "Lnet/minecraft/client/renderer/state/OptionsRenderState;cloudStatus:Lnet/minecraft/client/CloudStatus;"
@@ -126,22 +122,17 @@ public abstract class LevelRendererCloudMixin {
         }
 
         CirrusRenderContext.markCloudsRenderedIntoDistantHorizons();
-        CirrusRenderContext.beginRenderingCloudsForDistantHorizons();
-        try {
-            CirrusRenderers.clouds().render(
-                    CirrusRenderContext.level(),
-                    new com.mojang.blaze3d.vertex.PoseStack(),
-                    cirrus$dhModelViewMatrix.set(dhModelViewMatrix).transpose(),
-                    cirrus$dhProjectionMatrix.set(dhProjectionMatrix).transpose(),
-                    CirrusRenderContext.partialTick(),
-                    CirrusRenderContext.cloudTicks(),
-                    CirrusRenderContext.camera().position().x,
-                    CirrusRenderContext.camera().position().y,
-                    CirrusRenderContext.camera().position().z
-            );
-        } finally {
-            CirrusRenderContext.endRenderingCloudsForDistantHorizons();
-        }
+        CirrusRenderers.clouds().render(
+                CirrusRenderContext.level(),
+                new com.mojang.blaze3d.vertex.PoseStack(),
+                cirrus$dhModelViewMatrix.set(dhModelViewMatrix).transpose(),
+                cirrus$dhProjectionMatrix.set(dhProjectionMatrix).transpose(),
+                CirrusRenderContext.partialTick(),
+                CirrusRenderContext.cloudTicks(),
+                CirrusRenderContext.camera().position().x,
+                CirrusRenderContext.camera().position().y,
+                CirrusRenderContext.camera().position().z
+        );
     }
 
     @Inject(method = "close", at = @At("HEAD"))

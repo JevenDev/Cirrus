@@ -4,18 +4,18 @@ import static com.jvn.cirrus.client.util.CirrusRandom.signedDouble;
 
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
-import com.mojang.blaze3d.PrimitiveTopology;
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.ColorTargetState;
-import com.mojang.blaze3d.pipeline.DepthStencilState;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.CompareOp;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
+import com.mojang.renderpearl.api.pipeline.DepthStencilState;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.CompareOp;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.rendertype.OutputTarget;
+import net.minecraft.client.renderer.oit.OitPipelineSet;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.util.Mth;
@@ -59,13 +59,19 @@ public final class CirrusLightningRenderer {
     private static final RenderType GLOW_RENDER_TYPE = RenderType.create(
             "cirrus_lightning_glow",
             RenderSetup.builder(GLOW_PIPELINE)
-                    .setOutputTarget(OutputTarget.WEATHER_TARGET)
+                    .setOitPipelines(RenderPipelines.register(OitPipelineSet.builder(
+                            "cirrus_lightning_glow", RenderPipeline.builder(RenderPipelines.LIGHTNING_SNIPPET)
+                                    .withCull(false)
+                    ).build()))
                     .createRenderSetup()
     );
     private static final RenderType CORE_RENDER_TYPE = RenderType.create(
             "cirrus_lightning_core",
             RenderSetup.builder(CORE_PIPELINE)
-                    .setOutputTarget(OutputTarget.WEATHER_TARGET)
+                    .setOitPipelines(RenderPipelines.register(OitPipelineSet.builder(
+                            "cirrus_lightning_core", RenderPipeline.builder(RenderPipelines.LIGHTNING_SNIPPET)
+                                    .withCull(false)
+                    ).build()))
                     .createRenderSetup()
     );
     private static final Map<Long, CachedGeometry> GEOMETRY_CACHE =

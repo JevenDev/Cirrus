@@ -2,10 +2,13 @@ package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusRenderers;
+import com.jvn.cirrus.client.CirrusShaders;
 import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.config.CirrusConfig;
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SkyRenderer;
@@ -21,8 +24,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class SkyRendererMixin {
     @Unique private boolean cirrus$sunMaskActive;
 
+    @WrapMethod(method = "renderSunMoonAndStars")
+    private void cirrus$useSkyPass(
+            RenderPass renderPass, PoseStack poseStack, float sunAngle, float moonAngle,
+            float starAngle, MoonPhase moonPhase, float rainBrightness, float starBrightness,
+            Operation<Void> original
+    ) {
+        CirrusRenderContext.renderInPass(renderPass, null, () -> original.call(
+                renderPass, poseStack, sunAngle, moonAngle, starAngle, moonPhase, rainBrightness, starBrightness
+        ));
+    }
+
+    @WrapMethod(method = "renderEndSky")
+    private void cirrus$useEndPass(RenderPass renderPass, Operation<Void> original) {
+        CirrusRenderContext.renderInPass(renderPass, null, () -> original.call(renderPass));
+    }
+
     @Inject(method = "renderSunMoonAndStars", at = @At("HEAD"))
     private void cirrus$renderMilkyWay(
+            RenderPass renderPass,
             PoseStack poseStack,
             float sunAngle,
             float moonAngle,
@@ -44,6 +64,7 @@ public abstract class SkyRendererMixin {
 
     @Inject(method = "renderSunMoonAndStars", at = @At("TAIL"))
     private void cirrus$renderAuroraAndLightning(
+            RenderPass renderPass,
             PoseStack poseStack,
             float sunAngle,
             float moonAngle,
@@ -74,7 +95,7 @@ public abstract class SkyRendererMixin {
     }
 
     @Inject(method = "renderStars", at = @At("HEAD"), cancellable = true)
-    private void cirrus$renderStars(float brightness, PoseStack poseStack, CallbackInfo ci) {
+    private void cirrus$renderStars(RenderPass renderPass, float brightness, PoseStack poseStack, CallbackInfo ci) {
         if (!CirrusRenderContext.isReady()) {
             return;
         }
@@ -98,7 +119,7 @@ public abstract class SkyRendererMixin {
     }
 
     @Inject(method = "renderEndSky", at = @At("HEAD"), cancellable = true)
-    private void cirrus$renderEndSky(CallbackInfo ci) {
+    private void cirrus$renderEndSky(RenderPass renderPass, CallbackInfo ci) {
         if (!CirrusRenderContext.isReady()
                 || !Level.END.equals(CirrusRenderContext.level().dimension())
                 || !CirrusConfig.END_SKY_ENABLED.get()) {
@@ -115,7 +136,7 @@ public abstract class SkyRendererMixin {
     }
 
     @Inject(method = "renderSun", at = @At("HEAD"))
-    private void cirrus$maskSun(float rainBrightness, PoseStack poseStack, CallbackInfo ci) {
+    private void cirrus$maskSun(RenderPass renderPass, float rainBrightness, PoseStack poseStack, CallbackInfo ci) {
         if (!CirrusRenderContext.isReady()
                 || CirrusShaderPackCompat.isShaderPackInUse()
                 || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudStatus())) {
@@ -135,11 +156,9 @@ public abstract class SkyRendererMixin {
     }
 
     @Inject(method = "renderSun", at = @At("TAIL"))
-    private void cirrus$clearSunMask(float rainBrightness, PoseStack poseStack, CallbackInfo ci) {
+    private void cirrus$clearSunMask(RenderPass renderPass, float rainBrightness, PoseStack poseStack, CallbackInfo ci) {
         if (cirrus$sunMaskActive) {
-            RenderSystem.getDevice()
-                    .createCommandEncoder()
-                    .clearDepthTexture(Minecraft.getInstance().gameRenderer.mainRenderTarget().getDepthTexture(), 0.0);
+            CirrusShaders.clearSunMask(renderPass);
             cirrus$sunMaskActive = false;
         }
     }

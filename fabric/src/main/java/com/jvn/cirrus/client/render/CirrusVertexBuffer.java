@@ -1,14 +1,11 @@
 package com.jvn.cirrus.client.render;
 
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.commands.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.MeshData;
-import java.util.Optional;
-import java.util.OptionalDouble;
+import java.util.Objects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import org.joml.Matrix4f;
@@ -101,35 +98,14 @@ public final class CirrusVertexBuffer implements AutoCloseable {
             return;
         }
 
-        Minecraft minecraft = Minecraft.getInstance();
-        RenderTarget target = minecraft.gameRenderer.mainRenderTarget();
-        if (shader.target() == CirrusShader.Target.CLOUDS
-                && mode != CirrusShader.DrawMode.MAIN_DEPTH_ONLY) {
-            RenderTarget cloudsTarget = minecraft.levelRenderer.cloudsTarget();
-            if (cloudsTarget != null) {
-                target = cloudsTarget;
-            }
+        if (CirrusRenderContext.oitStage() != null && mode != CirrusShader.DrawMode.COLOR) {
+            return;
         }
-
-        GpuTextureView color = RenderSystem.outputColorTextureOverride != null
-                ? RenderSystem.outputColorTextureOverride
-                : target.getColorTextureView();
-        GpuTextureView depth = RenderSystem.outputDepthTextureOverride != null
-                ? RenderSystem.outputDepthTextureOverride
-                : target.getDepthTextureView();
-
+        Minecraft minecraft = Minecraft.getInstance();
+        RenderPass pass = Objects.requireNonNull(CirrusRenderContext.renderPass());
         try (GpuBuffer matrices = shader.createMatricesBuffer(modelView, projection);
-             GpuBuffer parameters = shader.createUniformBuffer();
-             RenderPass pass = RenderSystem.getDevice()
-                     .createCommandEncoder()
-                     .createRenderPass(
-                             () -> "Cirrus custom sky",
-                             color,
-                             Optional.empty(),
-                             depth,
-                             OptionalDouble.empty()
-                     )) {
-            pass.setPipeline(shader.pipeline(mode));
+             GpuBuffer parameters = shader.createUniformBuffer()) {
+            pass.setPipeline(RenderSystem.getCompiledPipeline(shader.pipeline(mode)));
             if (shader.usesVanillaFog()) {
                 pass.setUniform("Fog", RenderSystem.getShaderFog());
             }
@@ -144,7 +120,7 @@ public final class CirrusVertexBuffer implements AutoCloseable {
                 AbstractTexture texture = textureOverride != null
                         ? textureOverride
                         : minecraft.getTextureManager().getTexture(shader.texture());
-                pass.bindTexture("Sampler0", texture.getTextureView(), texture.getSampler());
+                pass.setUniform("Sampler0", texture.getTextureView(), texture.getSampler());
             }
             pass.setVertexBuffer(0, vertexBuffer.slice());
             if (indexBuffer != null) {
@@ -154,6 +130,9 @@ public final class CirrusVertexBuffer implements AutoCloseable {
                 pass.setIndexBuffer(sequential.getBuffer(drawState.indexCount()), sequential.type());
             }
             pass.drawIndexed(drawState.indexCount(), 1, 0, 0, 0);
+            if (scissor != null) {
+                pass.disableScissor();
+            }
         }
     }
 

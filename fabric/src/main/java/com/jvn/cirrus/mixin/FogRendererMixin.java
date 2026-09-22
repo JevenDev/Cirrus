@@ -12,14 +12,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.fog.FogData;
 import net.minecraft.client.renderer.fog.FogRenderer;
-import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.FogType;
+import org.joml.Vector3fc;
 import org.joml.Vector4f;
+import org.joml.Vector4fc;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -133,7 +134,7 @@ public abstract class FogRendererMixin {
             float strength,
             Vector4f fogColor
     ) {
-        int vanillaSkyColor = camera.attributeProbe()
+        Vector3fc vanillaSkyColor = camera.attributeProbe()
                 .getValue(EnvironmentAttributes.SKY_COLOR, partialTick);
         float viewElevation = camera.forwardVector().y();
         float elevation = Mth.clamp(viewElevation, 0.0F, 1.0F);
@@ -160,17 +161,17 @@ public abstract class FogRendererMixin {
         float gradientBlue = Mth.lerp(
                 gradientAmount, palette.horizonBlue(), palette.zenithBlue()
         );
-        float vanillaRed = ARGB.redFloat(vanillaSkyColor);
-        float vanillaGreen = ARGB.greenFloat(vanillaSkyColor);
-        float vanillaBlue = ARGB.blueFloat(vanillaSkyColor);
+        float vanillaRed = vanillaSkyColor.x();
+        float vanillaGreen = vanillaSkyColor.y();
+        float vanillaBlue = vanillaSkyColor.z();
         float red = Mth.lerp(gradientAlpha, vanillaRed, gradientRed);
         float green = Mth.lerp(gradientAlpha, vanillaGreen, gradientGreen);
         float blue = Mth.lerp(gradientAlpha, vanillaBlue, gradientBlue);
 
         if (renderDistanceChunks >= 4) {
-            int sunriseColor = camera.attributeProbe()
+            Vector4fc sunriseColor = camera.attributeProbe()
                     .getValue(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, partialTick);
-            float sunriseColorAlpha = ARGB.alphaFloat(sunriseColor);
+            float sunriseColorAlpha = sunriseColor.w();
             if (sunriseColorAlpha > 0.0F) {
                 float sunDirection = Mth.sin(CirrusRenderContext.sunAngle(partialTick)) > 0.0F
                         ? -1.0F
@@ -180,9 +181,9 @@ public abstract class FogRendererMixin {
                         0.0F,
                         1.0F
                 ) * sunriseColorAlpha;
-                red = Mth.lerp(sunriseAlpha, red, ARGB.redFloat(sunriseColor));
-                green = Mth.lerp(sunriseAlpha, green, ARGB.greenFloat(sunriseColor));
-                blue = Mth.lerp(sunriseAlpha, blue, ARGB.blueFloat(sunriseColor));
+                red = Mth.lerp(sunriseAlpha, red, sunriseColor.x());
+                green = Mth.lerp(sunriseAlpha, green, sunriseColor.y());
+                blue = Mth.lerp(sunriseAlpha, blue, sunriseColor.z());
             }
         }
 

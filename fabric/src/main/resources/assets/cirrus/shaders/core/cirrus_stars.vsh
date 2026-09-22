@@ -1,4 +1,5 @@
 #version 330
+#extension GL_ARB_separate_shader_objects : require
 
 layout(std140) uniform CirrusMatrices {
     mat4 ModelViewMat;
@@ -17,17 +18,17 @@ layout(std140) uniform CirrusParams {
 };
 
 
-in vec3 Position;
-in vec2 UV0;
-in vec4 Color;
-in vec3 Normal;
+layout(location = 0) in vec3 Position;
+layout(location = 1) in vec2 UV0;
+layout(location = 2) in vec4 Color;
+layout(location = 3) in vec3 Normal;
 
 
-out vec2 starCoordinate;
-flat out vec4 starData;
-flat out float starSelection;
-flat out float shootingActive;
-flat out float shootingProgress;
+layout(location = 0) out vec2 starCoordinate;
+layout(location = 1) flat out vec4 starData;
+layout(location = 2) flat out float starSelection;
+layout(location = 3) flat out float shootingActive;
+layout(location = 4) flat out float shootingProgress;
 
 float starHash(vec3 position) {
     return fract(sin(dot(position, vec3(12.9898, 78.233, 37.719))) * 43758.5453);

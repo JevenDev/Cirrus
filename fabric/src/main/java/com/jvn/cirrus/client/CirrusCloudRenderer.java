@@ -8,7 +8,7 @@ import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.client.util.CirrusShaderUniforms;
 import com.jvn.cirrus.client.render.CirrusUniform;
-import com.mojang.blaze3d.PrimitiveTopology;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
@@ -16,7 +16,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.jvn.cirrus.client.render.CirrusVertexBuffer;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.renderpearl.api.vertex.VertexFormat;
 import java.io.IOException;
 import java.io.InputStream;
 import net.minecraft.client.Minecraft;
@@ -474,8 +474,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     (float)cloudColor.z,
                     definition.opacity(rainLevel, thunderLevel)
             );
-            boolean renderingForDistantHorizons =
-                    CirrusRenderContext.renderingCloudsForDistantHorizons();
             if (definition.style() == CirrusConfig.CloudStyle.FANCY) {
                 mesh.buffer.drawWithShader(
                         poseStack.last().pose(),
@@ -488,16 +486,6 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             mesh.buffer.drawWithShader(
                     poseStack.last().pose(), projectionMatrix, shader, cloudTexture.texture()
             );
-            if (Minecraft.getInstance().gameRenderer.gameRenderState().useShaderTransparency()
-                    && !renderingForDistantHorizons) {
-                mesh.buffer.drawWithShader(
-                        poseStack.last().pose(),
-                        projectionMatrix,
-                        shader,
-                        CirrusShader.DrawMode.MAIN_DEPTH_ONLY,
-                        cloudTexture.texture()
-                );
-            }
         } finally {
             poseStack.popPose();
         }

@@ -3,13 +3,17 @@ package com.jvn.cirrus.client.render;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.util.ARGB;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import net.minecraft.client.renderer.oit.OitStage;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
+import org.joml.Vector4fc;
 
 public final class CirrusRenderContext {
+    private static RenderPass renderPass;
+    private static OitStage oitStage;
     private static ClientLevel level;
     private static Camera camera;
     private static Matrix4f frustumMatrix;
@@ -21,9 +25,29 @@ public final class CirrusRenderContext {
     private static long cloudTicks;
     private static float cloudHeight = Float.NaN;
     private static boolean cloudsRenderedIntoDistantHorizons;
-    private static boolean renderingCloudsForDistantHorizons;
 
     private CirrusRenderContext() {
+    }
+
+    public static void renderInPass(RenderPass pass, OitStage stage, Runnable render) {
+        RenderPass previousPass = renderPass;
+        OitStage previousStage = oitStage;
+        renderPass = pass;
+        oitStage = stage;
+        try {
+            render.run();
+        } finally {
+            renderPass = previousPass;
+            oitStage = previousStage;
+        }
+    }
+
+    static RenderPass renderPass() {
+        return renderPass;
+    }
+
+    public static OitStage oitStage() {
+        return oitStage;
     }
 
     public static void captureWorldProjection(Matrix4f capturedProjection) {
@@ -52,7 +76,6 @@ public final class CirrusRenderContext {
         ticks = capturedTicks;
         cloudTicks = capturedCloudTicks;
         cloudsRenderedIntoDistantHorizons = false;
-        renderingCloudsForDistantHorizons = false;
         cloudHeight = capturedCamera.attributeProbe()
                 .getValue(EnvironmentAttributes.CLOUD_HEIGHT, capturedPartialTick);
     }
@@ -97,8 +120,8 @@ public final class CirrusRenderContext {
         if (camera == null) {
             return false;
         }
-        int color = camera.attributeProbe().getValue(EnvironmentAttributes.CLOUD_COLOR, partialTick);
-        return ARGB.alpha(color) > 0;
+        Vector4fc color = camera.attributeProbe().getValue(EnvironmentAttributes.CLOUD_COLOR, partialTick);
+        return color.w() > 0.0F;
     }
 
     public static boolean cloudsRenderedIntoDistantHorizons() {
@@ -107,18 +130,6 @@ public final class CirrusRenderContext {
 
     public static void markCloudsRenderedIntoDistantHorizons() {
         cloudsRenderedIntoDistantHorizons = true;
-    }
-
-    public static boolean renderingCloudsForDistantHorizons() {
-        return renderingCloudsForDistantHorizons;
-    }
-
-    public static void beginRenderingCloudsForDistantHorizons() {
-        renderingCloudsForDistantHorizons = true;
-    }
-
-    public static void endRenderingCloudsForDistantHorizons() {
-        renderingCloudsForDistantHorizons = false;
     }
 
     public static float sunAngle(float requestedPartialTick) {
@@ -130,9 +141,9 @@ public final class CirrusRenderContext {
 
     public static Vec3 cloudColor(float requestedPartialTick) {
         Camera activeCamera = camera != null ? camera : Minecraft.getInstance().gameRenderer.mainCamera();
-        int color = activeCamera.attributeProbe()
+        Vector4fc color = activeCamera.attributeProbe()
                 .getValue(EnvironmentAttributes.CLOUD_COLOR, requestedPartialTick);
-        return new Vec3(ARGB.red(color) / 255.0, ARGB.green(color) / 255.0, ARGB.blue(color) / 255.0);
+        return new Vec3(color.x(), color.y(), color.z());
     }
 
     public static float cloudHeight(ClientLevel requestedLevel) {
@@ -160,7 +171,6 @@ public final class CirrusRenderContext {
         pendingWorldProjectionMatrix = null;
         fogColor = null;
         cloudHeight = Float.NaN;
-        renderingCloudsForDistantHorizons = false;
         cloudsRenderedIntoDistantHorizons = false;
     }
 }
