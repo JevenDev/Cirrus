@@ -13,6 +13,9 @@ layout(std140) uniform CirrusParams {
     float CirrusAuroraPixelationResolution;
     vec4 CirrusAuroraVariant;
     vec4 CirrusAuroraSettings;
+    vec3 CirrusAuroraLowerColor;
+    vec3 CirrusAuroraMiddleColor;
+    vec3 CirrusAuroraUpperColor;
 };
 
 uniform sampler2D Sampler0;
@@ -322,6 +325,19 @@ void main() {
                 * mix(0.30, 0.66, paletteBlend)
                 * mix(0.72, 1.0, CirrusAuroraVariant.x)
     );
+
+    if (CirrusAuroraSettings.w > 0.5) {
+        color = mix(
+            CirrusAuroraLowerColor,
+            CirrusAuroraMiddleColor,
+            smoothstep(lowerCenter, upperCenter, elevation)
+        );
+        color = mix(
+            color,
+            CirrusAuroraUpperColor,
+            smoothstep(upperCenter, highCenter, elevation)
+        );
+    }
 
     float pulseAmount = 0.10 * min(movement, 1.5);
     float pulsePhase = time * 0.060 * movement

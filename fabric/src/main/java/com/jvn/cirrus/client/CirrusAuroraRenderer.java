@@ -2,6 +2,7 @@ package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.config.CirrusConfig;
+import com.jvn.cirrus.client.util.CirrusColors;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.client.util.CirrusSkyDome;
 import com.jvn.cirrus.client.util.CirrusShaderUniforms;
@@ -110,12 +111,25 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
                 CirrusConfig.AURORA_MOVEMENT.get().floatValue(),
                 CirrusConfig.AURORA_RIBBON_WIDTH.get().floatValue(),
                 (float)Math.toRadians(CirrusConfig.AURORA_HEIGHT_DEGREES.get()),
-                0.0F
+                CirrusConfig.AURORA_CUSTOM_COLORS.get() ? 1.0F : 0.0F
         );
+        setColor(shader, "CirrusAuroraLowerColor", CirrusConfig.AURORA_LOWER_COLOR.get());
+        setColor(shader, "CirrusAuroraMiddleColor", CirrusConfig.AURORA_MIDDLE_COLOR.get());
+        setColor(shader, "CirrusAuroraUpperColor", CirrusConfig.AURORA_UPPER_COLOR.get());
 
         PoseStack poseStack = new PoseStack();
         poseStack.mulPose(frustumMatrix);
         domeBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
+    }
+
+    private static void setColor(CirrusShader shader, String name, int color) {
+        CirrusShaderUniforms.setUniform(
+                shader,
+                name,
+                CirrusColors.red(color) / 255.0F,
+                CirrusColors.green(color) / 255.0F,
+                CirrusColors.blue(color) / 255.0F
+        );
     }
 
     private float updateColdBiomeBlend(ClientLevel level, float partialTick, int ticks, Camera camera) {

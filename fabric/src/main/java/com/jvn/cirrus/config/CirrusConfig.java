@@ -145,6 +145,10 @@ public final class CirrusConfig {
     public static final CirrusConfigSpec.IntValue AURORA_PIXELATION_RESOLUTION;
     public static final CirrusConfigSpec.BooleanValue AURORA_COLD_BIOMES_ONLY;
     public static final CirrusConfigSpec.DoubleValue AURORA_OPACITY;
+    public static final CirrusConfigSpec.BooleanValue AURORA_CUSTOM_COLORS;
+    public static final CirrusConfigSpec.IntValue AURORA_LOWER_COLOR;
+    public static final CirrusConfigSpec.IntValue AURORA_MIDDLE_COLOR;
+    public static final CirrusConfigSpec.IntValue AURORA_UPPER_COLOR;
     public static final CirrusConfigSpec.DoubleValue AURORA_ANIMATION_SPEED;
     public static final CirrusConfigSpec.DoubleValue AURORA_MOVEMENT;
     public static final CirrusConfigSpec.DoubleValue AURORA_RIBBON_WIDTH;
@@ -490,6 +494,18 @@ public final class CirrusConfig {
                 builder,
                 "auroraOpacity",
                 "Maximum opacity of the northern lights."
+        );
+        AURORA_CUSTOM_COLORS = builder
+                .comment("Use custom lower, middle, and upper colors instead of the animated aurora palette.")
+                .define("auroraCustomColors", false);
+        AURORA_LOWER_COLOR = defineColor(
+                builder, "auroraLowerColor", 0x1AFF61, "RGB color of the lower aurora ribbons."
+        );
+        AURORA_MIDDLE_COLOR = defineColor(
+                builder, "auroraMiddleColor", 0x12C2EB, "RGB color of the middle aurora ribbons."
+        );
+        AURORA_UPPER_COLOR = defineColor(
+                builder, "auroraUpperColor", 0x7057EB, "RGB color of the upper aurora ribbons."
         );
         AURORA_ANIMATION_SPEED = AURORA_ANIMATION_SPEED_SETTING.define(
                 builder,

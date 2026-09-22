@@ -67,7 +67,10 @@ public final class CirrusShaders {
             uniform("CirrusAuroraPixelation", 1, 1.0F),
             uniform("CirrusAuroraPixelationResolution", 1, 320.0F),
             uniform("CirrusAuroraVariant", 4, 0.5F, 0.5F, 0.5F, 0.5F),
-            uniform("CirrusAuroraSettings", 4, 1.25F, 1.0F, 0.0F, 0.0F)
+            uniform("CirrusAuroraSettings", 4, 1.25F, 1.0F, 0.0F, 0.0F),
+            uniform("CirrusAuroraLowerColor", 3, 0.10F, 1.0F, 0.38F),
+            uniform("CirrusAuroraMiddleColor", 3, 0.07F, 0.76F, 0.92F),
+            uniform("CirrusAuroraUpperColor", 3, 0.44F, 0.34F, 0.92F)
     );
     private static final CirrusShader MILKY_WAY = new CirrusShader(
             "cirrus_milky_way",
