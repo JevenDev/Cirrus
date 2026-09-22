@@ -83,6 +83,10 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
                 shader, "CirrusMilkyWayRotation", CirrusRenderContext.sunAngle(partialTick)
         );
 
+        CirrusShaderUniforms.setUniform(
+                shader, "CirrusMilkyWayAngledOrbit", CirrusConfig.MILKY_WAY_ANGLED_ORBIT.get()
+        );
+
         PoseStack poseStack = new PoseStack();
         poseStack.mulPose(frustumMatrix);
         domeBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
