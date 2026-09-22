@@ -8,6 +8,7 @@
     "ClientPacketListenerMixin",
     "FogRendererMixin",
     "GameRendererMixin",
+    "CirrusUniformBuffersMixin",
     "LevelRendererCloudMixin",
     "CloudRendererMixin",
     "SkyRendererMixin",

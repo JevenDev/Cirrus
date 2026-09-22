@@ -36,6 +36,18 @@ public final class CirrusShaders {
             uniform("CirrusWorldUpViewDirection", 4, 0.0F, 1.0F, 0.0F, 0.0F),
             uniform("CirrusLightningRadius", 1, 640.0F)
     );
+    private static final CirrusShader CLOUD_DEPTH = new CirrusShader(
+            "cirrus_cloud_depth",
+            DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL,
+            CirrusShader.Blend.NONE,
+            CirrusShader.Target.CLOUDS,
+            ResourceLocation.withDefaultNamespace("textures/environment/clouds.png"),
+            false,
+            true,
+            uniform("ColorModulator", 4, 1.0F, 1.0F, 1.0F, 1.0F),
+            uniform("CirrusRainCloudCoverage", 1, 0.0F),
+            uniform("CirrusThunderCloudCoverage", 1, 0.0F)
+    );
     private static final CirrusShader CLOUD_MASK = new CirrusShader(
             "cirrus_cloud_mask",
             DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL,
@@ -135,6 +147,10 @@ public final class CirrusShaders {
             uniform("CirrusLightningSkyIntensity", 1, 0.0F)
     );
 
+    private static final CirrusShader[] ALL = {
+            CLOUDS, CLOUD_DEPTH, CLOUD_MASK, AURORA, MILKY_WAY, STARS, END_SKY, LIGHTNING_SKY
+    };
+
     private static boolean samplerTexturesLoaded;
 
     private CirrusShaders() {
@@ -142,6 +158,18 @@ public final class CirrusShaders {
 
     public static void initialize() {
         // Forces pipeline registration during client initialization.
+    }
+
+    public static void endFrame() {
+        for (CirrusShader shader : ALL) {
+            shader.endFrame();
+        }
+    }
+
+    public static void closeBuffers() {
+        for (CirrusShader shader : ALL) {
+            shader.closeBuffers();
+        }
     }
 
     public static void preloadSamplerTextures(Minecraft minecraft) {
@@ -161,6 +189,10 @@ public final class CirrusShaders {
 
     public static CirrusShader clouds() {
         return CLOUDS;
+    }
+
+    public static CirrusShader cloudDepth() {
+        return CLOUD_DEPTH;
     }
 
     public static CirrusShader cloudMask() {
