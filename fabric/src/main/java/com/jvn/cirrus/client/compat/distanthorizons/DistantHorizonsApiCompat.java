@@ -20,7 +20,7 @@ import org.lwjgl.opengl.GL30;
 
 import java.util.function.Consumer;
 
-final class DistantHorizonsApiCompat {
+public final class DistantHorizonsApiCompat {
     private static final float[] DH_PROJECTION_MATRIX_VALUES = new float[16];
     private static IDhApiConfig configs;
     private static IDhApiConfigValue<Boolean> cloudRendering;
@@ -29,48 +29,57 @@ final class DistantHorizonsApiCompat {
     private static boolean overrideApplied;
     private static boolean beforeApplyShaderEventRegistered;
     private static Consumer<float[]> beforeApplyShaderCallback;
+    private static boolean cloudCallbackInvoked;
     private static boolean renderingWithReversedDepth;
     private static ExternalFramebufferTarget externalFramebufferTarget;
     private static final DhApiBeforeApplyShaderRenderEvent BEFORE_APPLY_SHADER_EVENT =
             new DhApiBeforeApplyShaderRenderEvent() {
         @Override
         public void beforeRender(DhApiCancelableEventParam<DhApiRenderParam> event) {
-            Consumer<float[]> callback = beforeApplyShaderCallback;
-            if (callback != null) {
-                event.value.dhProjectionMatrix.putValuesInArray(DH_PROJECTION_MATRIX_VALUES);
-                int drawFramebuffer = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-                int readFramebuffer = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
-                GpuTextureView previousColorOverride = RenderSystem.outputColorTextureOverride;
-                GpuTextureView previousDepthOverride = RenderSystem.outputDepthTextureOverride;
-                try {
-                    ExternalFramebufferTarget target = externalFramebufferTarget(drawFramebuffer);
-                    if (target == null) {
-                        // Let Minecraft's normal cloud pass handle unsupported DH targets.
-                        return;
-                    }
-                    RenderSystem.outputColorTextureOverride = target.colorView;
-                    RenderSystem.outputDepthTextureOverride = target.depthView;
-                    // DH can use reversed depth even when Minecraft uses forward depth
-                    renderingWithReversedDepth = event.value.dhProjectionMatrix.m22 >= 0.0F;
-                    try {
-                        callback.accept(DH_PROJECTION_MATRIX_VALUES);
-                    } finally {
-                        renderingWithReversedDepth = false;
-                    }
-                } finally {
-                    RenderSystem.outputColorTextureOverride = previousColorOverride;
-                    RenderSystem.outputDepthTextureOverride = previousDepthOverride;
-                    // Minecraft render passes bind framebuffer 0 when they close.
-                    // DH's apply shader expects its framebuffer to remain bound while it
-                    // temporarily attaches Minecraft's color texture for the composite.
-                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
-                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer);
-                }
-            }
+            renderClouds(event.value);
         }
     };
 
     private DistantHorizonsApiCompat() {
+    }
+
+    public static void renderClouds(DhApiRenderParam params) {
+        if (cloudCallbackInvoked) {
+            return;
+        }
+        Consumer<float[]> callback = beforeApplyShaderCallback;
+        if (callback != null) {
+            params.dhProjectionMatrix.putValuesInArray(DH_PROJECTION_MATRIX_VALUES);
+            int drawFramebuffer = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+            int readFramebuffer = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
+            GpuTextureView previousColorOverride = RenderSystem.outputColorTextureOverride;
+            GpuTextureView previousDepthOverride = RenderSystem.outputDepthTextureOverride;
+            try {
+                ExternalFramebufferTarget target = externalFramebufferTarget(drawFramebuffer);
+                if (target == null) {
+                    // Let Minecraft's normal cloud pass handle unsupported DH targets.
+                    return;
+                }
+                RenderSystem.outputColorTextureOverride = target.colorView;
+                RenderSystem.outputDepthTextureOverride = target.depthView;
+                // DH can use reversed depth even when Minecraft uses forward depth
+                renderingWithReversedDepth = params.dhProjectionMatrix.m22 >= 0.0F;
+                try {
+                    cloudCallbackInvoked = true;
+                    callback.accept(DH_PROJECTION_MATRIX_VALUES);
+                } finally {
+                    renderingWithReversedDepth = false;
+                }
+            } finally {
+                RenderSystem.outputColorTextureOverride = previousColorOverride;
+                RenderSystem.outputDepthTextureOverride = previousDepthOverride;
+                // Minecraft render passes bind framebuffer 0 when they close.
+                // DH's apply shader expects its framebuffer to remain bound while it
+                // temporarily attaches Minecraft's color texture for the composite.
+                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
+                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer);
+            }
+        }
     }
 
     static int beginFrame(
@@ -91,6 +100,7 @@ final class DistantHorizonsApiCompat {
 
     static void setBeforeApplyShaderCallback(Consumer<float[]> callback) {
         beforeApplyShaderCallback = callback;
+        cloudCallbackInvoked = false;
     }
 
     static boolean isRenderingWithReversedDepth() {
