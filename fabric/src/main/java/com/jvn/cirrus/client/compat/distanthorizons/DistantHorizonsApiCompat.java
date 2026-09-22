@@ -8,12 +8,16 @@ import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.textures.TextureFormat;
 import com.seibel.distanthorizons.api.DhApi;
+import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingEngine;
 import com.seibel.distanthorizons.api.interfaces.config.IDhApiConfig;
 import com.seibel.distanthorizons.api.interfaces.config.IDhApiConfigValue;
+import com.seibel.distanthorizons.api.interfaces.render.IDhApiBlazeTextureWrapper;
+import com.seibel.distanthorizons.api.interfaces.render.IDhApiRenderProxy;
 import com.seibel.distanthorizons.api.methods.events.DhApiEventRegister;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeApplyShaderRenderEvent;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiCancelableEventParam;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
+import com.seibel.distanthorizons.api.objects.DhApiResult;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
@@ -42,20 +46,30 @@ final class DistantHorizonsApiCompat {
                 GpuTextureView previousColorOverride = RenderSystem.outputColorTextureOverride;
                 GpuTextureView previousDepthOverride = RenderSystem.outputDepthTextureOverride;
                 try {
-                    ExternalFramebufferTarget target = externalFramebufferTarget(drawFramebuffer);
-                    if (target == null) {
-                        // Let Minecraft's normal cloud pass handle unsupported DH targets.
-                        return;
+                    IDhApiRenderProxy renderProxy = DhApi.Delayed.renderProxy;
+                    if (renderProxy != null
+                            && (DhApi.getApiMajorVersion() > 7 || DhApi.getApiMinorVersion() >= 1)
+                            && renderProxy.getRenderingEngine() == EDhApiRenderingEngine.BLAZE_3D) {
+                        GpuTextureView colorView = blazeTextureView(renderProxy.getDhColorTextureBlazeWrapper());
+                        GpuTextureView depthView = blazeTextureView(renderProxy.getDhDepthTextureBlazeWrapper());
+                        if (colorView == null || depthView == null) {
+                            return;
+                        }
+                        RenderSystem.outputColorTextureOverride = colorView;
+                        RenderSystem.outputDepthTextureOverride = depthView;
+                    } else {
+                        ExternalFramebufferTarget target = externalFramebufferTarget(drawFramebuffer);
+                        if (target == null) {
+                            return;
+                        }
+                        RenderSystem.outputColorTextureOverride = target.colorView;
+                        RenderSystem.outputDepthTextureOverride = target.depthView;
                     }
-                    RenderSystem.outputColorTextureOverride = target.colorView;
-                    RenderSystem.outputDepthTextureOverride = target.depthView;
                     callback.accept(DH_PROJECTION_MATRIX_VALUES);
                 } finally {
                     RenderSystem.outputColorTextureOverride = previousColorOverride;
                     RenderSystem.outputDepthTextureOverride = previousDepthOverride;
-                    // Minecraft 1.21.11 render passes bind framebuffer 0 when they close.
-                    // DH's apply shader expects its framebuffer to remain bound while it
-                    // temporarily attaches Minecraft's color texture for the composite.
+                    // closing the cloud pass can change the framebuffer DH expects for compositing
                     GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
                     GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer);
                 }
@@ -131,6 +145,20 @@ final class DistantHorizonsApiCompat {
                     BEFORE_APPLY_SHADER_EVENT
             ).success;
         }
+    }
+
+    private static GpuTextureView blazeTextureView(DhApiResult<IDhApiBlazeTextureWrapper> result) {
+        if (!result.success || result.payload == null) {
+            return null;
+        }
+
+        // DH owns the texture and view exposed by this wrapper
+        Object wrapped = result.payload.getWrappedMcObject();
+        if (!(wrapped instanceof Object[] objects) || objects.length < 2
+                || !(objects[1] instanceof GpuTextureView view) || view.isClosed()) {
+            return null;
+        }
+        return view;
     }
 
     private static ExternalFramebufferTarget externalFramebufferTarget(int framebuffer) {
