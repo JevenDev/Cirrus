@@ -111,10 +111,11 @@ public final class CirrusVertexBuffer implements AutoCloseable {
             }
         }
 
-        GpuTextureView color = RenderSystem.outputColorTextureOverride != null
+        boolean useOverride = mode != CirrusShader.DrawMode.MAIN_DEPTH_ONLY;
+        GpuTextureView color = useOverride && RenderSystem.outputColorTextureOverride != null
                 ? RenderSystem.outputColorTextureOverride
                 : target.getColorTextureView();
-        GpuTextureView depth = RenderSystem.outputDepthTextureOverride != null
+        GpuTextureView depth = useOverride && RenderSystem.outputDepthTextureOverride != null
                 ? RenderSystem.outputDepthTextureOverride
                 : target.getDepthTextureView();
 

@@ -48,9 +48,7 @@ public abstract class CloudRendererMixin {
         }
 
         ci.cancel();
-        if (CirrusRenderContext.cloudsRenderedIntoDistantHorizons()) {
-            return;
-        }
+        // DH composites color only, so post effects still need cloud depth in the main target
         CirrusRenderers.clouds().render(
                 CirrusRenderContext.level(),
                 new PoseStack(),
@@ -60,7 +58,8 @@ public abstract class CloudRendererMixin {
                 CirrusRenderContext.cloudTicks(),
                 cameraPosition.x,
                 cameraPosition.y,
-                cameraPosition.z
+                cameraPosition.z,
+                CirrusRenderContext.cloudsRenderedIntoDistantHorizons()
         );
     }
 }
