@@ -4,7 +4,10 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "compat.caelum.CelestialRendererMixin",
+    "compat.caelum.ClientSkyUtilsAccessor",
     "compat.polytone.PostShaderRendererMixin",
+    "compat.polytone.ProgramMixin",
+    "compat.polytone.EffectInstanceMixin",
     "ClientLevelMixin",
     "ClientLevelDataMixin",
     "ClientPacketListenerMixin",

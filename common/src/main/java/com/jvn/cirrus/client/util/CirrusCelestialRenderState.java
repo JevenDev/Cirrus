@@ -11,6 +11,7 @@ public final class CirrusCelestialRenderState {
     private static boolean sunCaptured;
     private static boolean externalSun;
     private static boolean moonCaptured;
+    private static boolean externalMoon;
 
     private CirrusCelestialRenderState() {
     }
@@ -20,6 +21,7 @@ public final class CirrusCelestialRenderState {
         sunCaptured = false;
         externalSun = false;
         moonCaptured = false;
+        externalMoon = false;
     }
 
     public static void captureSun(Matrix4f modelView) {
@@ -45,9 +47,21 @@ public final class CirrusCelestialRenderState {
     }
 
     public static void captureMoon(Matrix4f modelView) {
+        if (externalMoon) {
+            return;
+        }
         modelView.transformDirection(MOON_DIRECTION.set(0.0F, -1.0F, 0.0F));
         INVERSE_VIEW.transformDirection(MOON_DIRECTION).normalize();
         moonCaptured = true;
+    }
+
+    public static void captureExternalMoon(Vector3f direction) {
+        MOON_DIRECTION.set(direction);
+        if (MOON_DIRECTION.lengthSquared() > 0.0F) {
+            MOON_DIRECTION.normalize();
+        }
+        moonCaptured = true;
+        externalMoon = true;
     }
 
     public static Matrix4f sunModelView() {

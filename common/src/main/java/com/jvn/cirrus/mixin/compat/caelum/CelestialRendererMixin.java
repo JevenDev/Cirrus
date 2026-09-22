@@ -16,11 +16,20 @@ import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @Mixin(targets = "net.sophka.caelum.client.CelestialRenderer", remap = false)
 public abstract class CelestialRendererMixin {
     @Unique private static boolean cirrus$renderingSun;
+
+    @Inject(method = "renderObjects", at = @At("RETURN"))
+    private static void cirrus$captureMoon(CallbackInfo ci) {
+        if (CirrusCelestialRenderState.hasExternalSun()) {
+            CirrusCelestialRenderState.captureExternalMoon(ClientSkyUtilsAccessor.cirrus$moonDirection());
+        }
+    }
 
     @WrapMethod(method = "renderSun")
     private static void cirrus$trackSun(PoseStack poses, float partialTick, Operation<Void> original) {
