@@ -16,8 +16,8 @@ public final class CirrusPrecipitationCeiling {
             return Double.POSITIVE_INFINITY;
         }
 
-        float cloudHeight = level.effects().getCloudHeight();
-        if (Float.isNaN(cloudHeight)) {
+        float cloudHeight = CirrusCloudDimensions.cloudHeight(level);
+        if (Float.isNaN(cloudHeight) || CirrusCloudTimeFade.opacity(level, 0.0F) <= 0.0F) {
             return Double.POSITIVE_INFINITY;
         }
 

@@ -51,8 +51,8 @@ public final class CirrusCloudAttachment {
             return new Vec3(0.0, 128.0, 0.0);
         }
 
-        float baseCloudHeight = level.effects().getCloudHeight();
-        if (Float.isNaN(baseCloudHeight)) {
+        float baseCloudHeight = CirrusCloudDimensions.cloudHeight(level);
+        if (Float.isNaN(baseCloudHeight) || CirrusCloudTimeFade.opacity(level, partialTick) <= 0.0F) {
             return new Vec3(0.0, 128.0, 0.0);
         }
 

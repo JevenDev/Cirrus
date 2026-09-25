@@ -12,10 +12,14 @@ import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import java.awt.Color;
+import java.util.Comparator;
 import java.util.Locale;
+import java.util.TreeSet;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import com.jvn.cirrus.config.CirrusConfigSpec;
 
 public final class CirrusConfigScreen {
@@ -69,6 +73,18 @@ public final class CirrusConfigScreen {
                                 "cirrus.config.clouds.translucentLayerOverlap",
                                 CirrusConfig.TRANSLUCENT_LAYER_OVERLAP
                         ))
+                        .build())
+                .group(cloudDimensionsGroup())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.cloudTimeFade"))
+                        .option(percentageOption("cirrus.config.clouds.dayFade",
+                                CirrusConfig.DAY_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
+                        .option(percentageOption("cirrus.config.clouds.noonFade",
+                                CirrusConfig.NOON_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
+                        .option(percentageOption("cirrus.config.clouds.eveningFade",
+                                CirrusConfig.EVENING_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
+                        .option(percentageOption("cirrus.config.clouds.nightFade",
+                                CirrusConfig.NIGHT_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
                         .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.cloudWeather"))
@@ -183,6 +199,30 @@ public final class CirrusConfigScreen {
                         ))
                         .build())
                 .build();
+    }
+
+    private static OptionGroup cloudDimensionsGroup() {
+        var group = OptionGroup.createBuilder()
+                .name(text("cirrus.config.group.cloudDimensions"));
+        var dimensions = new TreeSet<ResourceLocation>(Comparator.comparing(ResourceLocation::toString));
+        dimensions.addAll(CirrusCloudDimensions.dimensions());
+        CirrusConfig.CLOUD_DIMENSIONS.get().keySet().forEach(id ->
+                dimensions.add(ResourceLocation.parse(id)));
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null) {
+            connection.levels().forEach(dimension -> dimensions.add(dimension.location()));
+        }
+        for (var dimension : dimensions) {
+            group.option(Option.<Boolean>createBuilder()
+                    .name(Component.literal(dimension.toString()))
+                    .description(OptionDescription.of(text("cirrus.config.clouds.dimension.description")))
+                    .binding(CirrusCloudDimensions.defaultEnabled(dimension),
+                            () -> CirrusCloudDimensions.enabled(dimension),
+                            enabled -> CirrusCloudDimensions.setEnabled(dimension, enabled))
+                    .controller(TickBoxControllerBuilder::create)
+                    .build());
+        }
+        return group.build();
     }
 
     private static ConfigCategory skyColorCategory() {

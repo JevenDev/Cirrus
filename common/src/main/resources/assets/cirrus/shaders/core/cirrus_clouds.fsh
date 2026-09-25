@@ -9,6 +9,7 @@ uniform float FogStart;
 uniform float FogEnd;
 uniform vec4 FogColor;
 uniform float CirrusEnabled;
+uniform float CirrusTimeOpacity;
 uniform vec2 CirrusLightDirection;
 uniform float CirrusSunWeight;
 uniform vec3 CirrusLightViewDirection;
@@ -186,4 +187,5 @@ void main() {
     }
 
     fragColor = linear_fog(color, vertexDistance, FogStart, FogEnd, FogColor);
+    fragColor.a *= CirrusTimeOpacity;
 }

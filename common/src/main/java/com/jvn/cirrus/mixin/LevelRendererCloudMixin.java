@@ -4,6 +4,8 @@ import com.jvn.cirrus.client.CirrusAuroraRenderer;
 import com.jvn.cirrus.client.CirrusSunMask;
 import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
 import com.jvn.cirrus.client.CirrusCloudRenderer;
+import com.jvn.cirrus.client.CirrusCloudDimensions;
+import com.jvn.cirrus.client.CirrusCloudTimeFade;
 import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusCloudAttachment;
 import com.jvn.cirrus.client.CirrusEndSkyRenderer;
@@ -89,6 +91,7 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
         cirrus$frameCameraZ = camera.getPosition().z;
         DistantHorizonsCompat.setBeforeApplyShaderCallback(
                 DistantHorizonsCompat.shouldPrioritizeCirrusClouds()
+                        && level != null && CirrusCloudDimensions.enabled(level.dimension().location())
                         ? cirrus$renderCloudsIntoDistantHorizons
                         : null
         );
@@ -163,6 +166,8 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
         if (dhProjectionMatrix == null || dhProjectionMatrix.length != 16
                 || cirrus$cloudsRenderedIntoDistantHorizons
                 || level == null
+                || !CirrusCloudDimensions.enabled(level.dimension().location())
+                || CirrusCloudTimeFade.opacity(level, cirrus$framePartialTick) <= 0.0F
                 || cirrus$frameFrustumMatrix == null
                 || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
             return;
@@ -395,6 +400,7 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
 
     @Inject(method = "onResourceManagerReload", at = @At("HEAD"))
     private void cirrus$releaseCloudsOnReload(ResourceManager resourceManager, CallbackInfo ci) {
+        CirrusCloudDimensions.reload(resourceManager);
         cirrus$cloudRenderer.invalidate();
         CirrusCloudAttachment.invalidate();
     }

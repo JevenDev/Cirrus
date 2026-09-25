@@ -78,6 +78,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private ShaderInstance cachedMaskShader;
     private CloudMaskUniforms cachedMaskUniforms;
     private long cloudUniformFrame;
+    private float timeOpacity = 1.0F;
     private DynamicTexture shaderPackWeatherTexture;
     private int[] baseCloudPixels;
     private int cloudTextureWidth;
@@ -97,8 +98,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             double cameraY,
             double cameraZ
     ) {
-        float cloudHeight = level.effects().getCloudHeight();
-        if (Float.isNaN(cloudHeight)) {
+        float cloudHeight = CirrusCloudDimensions.cloudHeight(level);
+        timeOpacity = CirrusCloudTimeFade.opacity(level, partialTick);
+        if (Float.isNaN(cloudHeight) || timeOpacity <= 0.0F) {
             return false;
         }
 
@@ -155,13 +157,13 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             drawMaskLayer(lowerMesh, LOWER_LAYER, frustumMatrix, projectionMatrix,
                     maskShader, maskUniforms,
                     cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
-                    cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
+                    cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel, timeOpacity);
             if (upperEnabled) {
                 drawMaskLayer(upperMesh, UPPER_LAYER, frustumMatrix, projectionMatrix,
                         maskShader, maskUniforms,
                         cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                                 + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
-                        cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
+                        cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel, timeOpacity);
             }
             if (topEnabled) {
                 drawMaskLayer(topMesh, TOP_LAYER, frustumMatrix, projectionMatrix,
@@ -169,7 +171,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                         cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                                 + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
                                 + CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
-                        cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
+                        cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel, timeOpacity);
             }
             completed = true;
             return true;
@@ -198,7 +200,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             double cameraSampleZ,
             double windSample,
             float rainLevel,
-            float thunderLevel
+            float thunderLevel,
+            float timeOpacity
     ) {
         if (mesh.buffer == null) {
             return;
@@ -210,7 +213,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         poseStack.scale(WORLD_SCALE, 1.0F, WORLD_SCALE);
         poseStack.translate(-(sampleX - mesh.cachedAnchorX), relativeHeight, -(sampleZ - mesh.cachedAnchorZ));
         mesh.buffer.bind();
-        uniforms.setLayerOpacity(definition.opacity(rainLevel, thunderLevel));
+        uniforms.setLayerOpacity(definition.opacity(rainLevel, thunderLevel) * timeOpacity);
         mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
     }
 
@@ -234,8 +237,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             double cameraZ,
             boolean depthOnlyPass
     ) {
-        float cloudHeight = level.effects().getCloudHeight();
-        if (Float.isNaN(cloudHeight)) {
+        float cloudHeight = CirrusCloudDimensions.cloudHeight(level);
+        timeOpacity = CirrusCloudTimeFade.opacity(level, partialTick);
+        if (Float.isNaN(cloudHeight) || timeOpacity <= 0.0F) {
             return;
         }
 
@@ -501,7 +505,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     (float)cloudColor.x,
                     (float)cloudColor.y,
                     (float)cloudColor.z,
-                    definition.opacity(rainLevel, thunderLevel)
+                    definition.opacity(rainLevel, thunderLevel) * (shaderPackInUse ? timeOpacity : 1.0F)
             );
             poseStack.mulPose(frustumMatrix);
             poseStack.scale(WORLD_SCALE, 1.0F, WORLD_SCALE);
@@ -835,7 +839,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                         ? 0.0F : rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue(),
                 weatherPrecomposed
                         ? 0.0F : thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue(),
-                lightning
+                lightning,
+                timeOpacity
         );
     }
 
@@ -1191,6 +1196,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
 
     private static final class CloudUniforms {
         private final Uniform enabled;
+        private final Uniform timeOpacity;
         private final Uniform lightDirection;
         private final Uniform sunWeight;
         private final Uniform lightViewDirection;
@@ -1207,6 +1213,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
 
         private CloudUniforms(ShaderInstance shader) {
             enabled = shader.getUniform("CirrusEnabled");
+            timeOpacity = shader.getUniform("CirrusTimeOpacity");
             lightDirection = shader.getUniform("CirrusLightDirection");
             sunWeight = shader.getUniform("CirrusSunWeight");
             lightViewDirection = shader.getUniform("CirrusLightViewDirection");
@@ -1236,13 +1243,15 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 float currentThunderLevel,
                 float currentRainCloudCoverage,
                 float currentThunderCloudCoverage,
-                LightningState lightning
+                LightningState lightning,
+                float currentTimeOpacity
         ) {
             if (lastFrame == frame) {
                 return;
             }
             lastFrame = frame;
             set(enabled, 1.0F);
+            set(timeOpacity, currentTimeOpacity);
             if (lightDirection == null) {
                 return;
             }
