@@ -70,9 +70,13 @@ public final class CirrusConfig {
     public static final DoubleSetting END_SKY_SURGE_STRENGTH_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
 
     public static final CirrusConfigSpec.DoubleValue DAY_CLOUD_FADE;
+    public static final CirrusConfigSpec.BooleanValue DAY_CLOUD_FADE_TRANSITION_ONLY;
     public static final CirrusConfigSpec.DoubleValue NOON_CLOUD_FADE;
+    public static final CirrusConfigSpec.BooleanValue NOON_CLOUD_FADE_TRANSITION_ONLY;
     public static final CirrusConfigSpec.DoubleValue EVENING_CLOUD_FADE;
+    public static final CirrusConfigSpec.BooleanValue EVENING_CLOUD_FADE_TRANSITION_ONLY;
     public static final CirrusConfigSpec.DoubleValue NIGHT_CLOUD_FADE;
+    public static final CirrusConfigSpec.BooleanValue NIGHT_CLOUD_FADE_TRANSITION_ONLY;
     public static final CirrusConfigSpec.DimensionMapValue CLOUD_DIMENSIONS;
     public static final CirrusConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
     public static final CirrusConfigSpec.BooleanValue SHADER_PACK_WARNINGS_ENABLED;
@@ -187,9 +191,13 @@ public final class CirrusConfig {
                 .define("enabled", true);
         CLOUD_DIMENSIONS = builder.defineDimensions("dimensions");
         DAY_CLOUD_FADE = CLOUD_TIME_FADE_SETTING.define(builder, "dayFade", "Cloud fade during the morning.");
+        DAY_CLOUD_FADE_TRANSITION_ONLY = builder.define("dayFadeTransitionOnly", false);
         NOON_CLOUD_FADE = CLOUD_TIME_FADE_SETTING.define(builder, "noonFade", "Cloud fade around midday.");
+        NOON_CLOUD_FADE_TRANSITION_ONLY = builder.define("noonFadeTransitionOnly", false);
         EVENING_CLOUD_FADE = CLOUD_TIME_FADE_SETTING.define(builder, "eveningFade", "Cloud fade around sunset.");
+        EVENING_CLOUD_FADE_TRANSITION_ONLY = builder.define("eveningFadeTransitionOnly", false);
         NIGHT_CLOUD_FADE = CLOUD_TIME_FADE_SETTING.define(builder, "nightFade", "Cloud fade during the night.");
+        NIGHT_CLOUD_FADE_TRANSITION_ONLY = builder.define("nightFadeTransitionOnly", false);
         SHADER_PACK_WARNINGS_ENABLED = builder
                 .comment("Show compatibility warnings for incompatible or unknown shader packs.")
                 .define("shaderPackWarningsEnabled", true);
