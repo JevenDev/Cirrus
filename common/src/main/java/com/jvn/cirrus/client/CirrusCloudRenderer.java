@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.util.IdentityHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
@@ -79,6 +80,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private CloudMaskUniforms cachedMaskUniforms;
     private long cloudUniformFrame;
     private float timeOpacity = 1.0F;
+    private boolean celestialLighting;
     private DynamicTexture shaderPackWeatherTexture;
     private int[] baseCloudPixels;
     private int cloudTextureWidth;
@@ -249,6 +251,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         double cloudTime = ticks + partialTick;
         double windSample = cloudTime * 0.03 / WORLD_SCALE;
         boolean shaderPackInUse = CirrusShaderPackCompat.isShaderPackInUse();
+        celestialLighting = level.effects().skyType() == DimensionSpecialEffects.SkyType.NORMAL;
         float timeOfDay = level.getTimeOfDay(partialTick);
         Vector3f sunWorldDirection = CirrusCelestialRenderState.sunDirection(
                 new Vector3f(),
@@ -840,7 +843,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 weatherPrecomposed
                         ? 0.0F : thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue(),
                 lightning,
-                timeOpacity
+                timeOpacity,
+                celestialLighting
         );
     }
 
@@ -1244,13 +1248,14 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 float currentRainCloudCoverage,
                 float currentThunderCloudCoverage,
                 LightningState lightning,
-                float currentTimeOpacity
+                float currentTimeOpacity,
+                boolean hasCelestialLighting
         ) {
             if (lastFrame == frame) {
                 return;
             }
             lastFrame = frame;
-            set(enabled, 1.0F);
+            set(enabled, hasCelestialLighting ? 1.0F : 0.0F);
             set(timeOpacity, currentTimeOpacity);
             if (lightDirection == null) {
                 return;
