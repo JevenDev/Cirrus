@@ -3,6 +3,7 @@ package com.jvn.cirrus.mixin;
 import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusSkyPalette;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
+import com.jvn.cirrus.client.compat.fog.FogModCompat;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.config.CirrusConfig;
@@ -46,7 +47,7 @@ public abstract class FogRendererMixin {
     ) {
         cirrus$terrainFadeStrength = 0.0F;
         cirrus$farPlaneDistance = renderDistanceChunks * 16.0F;
-        if (!shouldMatchSky(camera, level)) {
+        if (FogModCompat.controlsFogColor() || !shouldMatchSky(camera, level)) {
             return;
         }
 
@@ -96,7 +97,8 @@ public abstract class FogRendererMixin {
         FogData fogData = cir.getReturnValue();
         fogData.renderDistanceStart =
                 cirrus$softenTerrainFogTransition(fogData.renderDistanceStart);
-        if (!CirrusCloudMode.isActive(minecraft.options.getCloudStatus())
+        if (FogModCompat.controlsFogDistance()
+                || !CirrusCloudMode.isActive(minecraft.options.getCloudStatus())
                 || camera.getFluidInCamera() != FogType.NONE
                 || hasVisibilityEffect(camera)
                 || minecraft.gui.hud.getBossOverlay().shouldCreateWorldFog()) {
@@ -107,6 +109,9 @@ public abstract class FogRendererMixin {
     }
 
     private float cirrus$softenTerrainFogTransition(float vanillaStart) {
+        if (FogModCompat.controlsFogDistance()) {
+            return vanillaStart;
+        }
         if (cirrus$terrainFadeStrength < 0.002F) {
             return vanillaStart;
         }
