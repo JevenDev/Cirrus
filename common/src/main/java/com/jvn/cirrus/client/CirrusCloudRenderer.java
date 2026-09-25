@@ -2,6 +2,7 @@ package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
+import com.jvn.cirrus.client.compat.fog.FogModCompat;
 import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusSunScissor;
@@ -343,8 +344,21 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         boolean preserveVanillaFog = hasVisibilityLimitingFog(level, cameraX, cameraZ);
 
         try {
+            boolean externalFogDistance = FogModCompat.controlsFogDistance();
+            if (externalFogDistance) {
+                Minecraft minecraft = Minecraft.getInstance();
+                // cloud and distant-horizon passes can enter with sky fog or disabled fog
+                FogRenderer.setupFog(
+                        minecraft.gameRenderer.getMainCamera(),
+                        FogRenderer.FogMode.FOG_TERRAIN,
+                        minecraft.gameRenderer.getRenderDistance(),
+                        level.effects().isFoggyAt(Mth.floor(cameraX), Mth.floor(cameraZ))
+                                || minecraft.gui.getBossOverlay().shouldCreateWorldFog(),
+                        partialTick
+                );
+            }
             FogRenderer.levelFogColor();
-            if (!preserveVanillaFog) {
+            if (!externalFogDistance && !preserveVanillaFog) {
                 RenderSystem.setShaderFogStart(Math.max(0.0F, distanceBlocks - fadeLength));
                 RenderSystem.setShaderFogEnd(distanceBlocks);
                 RenderSystem.setShaderFogShape(FogShape.CYLINDER);

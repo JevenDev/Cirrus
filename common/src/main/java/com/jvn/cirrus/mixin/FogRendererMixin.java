@@ -1,6 +1,7 @@
 package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.CirrusSkyPalette;
+import com.jvn.cirrus.client.compat.fog.FogModCompat;
 import com.jvn.cirrus.client.util.CirrusCelestialTransform;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.config.CirrusConfig;
@@ -37,7 +38,7 @@ public abstract class FogRendererMixin {
             float darkenWorldAmount,
             CallbackInfo ci
     ) {
-        if (!shouldMatchSky(camera, level)) {
+        if (FogModCompat.controlsFogColor() || !shouldMatchSky(camera, level)) {
             return;
         }
 
@@ -82,7 +83,8 @@ public abstract class FogRendererMixin {
             float partialTick,
             CallbackInfo ci
     ) {
-        if (fogMode != FogRenderer.FogMode.FOG_TERRAIN
+        if (FogModCompat.controlsFogDistance()
+                || fogMode != FogRenderer.FogMode.FOG_TERRAIN
                 || foggy
                 || !(camera.getEntity().level() instanceof ClientLevel level)
                 || !shouldMatchSky(camera, level)) {
