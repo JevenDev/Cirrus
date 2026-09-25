@@ -18,6 +18,9 @@ configurations {
         canBeResolved = true
         canBeConsumed = false
     }
+    forgeRuntimeLibrary {
+        exclude group: 'org.jetbrains', module: 'annotations'
+    }
     compileClasspath.extendsFrom common
     runtimeClasspath.extendsFrom common
     developmentNeoForge.extendsFrom common
@@ -44,10 +47,8 @@ dependencies {
     // Re-declare the small runtime libraries so NeoForge exposes them to YACL's module.
     include "org.quiltmc.parsers:json:0.2.1"
     include "org.quiltmc.parsers:gson:0.2.1"
-    include "org.jetbrains:annotations:24.0.1"
     forgeRuntimeLibrary "org.quiltmc.parsers:json:0.2.1"
     forgeRuntimeLibrary "org.quiltmc.parsers:gson:0.2.1"
-    forgeRuntimeLibrary "org.jetbrains:annotations:24.0.1"
 }
 
 tasks.named('processResources', ProcessResources).configure {
