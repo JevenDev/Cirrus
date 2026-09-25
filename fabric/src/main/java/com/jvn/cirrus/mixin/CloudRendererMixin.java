@@ -1,6 +1,7 @@
 package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.CirrusCloudAttachment;
+import com.jvn.cirrus.client.CirrusCloudDimensions;
 import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusRenderers;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
@@ -27,6 +28,7 @@ public abstract class CloudRendererMixin {
             ProfilerFiller profiler,
             CallbackInfo ci
     ) {
+        CirrusCloudDimensions.reload(resourceManager);
         CirrusRenderers.clouds().invalidate();
         CirrusCloudAttachment.invalidate();
     }

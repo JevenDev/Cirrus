@@ -1,6 +1,5 @@
 package com.jvn.cirrus.client;
 
-import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
@@ -52,8 +51,8 @@ public final class CirrusCloudAttachment {
             return new Vec3(0.0, 128.0, 0.0);
         }
 
-        float baseCloudHeight = CirrusRenderContext.cloudHeight(level);
-        if (Float.isNaN(baseCloudHeight)) {
+        float baseCloudHeight = CirrusCloudDimensions.cloudHeight(level);
+        if (Float.isNaN(baseCloudHeight) || CirrusCloudTimeFade.opacity(level, partialTick) <= 0.0F) {
             return new Vec3(0.0, 128.0, 0.0);
         }
 
