@@ -29,6 +29,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -357,7 +358,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 rainLevel,
                 thunderLevel,
                 lightning,
-                cloudTexture.weatherPrecomposed()
+                cloudTexture.weatherPrecomposed(),
+                level.dimensionType().skybox() == DimensionType.Skybox.OVERWORLD
         );
 
         for (int layerIndex = 0; layerIndex < enabledLayerCount; layerIndex++) {
@@ -700,9 +702,10 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             float rainLevel,
             float thunderLevel,
             LightningState lightning,
-            boolean weatherPrecomposed
+            boolean weatherPrecomposed,
+            boolean celestialLighting
     ) {
-        CirrusShaderUniforms.setUniform(shader, "CirrusEnabled", true);
+        CirrusShaderUniforms.setUniform(shader, "CirrusEnabled", celestialLighting);
         CirrusUniform lightDirection = shader.getUniform("CirrusLightDirection");
         if (lightDirection == null) {
             return;
