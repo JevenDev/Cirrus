@@ -5,10 +5,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.jvn.cirrus.Cirrus;
+import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.config.CirrusConfigSpec;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 
 import java.io.IOException;
@@ -20,17 +21,17 @@ import java.util.Set;
 public final class CirrusCloudDimensions {
     private static final String DIRECTORY = "cirrus/cloud_dimensions";
     private static final float FALLBACK_HEIGHT = 192.0F;
-    private static Map<ResourceLocation, Rule> rules = Map.of();
+    private static Map<Identifier, Rule> rules = Map.of();
 
     private CirrusCloudDimensions() {
     }
 
     public static void reload(ResourceManager resourceManager) {
-        Map<ResourceLocation, Rule> loaded = new HashMap<>();
+        Map<Identifier, Rule> loaded = new HashMap<>();
         resourceManager.listResources(DIRECTORY, id -> id.getPath().endsWith(".json"))
                 .forEach((id, resource) -> {
                     String path = id.getPath();
-                    ResourceLocation dimension = ResourceLocation.fromNamespaceAndPath(
+                    Identifier dimension = Identifier.fromNamespaceAndPath(
                             id.getNamespace(), path.substring(DIRECTORY.length() + 1, path.length() - 5)
                     );
                     try (Reader reader = resource.openAsReader()) {
@@ -43,20 +44,20 @@ public final class CirrusCloudDimensions {
         rules = Map.copyOf(loaded);
     }
 
-    public static Set<ResourceLocation> dimensions() {
+    public static Set<Identifier> dimensions() {
         return rules.keySet();
     }
 
-    public static boolean defaultEnabled(ResourceLocation dimension) {
+    public static boolean defaultEnabled(Identifier dimension) {
         Rule rule = rules.get(dimension);
         return rule != null && rule.enabled();
     }
 
-    public static boolean enabled(ResourceLocation dimension) {
+    public static boolean enabled(Identifier dimension) {
         return CirrusConfig.CLOUD_DIMENSIONS.get().getOrDefault(dimension.toString(), defaultEnabled(dimension));
     }
 
-    public static void setEnabled(ResourceLocation dimension, boolean enabled) {
+    public static void setEnabled(Identifier dimension, boolean enabled) {
         Map<String, Boolean> overrides = new HashMap<>(CirrusConfig.CLOUD_DIMENSIONS.get());
         if (enabled == defaultEnabled(dimension)) {
             overrides.remove(dimension.toString());
@@ -67,16 +68,16 @@ public final class CirrusCloudDimensions {
         CirrusCloudAttachment.invalidate();
     }
 
-    public static int defaultTint(ResourceLocation dimension) {
+    public static int defaultTint(Identifier dimension) {
         Rule rule = rules.get(dimension);
         return rule == null ? 0xFFFFFF : rule.tint();
     }
 
-    public static int tint(ResourceLocation dimension) {
+    public static int tint(Identifier dimension) {
         return CirrusConfig.CLOUD_DIMENSION_TINTS.get().getOrDefault(dimension.toString(), defaultTint(dimension));
     }
 
-    public static void setTint(ResourceLocation dimension, int tint) {
+    public static void setTint(Identifier dimension, int tint) {
         Map<String, Integer> overrides = new HashMap<>(CirrusConfig.CLOUD_DIMENSION_TINTS.get());
         if (tint == defaultTint(dimension)) {
             overrides.remove(dimension.toString());
@@ -87,14 +88,13 @@ public final class CirrusCloudDimensions {
     }
 
     public static float cloudHeight(ClientLevel level) {
-        if (level == null || !enabled(level.dimension().location())) {
+        if (level == null || !enabled(level.dimension().identifier())) {
             return Float.NaN;
         }
-        Rule rule = rules.get(level.dimension().location());
+        Rule rule = rules.get(level.dimension().identifier());
         Float height = rule != null ? rule.cloudHeight() : null;
         if (height == null) {
-            Integer configuredHeight = level.dimensionType().cloudHeight().orElse(null);
-            height = configuredHeight != null ? configuredHeight.floatValue() : FALLBACK_HEIGHT;
+            height = CirrusRenderContext.cloudHeight(level);
         }
         return Float.isFinite(height) ? height : FALLBACK_HEIGHT;
     }

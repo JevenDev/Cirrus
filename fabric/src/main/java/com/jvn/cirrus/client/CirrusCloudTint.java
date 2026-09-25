@@ -1,5 +1,6 @@
 package com.jvn.cirrus.client;
 
+import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.config.CirrusConfig;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -14,13 +15,8 @@ public final class CirrusCloudTint {
     }
 
     public static Vec3 color(ClientLevel level, float partialTick) {
-        int cloudColor = level.getCloudColor(partialTick);
-        Vec3 color = new Vec3(
-                ARGB.red(cloudColor) / 255.0,
-                ARGB.green(cloudColor) / 255.0,
-                ARGB.blue(cloudColor) / 255.0
-        )
-                .multiply(Vec3.fromRGB24(CirrusCloudDimensions.tint(level.dimension().location())));
+        Vec3 color = CirrusRenderContext.cloudColor(partialTick)
+                .multiply(fromRgb(CirrusCloudDimensions.tint(level.dimension().identifier())));
         return CirrusConfig.CLOUD_TIME_TINT_ENABLED.get()
                 ? color.multiply(timeTint(CirrusCloudTimeFade.dayTime(level, partialTick))) : color;
     }
@@ -34,7 +30,7 @@ public final class CirrusCloudTint {
             double elapsed = (tick - start + DAY_TICKS) % DAY_TICKS;
             if (elapsed <= duration) {
                 float amount = CirrusEasing.smoothstep((float)(elapsed / duration));
-                return Vec3.fromRGB24(tint(previous)).lerp(Vec3.fromRGB24(tint(phase)), amount);
+                return fromRgb(tint(previous)).lerp(fromRgb(tint(phase)), amount);
             }
         }
         return new Vec3(1.0, 1.0, 1.0);
@@ -47,5 +43,13 @@ public final class CirrusCloudTint {
             case 2 -> CirrusConfig.EVENING_CLOUD_TINT.get();
             default -> CirrusConfig.NIGHT_CLOUD_TINT.get();
         };
+    }
+
+    private static Vec3 fromRgb(int color) {
+        return new Vec3(
+                ARGB.red(color) / 255.0,
+                ARGB.green(color) / 255.0,
+                ARGB.blue(color) / 255.0
+        );
     }
 }

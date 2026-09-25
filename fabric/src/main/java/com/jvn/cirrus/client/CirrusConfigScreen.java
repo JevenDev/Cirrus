@@ -19,7 +19,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import com.jvn.cirrus.config.CirrusConfigSpec;
 
 public final class CirrusConfigScreen {
@@ -220,15 +220,15 @@ public final class CirrusConfigScreen {
     private static OptionGroup cloudDimensionsGroup() {
         var group = OptionGroup.createBuilder()
                 .name(text("cirrus.config.group.cloudDimensions"));
-        var dimensions = new TreeSet<ResourceLocation>(Comparator.comparing(ResourceLocation::toString));
+        var dimensions = new TreeSet<Identifier>(Comparator.comparing(Identifier::toString));
         dimensions.addAll(CirrusCloudDimensions.dimensions());
         CirrusConfig.CLOUD_DIMENSIONS.get().keySet().forEach(id ->
-                dimensions.add(ResourceLocation.parse(id)));
+                dimensions.add(Identifier.parse(id)));
         CirrusConfig.CLOUD_DIMENSION_TINTS.get().keySet().forEach(id ->
-                dimensions.add(ResourceLocation.parse(id)));
+                dimensions.add(Identifier.parse(id)));
         var connection = Minecraft.getInstance().getConnection();
         if (connection != null) {
-            connection.levels().forEach(dimension -> dimensions.add(dimension.location()));
+            connection.levels().forEach(dimension -> dimensions.add(dimension.identifier()));
         }
         for (var dimension : dimensions) {
             group.option(Option.<Boolean>createBuilder()

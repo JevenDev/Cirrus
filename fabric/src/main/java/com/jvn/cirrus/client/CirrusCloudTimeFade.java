@@ -1,8 +1,10 @@
 package com.jvn.cirrus.client;
 
+import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.config.CirrusConfig;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.util.Mth;
 
 public final class CirrusCloudTimeFade {
     private static final double DAY_TICKS = 24000.0;
@@ -18,8 +20,8 @@ public final class CirrusCloudTimeFade {
     }
 
     static double dayTime(ClientLevel level, float partialTick) {
-        return level.dimensionType().fixedTime().isPresent()
-                ? level.dimensionType().fixedTime().getAsLong()
+        return level.dimensionType().hasFixedTime()
+                ? CirrusRenderContext.sunAngle(partialTick) / Mth.TWO_PI * DAY_TICKS
                 : CirrusTimeTransition.canUseVisualTime(level)
                         ? CirrusTimeTransition.visualDayTime(level, partialTick)
                         : level.getDayTime() + partialTick;

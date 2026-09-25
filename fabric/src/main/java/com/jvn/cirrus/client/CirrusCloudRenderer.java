@@ -3,6 +3,7 @@ package com.jvn.cirrus.client;
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
+import com.jvn.cirrus.client.compat.fog.FogModCompat;
 import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
@@ -23,12 +24,12 @@ import java.io.InputStream;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import com.jvn.cirrus.client.render.CirrusShader;
-import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -341,9 +342,12 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             float distanceBlocks = distanceChunks * 16.0F;
             float fadeLength = Math.max(32.0F, distanceBlocks * 0.15F);
             CirrusShaderUniforms.setUniform(
-                    cloudShader, "FogStart", Math.max(0.0F, distanceBlocks - fadeLength)
+                    cloudShader, "FogStart",
+                    FogModCompat.fogStart(Math.max(0.0F, distanceBlocks - fadeLength))
             );
-            CirrusShaderUniforms.setUniform(cloudShader, "FogEnd", distanceBlocks);
+            CirrusShaderUniforms.setUniform(
+                    cloudShader, "FogEnd", FogModCompat.fogEnd(distanceBlocks)
+            );
             Vector4f fogColor = CirrusRenderContext.fogColor();
             if (fogColor != null) {
                 CirrusShaderUniforms.setUniform(
@@ -380,7 +384,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     thunderLevel,
                     lightning,
                     cloudTexture.weatherPrecomposed(),
-                    level.effects().skyType() == DimensionSpecialEffects.SkyType.OVERWORLD
+                    level.dimensionType().skybox() == DimensionType.Skybox.OVERWORLD
             );
         }
 

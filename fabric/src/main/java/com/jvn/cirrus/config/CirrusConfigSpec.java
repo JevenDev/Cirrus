@@ -6,7 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -310,7 +310,7 @@ public final class CirrusConfigSpec {
             Map<String, Boolean> dimensions = new LinkedHashMap<>();
             value.forEach((id, enabled) -> {
                 if (id == null || !id.contains(":")
-                        || ResourceLocation.tryParse(id) == null || enabled == null) {
+                        || Identifier.tryParse(id) == null || enabled == null) {
                     throw new IllegalArgumentException("Invalid cloud dimension rule: " + id);
                 }
                 dimensions.put(id, enabled);
@@ -359,7 +359,7 @@ public final class CirrusConfigSpec {
             }
             Map<String, Integer> tints = new LinkedHashMap<>();
             value.forEach((id, color) -> {
-                if (id == null || !id.contains(":") || ResourceLocation.tryParse(id) == null
+                if (id == null || !id.contains(":") || Identifier.tryParse(id) == null
                         || color == null || color < 0 || color > 0xFFFFFF) {
                     throw new IllegalArgumentException("Invalid cloud dimension tint: " + id);
                 }

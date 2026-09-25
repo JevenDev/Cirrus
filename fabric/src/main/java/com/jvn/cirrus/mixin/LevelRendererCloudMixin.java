@@ -63,7 +63,7 @@ public abstract class LevelRendererCloudMixin {
         DistantHorizonsCompat.setBeforeApplyShaderCallback(
                 DistantHorizonsCompat.shouldPrioritizeCirrusClouds()
                         && level != null
-                        && CirrusCloudDimensions.enabled(level.dimension().location())
+                        && CirrusCloudDimensions.enabled(level.dimension().identifier())
                         ? cirrus$renderCloudsIntoDistantHorizons
                         : null
         );
@@ -113,7 +113,7 @@ public abstract class LevelRendererCloudMixin {
                 || dhProjectionMatrix.length != 16
                 || CirrusRenderContext.cloudsRenderedIntoDistantHorizons()
                 || !CirrusRenderContext.isReady()
-                || !CirrusCloudDimensions.enabled(level.dimension().location())
+                || !CirrusCloudDimensions.enabled(level.dimension().identifier())
                 || CirrusCloudTimeFade.opacity(level, CirrusRenderContext.partialTick()) <= 0.0F
                 || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
             return;
