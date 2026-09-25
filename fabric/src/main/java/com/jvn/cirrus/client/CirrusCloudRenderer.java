@@ -23,6 +23,7 @@ import java.io.InputStream;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import com.jvn.cirrus.client.render.CirrusShader;
+import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
@@ -378,7 +379,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     rainLevel,
                     thunderLevel,
                     lightning,
-                    cloudTexture.weatherPrecomposed()
+                    cloudTexture.weatherPrecomposed(),
+                    level.effects().skyType() == DimensionSpecialEffects.SkyType.OVERWORLD
             );
         }
 
@@ -739,9 +741,10 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             float rainLevel,
             float thunderLevel,
             LightningState lightning,
-            boolean weatherPrecomposed
+            boolean weatherPrecomposed,
+            boolean celestialLighting
     ) {
-        CirrusShaderUniforms.setUniform(shader, "CirrusEnabled", true);
+        CirrusShaderUniforms.setUniform(shader, "CirrusEnabled", celestialLighting);
         CirrusUniform lightDirection = shader.getUniform("CirrusLightDirection");
         if (lightDirection == null) {
             return;
