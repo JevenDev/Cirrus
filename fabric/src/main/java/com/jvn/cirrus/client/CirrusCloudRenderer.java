@@ -7,7 +7,6 @@ import com.jvn.cirrus.client.compat.fog.FogModCompat;
 import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
-import com.jvn.cirrus.client.util.CirrusCelestialTransform;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.client.util.CirrusShaderUniforms;
 import com.jvn.cirrus.client.render.CirrusUniform;
@@ -32,14 +31,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 public final class CirrusCloudRenderer implements AutoCloseable {
     private static final float WORLD_SCALE = 12.0F;
     private static final int TILE_SIZE = 8;
-    private static final float SUN_DISTANCE = 100.0F;
-    private static final float SUN_HALF_SIZE = 30.0F;
     private static final int SUN_SCISSOR_PADDING = 2;
     private static final float MIN_CLIP_W = 1.0E-4F;
     private static final int DISTANT_RING_SEGMENTS = 256;
@@ -81,6 +79,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private boolean weatherTextureLoadAttempted;
 
     public boolean renderSunMask(
+            Matrix4fc sunModelView,
             ClientLevel level,
             Matrix4f frustumMatrix,
             Matrix4f projectionMatrix,
@@ -96,7 +95,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             return false;
         }
 
-        CirrusVertexBuffer.ScissorBox scissor = sunScissor(frustumMatrix, projectionMatrix, partialTick);
+        CirrusVertexBuffer.ScissorBox scissor = sunScissor(sunModelView, projectionMatrix);
         if (scissor == null) {
             return false;
         }
@@ -148,9 +147,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     }
 
     private static CirrusVertexBuffer.ScissorBox sunScissor(
-            Matrix4f frustumMatrix,
-            Matrix4f projectionMatrix,
-            float partialTick
+            Matrix4fc sunModelView,
+            Matrix4f projectionMatrix
     ) {
         Minecraft minecraft = Minecraft.getInstance();
         int framebufferWidth = minecraft.getWindow().getWidth();
@@ -159,15 +157,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             return null;
         }
 
-        Matrix4f sunPose = CirrusCelestialRenderState.sunModelView();
-        if (sunPose == null) {
-            sunPose = CirrusCelestialTransform.bodyModelView(
-                    new Matrix4f(), frustumMatrix,
-                    CirrusRenderContext.sunAngle(partialTick) / Mth.TWO_PI,
-                    CirrusConfig.SUN_ANGLED_ORBIT.get()
-            );
-        }
-        Matrix4f clipTransform = new Matrix4f(projectionMatrix).mul(sunPose);
+        Matrix4f clipTransform = new Matrix4f(projectionMatrix).mul(sunModelView);
         float minimumX = Float.POSITIVE_INFINITY;
         float minimumY = Float.POSITIVE_INFINITY;
         float maximumX = Float.NEGATIVE_INFINITY;
@@ -178,9 +168,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         for (int xSign = -1; xSign <= 1; xSign += 2) {
             for (int zSign = -1; zSign <= 1; zSign += 2) {
                 Vector4f clip = clipTransform.transform(new Vector4f(
-                        xSign * SUN_HALF_SIZE,
-                        SUN_DISTANCE,
-                        zSign * SUN_HALF_SIZE,
+                        xSign,
+                        0.0F,
+                        zSign,
                         1.0F
                 ));
                 if (clip.w <= MIN_CLIP_W) {
