@@ -321,7 +321,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         float oldShaderAlpha = oldShaderColor[3];
         float distanceBlocks = distanceChunks * 16.0F;
         float fadeLength = Math.max(32.0F, distanceBlocks * 0.15F);
-        Vec3 cloudColor = level.getCloudColor(partialTick);
+        Vec3 cloudColor = CirrusCloudTint.color(level, partialTick);
         double lowerHeight = cloudHeight
                 + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                 - cameraY

@@ -14,12 +14,15 @@ public final class CirrusCloudTimeFade {
     }
 
     public static float opacity(ClientLevel level, float partialTick) {
-        double time = level.dimensionType().fixedTime().isPresent()
+        return opacity(dayTime(level, partialTick));
+    }
+
+    static double dayTime(ClientLevel level, float partialTick) {
+        return level.dimensionType().fixedTime().isPresent()
                 ? level.dimensionType().fixedTime().getAsLong()
                 : CirrusTimeTransition.canUseVisualTime(level)
                         ? CirrusTimeTransition.visualDayTime(level, partialTick)
                         : level.getDayTime() + partialTick;
-        return opacity(time);
     }
 
     public static float opacity(double dayTime) {

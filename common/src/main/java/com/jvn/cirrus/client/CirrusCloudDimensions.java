@@ -6,6 +6,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
+import com.jvn.cirrus.config.CirrusConfigSpec;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -66,6 +67,25 @@ public final class CirrusCloudDimensions {
         CirrusCloudAttachment.invalidate();
     }
 
+    public static int defaultTint(ResourceLocation dimension) {
+        Rule rule = rules.get(dimension);
+        return rule == null ? 0xFFFFFF : rule.tint();
+    }
+
+    public static int tint(ResourceLocation dimension) {
+        return CirrusConfig.CLOUD_DIMENSION_TINTS.get().getOrDefault(dimension.toString(), defaultTint(dimension));
+    }
+
+    public static void setTint(ResourceLocation dimension, int tint) {
+        Map<String, Integer> overrides = new HashMap<>(CirrusConfig.CLOUD_DIMENSION_TINTS.get());
+        if (tint == defaultTint(dimension)) {
+            overrides.remove(dimension.toString());
+        } else {
+            overrides.put(dimension.toString(), tint);
+        }
+        CirrusConfig.CLOUD_DIMENSION_TINTS.set(overrides);
+    }
+
     public static float cloudHeight(ClientLevel level) {
         if (level == null || !enabled(level.dimension().location())) {
             return Float.NaN;
@@ -76,7 +96,7 @@ public final class CirrusCloudDimensions {
         return Float.isFinite(height) ? height : FALLBACK_HEIGHT;
     }
 
-    public record Rule(boolean enabled, Float cloudHeight) {
+    public record Rule(boolean enabled, Float cloudHeight, int tint) {
         public static Rule parse(JsonElement element) {
             if (!element.isJsonObject()) {
                 throw new IllegalArgumentException("Cloud dimension rule must be an object");
@@ -97,7 +117,8 @@ public final class CirrusCloudDimensions {
                     throw new IllegalArgumentException("Cloud height must be a finite number");
                 }
             }
-            return new Rule(enabled.getAsBoolean(), height);
+            int tint = object.has("tint") ? CirrusConfigSpec.parseRgb(object.get("tint")) : 0xFFFFFF;
+            return new Rule(enabled.getAsBoolean(), height, tint);
         }
     }
 }
