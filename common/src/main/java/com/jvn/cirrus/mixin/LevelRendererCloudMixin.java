@@ -15,7 +15,10 @@ import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.jvn.cirrus.client.CirrusShaders;
 import com.jvn.cirrus.config.CirrusConfig;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CloudStatus;
@@ -284,38 +287,31 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
         }
     }
 
-    @Inject(
+    @WrapOperation(
             method = "renderSky",
             at = @At(
                     value = "INVOKE",
                     target = "Lcom/mojang/blaze3d/vertex/BufferUploader;drawWithShader("
                             + "Lcom/mojang/blaze3d/vertex/MeshData;)V",
-                    ordinal = 1,
-                    shift = At.Shift.BEFORE
+                    ordinal = 1
             )
     )
-    private void cirrus$maskSunBehindClouds(
-            Matrix4f frustumMatrix,
-            Matrix4f projectionMatrix,
-            float partialTick,
-            Camera camera,
-            boolean isFoggy,
-            Runnable skyFogSetup,
-            CallbackInfo ci
-    ) {
+    private void cirrus$maskSunBehindClouds(MeshData mesh, Operation<Void> original) {
         if (!CirrusCelestialRenderState.hasExternalSun()) {
-            cirrus$beginSunMask();
+            cirrus$beginSunMask(mesh);
         }
+        original.call(mesh);
     }
 
     @Override
-    public boolean cirrus$beginSunMask() {
+    public boolean cirrus$beginSunMask(MeshData sunMesh) {
         if (level == null
                 || CirrusShaderPackCompat.isShaderPackInUse()
                 || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
             return false;
         }
         boolean maskRendered = cirrus$cloudRenderer.renderSunMask(
+                sunMesh,
                 level,
                 cirrus$frameFrustumMatrix,
                 cirrus$frameProjectionMatrix,

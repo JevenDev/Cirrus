@@ -70,7 +70,7 @@ public abstract class CelestialRendererMixin {
     private static void cirrus$maskSun(MeshData mesh, Operation<Void> original) {
         CirrusSunMask mask = (CirrusSunMask)Minecraft.getInstance().levelRenderer;
         ShaderInstance shader = RenderSystem.getShader();
-        boolean masked = cirrus$renderingSun && mask.cirrus$beginSunMask();
+        boolean masked = cirrus$renderingSun && mask.cirrus$beginSunMask(mesh);
         try {
             original.call(mesh);
         } finally {
