@@ -14,10 +14,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SkyRenderer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.MoonPhase;
+import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = SkyRenderer.class, priority = 900)
@@ -135,15 +137,23 @@ public abstract class SkyRendererMixin {
         ci.cancel();
     }
 
-    @Inject(method = "renderSun", at = @At("HEAD"))
-    private void cirrus$maskSun(RenderPass renderPass, float rainBrightness, PoseStack poseStack, CallbackInfo ci) {
+    @ModifyArg(
+            method = "renderSun",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/DynamicGpuData;writeTransform(Lorg/joml/Matrix4f;Lorg/joml/Vector4f;)Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;"
+            ),
+            index = 0
+    )
+    private Matrix4f cirrus$maskSun(Matrix4f sunModelView) {
         if (!CirrusRenderContext.isReady()
                 || CirrusShaderPackCompat.isShaderPackInUse()
                 || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudStatus())) {
-            return;
+            return sunModelView;
         }
 
         cirrus$sunMaskActive = CirrusRenderers.clouds().renderSunMask(
+                sunModelView,
                 CirrusRenderContext.level(),
                 CirrusRenderContext.frustumMatrix(),
                 CirrusRenderContext.projectionMatrix(),
@@ -153,6 +163,7 @@ public abstract class SkyRendererMixin {
                 CirrusRenderContext.camera().position().y,
                 CirrusRenderContext.camera().position().z
         );
+        return sunModelView;
     }
 
     @Inject(method = "renderSun", at = @At("TAIL"))
