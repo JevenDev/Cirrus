@@ -79,12 +79,20 @@ public final class CirrusConfigScreen {
                         .name(text("cirrus.config.group.cloudTimeFade"))
                         .option(percentageOption("cirrus.config.clouds.dayFade",
                                 CirrusConfig.DAY_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
+                        .option(booleanOption("cirrus.config.clouds.dayFadeTransitionOnly",
+                                CirrusConfig.DAY_CLOUD_FADE_TRANSITION_ONLY))
                         .option(percentageOption("cirrus.config.clouds.noonFade",
                                 CirrusConfig.NOON_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
+                        .option(booleanOption("cirrus.config.clouds.noonFadeTransitionOnly",
+                                CirrusConfig.NOON_CLOUD_FADE_TRANSITION_ONLY))
                         .option(percentageOption("cirrus.config.clouds.eveningFade",
                                 CirrusConfig.EVENING_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
+                        .option(booleanOption("cirrus.config.clouds.eveningFadeTransitionOnly",
+                                CirrusConfig.EVENING_CLOUD_FADE_TRANSITION_ONLY))
                         .option(percentageOption("cirrus.config.clouds.nightFade",
                                 CirrusConfig.NIGHT_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
+                        .option(booleanOption("cirrus.config.clouds.nightFadeTransitionOnly",
+                                CirrusConfig.NIGHT_CLOUD_FADE_TRANSITION_ONLY))
                         .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.cloudWeather"))
