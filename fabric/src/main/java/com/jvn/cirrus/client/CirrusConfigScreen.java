@@ -76,6 +76,14 @@ public final class CirrusConfigScreen {
                         .build())
                 .group(cloudDimensionsGroup())
                 .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.cloudTimeTint"))
+                        .option(booleanOption("cirrus.config.clouds.timeTintEnabled", CirrusConfig.CLOUD_TIME_TINT_ENABLED))
+                        .option(colorOption("cirrus.config.clouds.dayTint", CirrusConfig.DAY_CLOUD_TINT))
+                        .option(colorOption("cirrus.config.clouds.noonTint", CirrusConfig.NOON_CLOUD_TINT))
+                        .option(colorOption("cirrus.config.clouds.eveningTint", CirrusConfig.EVENING_CLOUD_TINT))
+                        .option(colorOption("cirrus.config.clouds.nightTint", CirrusConfig.NIGHT_CLOUD_TINT))
+                        .build())
+                .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.cloudTimeFade"))
                         .option(percentageOption("cirrus.config.clouds.dayFade",
                                 CirrusConfig.DAY_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
@@ -216,6 +224,8 @@ public final class CirrusConfigScreen {
         dimensions.addAll(CirrusCloudDimensions.dimensions());
         CirrusConfig.CLOUD_DIMENSIONS.get().keySet().forEach(id ->
                 dimensions.add(ResourceLocation.parse(id)));
+        CirrusConfig.CLOUD_DIMENSION_TINTS.get().keySet().forEach(id ->
+                dimensions.add(ResourceLocation.parse(id)));
         var connection = Minecraft.getInstance().getConnection();
         if (connection != null) {
             connection.levels().forEach(dimension -> dimensions.add(dimension.location()));
@@ -228,6 +238,14 @@ public final class CirrusConfigScreen {
                             () -> CirrusCloudDimensions.enabled(dimension),
                             enabled -> CirrusCloudDimensions.setEnabled(dimension, enabled))
                     .controller(TickBoxControllerBuilder::create)
+                    .build());
+            group.option(Option.<Color>createBuilder()
+                    .name(Component.translatable("cirrus.config.clouds.dimensionTint", dimension.toString()))
+                    .description(OptionDescription.of(text("cirrus.config.clouds.dimensionTint.description")))
+                    .binding(new Color(CirrusCloudDimensions.defaultTint(dimension)),
+                            () -> new Color(CirrusCloudDimensions.tint(dimension)),
+                            color -> CirrusCloudDimensions.setTint(dimension, color.getRGB() & 0xFFFFFF))
+                    .controller(ColorControllerBuilder::create)
                     .build());
         }
         return group.build();
