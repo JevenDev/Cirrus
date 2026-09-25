@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
+import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -213,6 +214,10 @@ public final class CirrusConfigSpec {
             return register(name, new EnumValue<>(key(name), defaultValue));
         }
 
+        public DimensionMapValue defineDimensions(String name) {
+            return register(name, new DimensionMapValue(key(name)));
+        }
+
         public CirrusConfigSpec build() {
             return new CirrusConfigSpec(values);
         }
@@ -286,6 +291,48 @@ public final class CirrusConfigSpec {
         protected abstract T read(JsonElement element);
 
         protected abstract JsonElement toJson();
+    }
+
+    public static final class DimensionMapValue extends ConfigValue<Map<String, Boolean>> {
+        private DimensionMapValue(String key) {
+            super(key, Map.of());
+        }
+
+        @Override
+        protected Map<String, Boolean> sanitize(Map<String, Boolean> value) {
+            if (value == null) {
+                return getDefault();
+            }
+            Map<String, Boolean> dimensions = new LinkedHashMap<>();
+            value.forEach((id, enabled) -> {
+                if (id == null || !id.contains(":")
+                        || ResourceLocation.tryParse(id) == null || enabled == null) {
+                    throw new IllegalArgumentException("Invalid cloud dimension rule: " + id);
+                }
+                dimensions.put(id, enabled);
+            });
+            return Collections.unmodifiableMap(dimensions);
+        }
+
+        @Override
+        protected Map<String, Boolean> read(JsonElement element) {
+            Map<String, Boolean> dimensions = new LinkedHashMap<>();
+            element.getAsJsonObject().entrySet().forEach(entry -> {
+                JsonElement enabled = entry.getValue();
+                if (!enabled.isJsonPrimitive() || !enabled.getAsJsonPrimitive().isBoolean()) {
+                    throw new IllegalArgumentException("Cloud dimension rules must be booleans");
+                }
+                dimensions.put(entry.getKey(), enabled.getAsBoolean());
+            });
+            return dimensions;
+        }
+
+        @Override
+        protected JsonElement toJson() {
+            JsonObject dimensions = new JsonObject();
+            get().forEach(dimensions::addProperty);
+            return dimensions;
+        }
     }
 
     public static final class BooleanValue extends ConfigValue<Boolean> {
