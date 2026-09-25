@@ -78,6 +78,12 @@ public final class CirrusConfig {
     public static final CirrusConfigSpec.DoubleValue NIGHT_CLOUD_FADE;
     public static final CirrusConfigSpec.BooleanValue NIGHT_CLOUD_FADE_TRANSITION_ONLY;
     public static final CirrusConfigSpec.DimensionMapValue CLOUD_DIMENSIONS;
+    public static final CirrusConfigSpec.DimensionTintMapValue CLOUD_DIMENSION_TINTS;
+    public static final CirrusConfigSpec.BooleanValue CLOUD_TIME_TINT_ENABLED;
+    public static final CirrusConfigSpec.IntValue DAY_CLOUD_TINT;
+    public static final CirrusConfigSpec.IntValue NOON_CLOUD_TINT;
+    public static final CirrusConfigSpec.IntValue EVENING_CLOUD_TINT;
+    public static final CirrusConfigSpec.IntValue NIGHT_CLOUD_TINT;
     public static final CirrusConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
     public static final CirrusConfigSpec.BooleanValue SHADER_PACK_WARNINGS_ENABLED;
     public static final CirrusConfigSpec.BooleanValue DISTANT_HORIZONS_COMPATIBILITY;
@@ -190,6 +196,12 @@ public final class CirrusConfig {
                 .comment("Replace vanilla clouds with Cirrus clouds.")
                 .define("enabled", true);
         CLOUD_DIMENSIONS = builder.defineDimensions("dimensions");
+        CLOUD_DIMENSION_TINTS = builder.defineDimensionTints("dimensionTints");
+        CLOUD_TIME_TINT_ENABLED = builder.define("timeTintEnabled", false);
+        DAY_CLOUD_TINT = defineColor(builder, "dayTint", 0xFFD8B0, "Cloud tint during the morning.");
+        NOON_CLOUD_TINT = defineColor(builder, "noonTint", 0xFFFFFF, "Cloud tint around midday.");
+        EVENING_CLOUD_TINT = defineColor(builder, "eveningTint", 0xFFA080, "Cloud tint around sunset.");
+        NIGHT_CLOUD_TINT = defineColor(builder, "nightTint", 0x8695CF, "Cloud tint during the night.");
         DAY_CLOUD_FADE = CLOUD_TIME_FADE_SETTING.define(builder, "dayFade", "Cloud fade during the morning.");
         DAY_CLOUD_FADE_TRANSITION_ONLY = builder.define("dayFadeTransitionOnly", false);
         NOON_CLOUD_FADE = CLOUD_TIME_FADE_SETTING.define(builder, "noonFade", "Cloud fade around midday.");

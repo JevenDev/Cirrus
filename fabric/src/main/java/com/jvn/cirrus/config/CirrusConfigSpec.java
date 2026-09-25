@@ -218,6 +218,10 @@ public final class CirrusConfigSpec {
             return register(name, new DimensionMapValue(key(name)));
         }
 
+        public DimensionTintMapValue defineDimensionTints(String name) {
+            return register(name, new DimensionTintMapValue(key(name)));
+        }
+
         public CirrusConfigSpec build() {
             return new CirrusConfigSpec(values);
         }
@@ -332,6 +336,51 @@ public final class CirrusConfigSpec {
             JsonObject dimensions = new JsonObject();
             get().forEach(dimensions::addProperty);
             return dimensions;
+        }
+    }
+
+    public static int parseRgb(JsonElement element) {
+        if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()
+                || !element.getAsString().matches("#[0-9a-fA-F]{6}")) {
+            throw new IllegalArgumentException("Cloud tint must be an RGB color such as #FFFFFF");
+        }
+        return Integer.parseInt(element.getAsString().substring(1), 16);
+    }
+
+    public static final class DimensionTintMapValue extends ConfigValue<Map<String, Integer>> {
+        private DimensionTintMapValue(String key) {
+            super(key, Map.of());
+        }
+
+        @Override
+        protected Map<String, Integer> sanitize(Map<String, Integer> value) {
+            if (value == null) {
+                return getDefault();
+            }
+            Map<String, Integer> tints = new LinkedHashMap<>();
+            value.forEach((id, color) -> {
+                if (id == null || !id.contains(":") || Identifier.tryParse(id) == null
+                        || color == null || color < 0 || color > 0xFFFFFF) {
+                    throw new IllegalArgumentException("Invalid cloud dimension tint: " + id);
+                }
+                tints.put(id, color);
+            });
+            return Collections.unmodifiableMap(tints);
+        }
+
+        @Override
+        protected Map<String, Integer> read(JsonElement element) {
+            Map<String, Integer> tints = new LinkedHashMap<>();
+            element.getAsJsonObject().entrySet().forEach(entry ->
+                    tints.put(entry.getKey(), parseRgb(entry.getValue())));
+            return tints;
+        }
+
+        @Override
+        protected JsonElement toJson() {
+            JsonObject tints = new JsonObject();
+            get().forEach((id, color) -> tints.addProperty(id, String.format(Locale.ROOT, "#%06X", color)));
+            return tints;
         }
     }
 
