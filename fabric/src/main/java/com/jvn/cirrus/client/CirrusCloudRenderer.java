@@ -89,8 +89,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             double cameraY,
             double cameraZ
     ) {
-        float cloudHeight = CirrusRenderContext.cloudHeight(level);
-        if (Float.isNaN(cloudHeight)) {
+        float cloudHeight = CirrusCloudDimensions.cloudHeight(level);
+        float timeOpacity = CirrusCloudTimeFade.opacity(level, partialTick);
+        if (Float.isNaN(cloudHeight) || timeOpacity <= 0.0F) {
             return false;
         }
 
@@ -128,19 +129,19 @@ public final class CirrusCloudRenderer implements AutoCloseable {
 
         drawMaskLayer(lowerMesh, LOWER_LAYER, frustumMatrix, projectionMatrix, maskShader, scissor,
                 cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
-                cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
+                cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel, timeOpacity);
         if (upperEnabled) {
             drawMaskLayer(upperMesh, UPPER_LAYER, frustumMatrix, projectionMatrix, maskShader, scissor,
                     cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                             + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
-                    cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
+                    cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel, timeOpacity);
         }
         if (topEnabled) {
             drawMaskLayer(topMesh, TOP_LAYER, frustumMatrix, projectionMatrix, maskShader, scissor,
                     cloudHeight + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                             + CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
                             + CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get() - cameraY + 0.33,
-                    cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel);
+                    cameraSampleX, cameraSampleZ, windSample, rainLevel, thunderLevel, timeOpacity);
         }
         return true;
     }
@@ -247,7 +248,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             double cameraSampleZ,
             double windSample,
             float rainLevel,
-            float thunderLevel
+            float thunderLevel,
+            float timeOpacity
     ) {
         if (mesh.buffer == null) {
             return;
@@ -258,7 +260,10 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         poseStack.mulPose(frustumMatrix);
         poseStack.scale(WORLD_SCALE, 1.0F, WORLD_SCALE);
         poseStack.translate(-(sampleX - mesh.cachedAnchorX), relativeHeight, -(sampleZ - mesh.cachedAnchorZ));
-        CirrusShaderUniforms.setUniform(shader, "CirrusLayerOpacity", definition.opacity(rainLevel, thunderLevel));
+        CirrusShaderUniforms.setUniform(
+                shader, "CirrusLayerOpacity",
+                definition.opacity(rainLevel, thunderLevel) * timeOpacity
+        );
         mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader, scissor);
     }
 
@@ -273,8 +278,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             double cameraY,
             double cameraZ
     ) {
-        float cloudHeight = CirrusRenderContext.cloudHeight(level);
-        if (Float.isNaN(cloudHeight)) {
+        float cloudHeight = CirrusCloudDimensions.cloudHeight(level);
+        float timeOpacity = CirrusCloudTimeFade.opacity(level, partialTick);
+        if (Float.isNaN(cloudHeight) || timeOpacity <= 0.0F) {
             return;
         }
 
@@ -341,6 +347,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 : -1.0;
         int enabledLayerCount = 1 + (upperEnabled ? 1 : 0) + (topEnabled ? 1 : 0);
         CirrusShader cloudShader = CirrusShaders.clouds();
+        CirrusShaderUniforms.setUniform(cloudShader, "CirrusTimeOpacity", timeOpacity);
         setCloudEnvironment(
                 cloudShader,
                 sunDirection,

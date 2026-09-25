@@ -3,6 +3,7 @@ package com.jvn.cirrus.config;
 import com.jvn.cirrus.config.CirrusConfigSpec;
 
 public final class CirrusConfig {
+    public static final DoubleSetting CLOUD_TIME_FADE_SETTING = new DoubleSetting(0.0, 0.0, 1.0, 0.05);
     public static final IntSetting CLOUD_RENDER_DISTANCE_SETTING = new IntSetting(64, 2, 128, 1);
     public static final IntSetting DETAILED_CLOUD_RADIUS_SETTING = new IntSetting(64, 2, 128, 1);
     public static final DoubleSetting RAIN_CLOUD_COVERAGE_SETTING = new DoubleSetting(0.55, 0.0, 1.0, 0.05);
@@ -68,6 +69,11 @@ public final class CirrusConfig {
     public static final DoubleSetting END_SKY_SURGE_FREQUENCY_SETTING = new DoubleSetting(3.0, 0.0, 3.0, 0.05);
     public static final DoubleSetting END_SKY_SURGE_STRENGTH_SETTING = new DoubleSetting(1.0, 0.0, 1.0, 0.05);
 
+    public static final CirrusConfigSpec.DoubleValue DAY_CLOUD_FADE;
+    public static final CirrusConfigSpec.DoubleValue NOON_CLOUD_FADE;
+    public static final CirrusConfigSpec.DoubleValue EVENING_CLOUD_FADE;
+    public static final CirrusConfigSpec.DoubleValue NIGHT_CLOUD_FADE;
+    public static final CirrusConfigSpec.DimensionMapValue CLOUD_DIMENSIONS;
     public static final CirrusConfigSpec.BooleanValue CUSTOM_CLOUDS_ENABLED;
     public static final CirrusConfigSpec.BooleanValue SHADER_PACK_WARNINGS_ENABLED;
     public static final CirrusConfigSpec.BooleanValue DISTANT_HORIZONS_COMPATIBILITY;
@@ -179,6 +185,11 @@ public final class CirrusConfig {
         CUSTOM_CLOUDS_ENABLED = builder
                 .comment("Replace vanilla clouds with Cirrus clouds.")
                 .define("enabled", true);
+        CLOUD_DIMENSIONS = builder.defineDimensions("dimensions");
+        DAY_CLOUD_FADE = CLOUD_TIME_FADE_SETTING.define(builder, "dayFade", "Cloud fade during the morning.");
+        NOON_CLOUD_FADE = CLOUD_TIME_FADE_SETTING.define(builder, "noonFade", "Cloud fade around midday.");
+        EVENING_CLOUD_FADE = CLOUD_TIME_FADE_SETTING.define(builder, "eveningFade", "Cloud fade around sunset.");
+        NIGHT_CLOUD_FADE = CLOUD_TIME_FADE_SETTING.define(builder, "nightFade", "Cloud fade during the night.");
         SHADER_PACK_WARNINGS_ENABLED = builder
                 .comment("Show compatibility warnings for incompatible or unknown shader packs.")
                 .define("shaderPackWarningsEnabled", true);

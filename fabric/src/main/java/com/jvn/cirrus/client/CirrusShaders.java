@@ -29,6 +29,7 @@ public final class CirrusShaders {
             true,
             true,
             uniform("ColorModulator", 4, 1.0F, 1.0F, 1.0F, 1.0F),
+            uniform("CirrusTimeOpacity", 1, 1.0F),
             uniform("CirrusEnabled", 1, 0.0F),
             uniform("CirrusLightDirection", 2, 0.0F, 0.0F),
             uniform("CirrusSunWeight", 1, 1.0F),

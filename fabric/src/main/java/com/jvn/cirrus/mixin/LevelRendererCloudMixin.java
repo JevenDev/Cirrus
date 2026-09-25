@@ -1,7 +1,9 @@
 package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.CirrusCloudAttachment;
+import com.jvn.cirrus.client.CirrusCloudDimensions;
 import com.jvn.cirrus.client.CirrusCloudMode;
+import com.jvn.cirrus.client.CirrusCloudTimeFade;
 import com.jvn.cirrus.client.CirrusLightningLocator;
 import com.jvn.cirrus.client.CirrusRenderers;
 import com.jvn.cirrus.client.CirrusShaders;
@@ -65,7 +67,9 @@ public abstract class LevelRendererCloudMixin {
         DistantHorizonsCompat.setBeforeApplyShaderCallback(
                 DistantHorizonsCompat.shouldPrioritizeCirrusClouds()
                         && CirrusRenderContext.hasVisibleClouds()
-                                ? cirrus$renderCloudsIntoDistantHorizons
+                        && level != null
+                        && CirrusCloudDimensions.enabled(level.dimension().identifier())
+                        ? cirrus$renderCloudsIntoDistantHorizons
                         : null
         );
 
@@ -117,6 +121,10 @@ public abstract class LevelRendererCloudMixin {
                 || dhModelViewMatrix.length != 16
                 || !CirrusRenderContext.isReady()
                 || !CirrusRenderContext.hasVisibleClouds()
+                || !CirrusCloudDimensions.enabled(CirrusRenderContext.level().dimension().identifier())
+                || CirrusCloudTimeFade.opacity(
+                        CirrusRenderContext.level(), CirrusRenderContext.partialTick()
+                ) <= 0.0F
                 || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudStatus())) {
             return;
         }
