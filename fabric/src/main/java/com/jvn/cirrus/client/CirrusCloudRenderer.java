@@ -330,7 +330,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             return;
         }
 
-        Vec3 cloudColor = CirrusRenderContext.cloudColor(partialTick);
+        Vec3 cloudColor = CirrusCloudTint.color(level, partialTick);
         double lowerHeight = cloudHeight
                 + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                 - cameraY
