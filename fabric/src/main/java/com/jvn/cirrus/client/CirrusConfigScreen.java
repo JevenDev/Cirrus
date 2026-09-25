@@ -30,8 +30,12 @@ public final class CirrusConfigScreen {
         return YetAnotherConfigLib.createBuilder()
                 .title(text("cirrus.config.title"))
                 .category(cloudCategory())
-                .category(skyColorCategory())
                 .category(skyCategory())
+                .category(starsCategory())
+                .category(auroraCategory())
+                .category(endCategory())
+                .category(dimensionsCategory())
+                .category(compatibilityCategory())
                 .save(CirrusConfig.SPEC::save)
                 .build()
                 .generateScreen(parent);
@@ -41,22 +45,9 @@ public final class CirrusConfigScreen {
         return ConfigCategory.createBuilder()
                 .name(text("cirrus.config.category.clouds"))
                 .tooltip(text("cirrus.config.category.clouds.description"))
+                .option(booleanOption("cirrus.config.clouds.enabled", CirrusConfig.CUSTOM_CLOUDS_ENABLED))
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.cloudGeneral"))
-                        .option(booleanOption("cirrus.config.clouds.enabled", CirrusConfig.CUSTOM_CLOUDS_ENABLED))
-                        .option(booleanOption(
-                                "cirrus.config.clouds.shaderPackWarningsEnabled",
-                                CirrusConfig.SHADER_PACK_WARNINGS_ENABLED
-                        ))
-                        .option(booleanOption(
-                                "cirrus.config.clouds.distantHorizonsCompatibility",
-                                CirrusConfig.DISTANT_HORIZONS_COMPATIBILITY
-                        ))
-                        .option(booleanOption(
-                                "cirrus.config.clouds.syncCloudDistanceWithDistantHorizons",
-                                CirrusConfig.SYNC_CLOUD_DISTANCE_WITH_DISTANT_HORIZONS,
-                                warningDescription("cirrus.config.clouds.syncCloudDistanceWithDistantHorizons")
-                        ))
                         .option(integerOption(
                                 "cirrus.config.clouds.renderDistanceChunks",
                                 CirrusConfig.CLOUD_RENDER_DISTANCE,
@@ -74,68 +65,9 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.TRANSLUCENT_LAYER_OVERLAP
                         ))
                         .build())
-                .group(cloudDimensionsGroup())
-                .group(OptionGroup.createBuilder()
-                        .name(text("cirrus.config.group.cloudTimeTint"))
-                        .option(booleanOption("cirrus.config.clouds.timeTintEnabled", CirrusConfig.CLOUD_TIME_TINT_ENABLED))
-                        .option(colorOption("cirrus.config.clouds.dayTint", CirrusConfig.DAY_CLOUD_TINT))
-                        .option(colorOption("cirrus.config.clouds.noonTint", CirrusConfig.NOON_CLOUD_TINT))
-                        .option(colorOption("cirrus.config.clouds.eveningTint", CirrusConfig.EVENING_CLOUD_TINT))
-                        .option(colorOption("cirrus.config.clouds.nightTint", CirrusConfig.NIGHT_CLOUD_TINT))
-                        .build())
-                .group(OptionGroup.createBuilder()
-                        .name(text("cirrus.config.group.cloudTimeFade"))
-                        .option(percentageOption("cirrus.config.clouds.dayFade",
-                                CirrusConfig.DAY_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
-                        .option(booleanOption("cirrus.config.clouds.dayFadeTransitionOnly",
-                                CirrusConfig.DAY_CLOUD_FADE_TRANSITION_ONLY))
-                        .option(percentageOption("cirrus.config.clouds.noonFade",
-                                CirrusConfig.NOON_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
-                        .option(booleanOption("cirrus.config.clouds.noonFadeTransitionOnly",
-                                CirrusConfig.NOON_CLOUD_FADE_TRANSITION_ONLY))
-                        .option(percentageOption("cirrus.config.clouds.eveningFade",
-                                CirrusConfig.EVENING_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
-                        .option(booleanOption("cirrus.config.clouds.eveningFadeTransitionOnly",
-                                CirrusConfig.EVENING_CLOUD_FADE_TRANSITION_ONLY))
-                        .option(percentageOption("cirrus.config.clouds.nightFade",
-                                CirrusConfig.NIGHT_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
-                        .option(booleanOption("cirrus.config.clouds.nightFadeTransitionOnly",
-                                CirrusConfig.NIGHT_CLOUD_FADE_TRANSITION_ONLY))
-                        .build())
-                .group(OptionGroup.createBuilder()
-                        .name(text("cirrus.config.group.cloudWeather"))
-                        .option(percentageOption(
-                                "cirrus.config.clouds.rainCloudCoverage",
-                                CirrusConfig.RAIN_CLOUD_COVERAGE,
-                                CirrusConfig.RAIN_CLOUD_COVERAGE_SETTING
-                        ))
-                        .option(percentageOption(
-                                "cirrus.config.clouds.thunderCloudCoverage",
-                                CirrusConfig.THUNDER_CLOUD_COVERAGE,
-                                CirrusConfig.THUNDER_CLOUD_COVERAGE_SETTING
-                        ))
-                        .option(booleanOption(
-                                "cirrus.config.clouds.customLightningEnabled",
-                                CirrusConfig.CUSTOM_LIGHTNING_ENABLED
-                        ))
-                        .option(doubleOption(
-                                "cirrus.config.clouds.lightningBoltIntensity",
-                                CirrusConfig.LIGHTNING_BOLT_INTENSITY,
-                                CirrusConfig.LIGHTNING_BOLT_INTENSITY_SETTING,
-                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
-                        ))
-                        .option(booleanOption(
-                                "cirrus.config.clouds.hideLightningCloudFlashes",
-                                CirrusConfig.HIDE_LIGHTNING_CLOUD_FLASHES
-                        ))
-                        .option(percentageOption(
-                                "cirrus.config.clouds.lightningCloudFlashOpacity",
-                                CirrusConfig.LIGHTNING_CLOUD_FLASH_OPACITY,
-                                CirrusConfig.LIGHTNING_CLOUD_FLASH_OPACITY_SETTING
-                        ))
-                        .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.lowerLayer"))
+                        .collapsed(true)
                         .option(enumOption(
                                 "cirrus.config.clouds.lowerLayerStyle",
                                 CirrusConfig.LOWER_LAYER_STYLE,
@@ -162,6 +94,7 @@ public final class CirrusConfigScreen {
                         .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.upperLayer"))
+                        .collapsed(true)
                         .option(booleanOption("cirrus.config.clouds.upperLayerEnabled", CirrusConfig.UPPER_LAYER_ENABLED))
                         .option(enumOption(
                                 "cirrus.config.clouds.upperLayerStyle",
@@ -189,6 +122,7 @@ public final class CirrusConfigScreen {
                         .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.topLayer"))
+                        .collapsed(true)
                         .option(booleanOption("cirrus.config.clouds.topLayerEnabled", CirrusConfig.TOP_LAYER_ENABLED))
                         .option(enumOption(
                                 "cirrus.config.clouds.topLayerStyle",
@@ -214,61 +148,72 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.TOP_LAYER_OPACITY_SETTING
                         ))
                         .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.cloudWeather"))
+                        .collapsed(true)
+                        .option(percentageOption(
+                                "cirrus.config.clouds.rainCloudCoverage",
+                                CirrusConfig.RAIN_CLOUD_COVERAGE,
+                                CirrusConfig.RAIN_CLOUD_COVERAGE_SETTING
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.clouds.thunderCloudCoverage",
+                                CirrusConfig.THUNDER_CLOUD_COVERAGE,
+                                CirrusConfig.THUNDER_CLOUD_COVERAGE_SETTING
+                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.cloudTimeTint"))
+                        .option(booleanOption("cirrus.config.clouds.timeTintEnabled", CirrusConfig.CLOUD_TIME_TINT_ENABLED))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.dayClouds"))
+                        .collapsed(true)
+                        .option(colorOption("cirrus.config.clouds.dayTint", CirrusConfig.DAY_CLOUD_TINT))
+                        .option(percentageOption("cirrus.config.clouds.dayFade",
+                                CirrusConfig.DAY_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
+                        .option(booleanOption("cirrus.config.clouds.dayFadeTransitionOnly",
+                                CirrusConfig.DAY_CLOUD_FADE_TRANSITION_ONLY))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.noonClouds"))
+                        .collapsed(true)
+                        .option(colorOption("cirrus.config.clouds.noonTint", CirrusConfig.NOON_CLOUD_TINT))
+                        .option(percentageOption("cirrus.config.clouds.noonFade",
+                                CirrusConfig.NOON_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
+                        .option(booleanOption("cirrus.config.clouds.noonFadeTransitionOnly",
+                                CirrusConfig.NOON_CLOUD_FADE_TRANSITION_ONLY))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.eveningClouds"))
+                        .collapsed(true)
+                        .option(colorOption("cirrus.config.clouds.eveningTint", CirrusConfig.EVENING_CLOUD_TINT))
+                        .option(percentageOption("cirrus.config.clouds.eveningFade",
+                                CirrusConfig.EVENING_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
+                        .option(booleanOption("cirrus.config.clouds.eveningFadeTransitionOnly",
+                                CirrusConfig.EVENING_CLOUD_FADE_TRANSITION_ONLY))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.nightClouds"))
+                        .collapsed(true)
+                        .option(colorOption("cirrus.config.clouds.nightTint", CirrusConfig.NIGHT_CLOUD_TINT))
+                        .option(percentageOption("cirrus.config.clouds.nightFade",
+                                CirrusConfig.NIGHT_CLOUD_FADE, CirrusConfig.CLOUD_TIME_FADE_SETTING))
+                        .option(booleanOption("cirrus.config.clouds.nightFadeTransitionOnly",
+                                CirrusConfig.NIGHT_CLOUD_FADE_TRANSITION_ONLY))
+                        .build())
                 .build();
     }
 
-    private static OptionGroup cloudDimensionsGroup() {
-        var group = OptionGroup.createBuilder()
-                .name(text("cirrus.config.group.cloudDimensions"));
-        var dimensions = new TreeSet<ResourceLocation>(Comparator.comparing(ResourceLocation::toString));
-        dimensions.addAll(CirrusCloudDimensions.dimensions());
-        CirrusConfig.CLOUD_DIMENSIONS.get().keySet().forEach(id ->
-                dimensions.add(ResourceLocation.parse(id)));
-        CirrusConfig.CLOUD_DIMENSION_TINTS.get().keySet().forEach(id ->
-                dimensions.add(ResourceLocation.parse(id)));
-        var connection = Minecraft.getInstance().getConnection();
-        if (connection != null) {
-            connection.levels().forEach(dimension -> dimensions.add(dimension.location()));
-        }
-        for (var dimension : dimensions) {
-            group.option(Option.<Boolean>createBuilder()
-                    .name(Component.literal(dimension.toString()))
-                    .description(OptionDescription.of(text("cirrus.config.clouds.dimension.description")))
-                    .binding(CirrusCloudDimensions.defaultEnabled(dimension),
-                            () -> CirrusCloudDimensions.enabled(dimension),
-                            enabled -> CirrusCloudDimensions.setEnabled(dimension, enabled))
-                    .controller(TickBoxControllerBuilder::create)
-                    .build());
-            group.option(Option.<Color>createBuilder()
-                    .name(Component.translatable("cirrus.config.clouds.dimensionTint", dimension.toString()))
-                    .description(OptionDescription.of(text("cirrus.config.clouds.dimensionTint.description")))
-                    .binding(new Color(CirrusCloudDimensions.defaultTint(dimension)),
-                            () -> new Color(CirrusCloudDimensions.tint(dimension)),
-                            color -> CirrusCloudDimensions.setTint(dimension, color.getRGB() & 0xFFFFFF))
-                    .controller(ColorControllerBuilder::create)
-                    .build());
-        }
-        return group.build();
-    }
-
-    private static ConfigCategory skyColorCategory() {
+    private static ConfigCategory skyCategory() {
         return ConfigCategory.createBuilder()
-                .name(text("cirrus.config.category.skyColors"))
-                .tooltip(text("cirrus.config.category.skyColors.description"))
+                .name(text("cirrus.config.category.sky"))
+                .tooltip(text("cirrus.config.category.sky.description"))
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.skyGradientGeneral"))
                         .option(booleanOption(
                                 "cirrus.config.sky.skyGradientsEnabled",
                                 CirrusConfig.SKY_GRADIENTS_ENABLED
-                        ))
-                        .option(booleanOption(
-                                "cirrus.config.sky.fogUsesHorizonColor",
-                                CirrusConfig.FOG_USES_HORIZON_COLOR
-                        ))
-                        .option(percentageOption(
-                                "cirrus.config.sky.fogHorizonTintStrength",
-                                CirrusConfig.FOG_HORIZON_TINT_STRENGTH,
-                                CirrusConfig.FOG_HORIZON_TINT_STRENGTH_SETTING
                         ))
                         .option(percentageOption(
                                 "cirrus.config.sky.skyGradientOpacity",
@@ -315,31 +260,22 @@ public final class CirrusConfigScreen {
                         CirrusConfig.NIGHT_GRADIENT_STRENGTH,
                         CirrusConfig.NIGHT_GRADIENT_STRENGTH_SETTING
                 ))
-                .build();
-    }
-
-    private static OptionGroup gradientPhaseGroup(
-            String phase,
-            CirrusConfigSpec.IntValue horizonColor,
-            CirrusConfigSpec.IntValue zenithColor,
-            CirrusConfigSpec.DoubleValue strength,
-            CirrusConfig.DoubleSetting strengthSetting
-    ) {
-        String key = "cirrus.config.sky." + phase;
-        return OptionGroup.createBuilder()
-                .name(text("cirrus.config.group." + phase + "Gradient"))
-                .option(colorOption(key + "HorizonColor", horizonColor))
-                .option(colorOption(key + "ZenithColor", zenithColor))
-                .option(percentageOption(key + "GradientStrength", strength, strengthSetting))
-                .build();
-    }
-
-    private static ConfigCategory skyCategory() {
-        return ConfigCategory.createBuilder()
-                .name(text("cirrus.config.category.sky"))
-                .tooltip(text("cirrus.config.category.sky.description"))
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.fog"))
+                        .collapsed(true)
+                        .option(booleanOption(
+                                "cirrus.config.sky.fogUsesHorizonColor",
+                                CirrusConfig.FOG_USES_HORIZON_COLOR
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.fogHorizonTintStrength",
+                                CirrusConfig.FOG_HORIZON_TINT_STRENGTH,
+                                CirrusConfig.FOG_HORIZON_TINT_STRENGTH_SETTING
+                        ))
+                        .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.time"))
+                        .collapsed(true)
                         .option(booleanOption(
                                 "cirrus.config.sky.smoothTimeTransitions",
                                 CirrusConfig.SMOOTH_TIME_TRANSITIONS
@@ -353,6 +289,7 @@ public final class CirrusConfigScreen {
                         .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.celestialOrbits"))
+                        .collapsed(true)
                         .option(booleanOption(
                                 "cirrus.config.sky.sunAngledOrbit",
                                 CirrusConfig.SUN_ANGLED_ORBIT
@@ -361,15 +298,54 @@ public final class CirrusConfigScreen {
                                 "cirrus.config.sky.moonAngledOrbit",
                                 CirrusConfig.MOON_ANGLED_ORBIT
                         ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.lightning"))
+                        .collapsed(true)
                         .option(booleanOption(
-                                "cirrus.config.sky.starsAngledOrbit",
-                                CirrusConfig.STARS_ANGLED_ORBIT
+                                "cirrus.config.clouds.customLightningEnabled",
+                                CirrusConfig.CUSTOM_LIGHTNING_ENABLED
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.clouds.lightningBoltIntensity",
+                                CirrusConfig.LIGHTNING_BOLT_INTENSITY,
+                                CirrusConfig.LIGHTNING_BOLT_INTENSITY_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
                         ))
                         .option(booleanOption(
-                                "cirrus.config.sky.milkyWayAngledOrbit",
-                                CirrusConfig.MILKY_WAY_ANGLED_ORBIT
+                                "cirrus.config.clouds.hideLightningCloudFlashes",
+                                CirrusConfig.HIDE_LIGHTNING_CLOUD_FLASHES
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.clouds.lightningCloudFlashOpacity",
+                                CirrusConfig.LIGHTNING_CLOUD_FLASH_OPACITY,
+                                CirrusConfig.LIGHTNING_CLOUD_FLASH_OPACITY_SETTING
                         ))
                         .build())
+                .build();
+    }
+
+    private static OptionGroup gradientPhaseGroup(
+            String phase,
+            CirrusConfigSpec.IntValue horizonColor,
+            CirrusConfigSpec.IntValue zenithColor,
+            CirrusConfigSpec.DoubleValue strength,
+            CirrusConfig.DoubleSetting strengthSetting
+    ) {
+        String key = "cirrus.config.sky." + phase;
+        return OptionGroup.createBuilder()
+                .name(text("cirrus.config.group." + phase + "Gradient"))
+                .collapsed(true)
+                .option(colorOption(key + "HorizonColor", horizonColor))
+                .option(colorOption(key + "ZenithColor", zenithColor))
+                .option(percentageOption(key + "GradientStrength", strength, strengthSetting))
+                .build();
+    }
+
+    private static ConfigCategory starsCategory() {
+        return ConfigCategory.createBuilder()
+                .name(text("cirrus.config.category.stars"))
+                .tooltip(text("cirrus.config.category.stars.description"))
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.stars"))
                         .option(booleanOption(
@@ -382,6 +358,14 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.STAR_DENSITY_SETTING,
                                 value -> Component.literal(String.format(Locale.ROOT, "%,d stars", value))
                         ))
+                        .option(booleanOption(
+                                "cirrus.config.sky.starsAngledOrbit",
+                                CirrusConfig.STARS_ANGLED_ORBIT
+                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.starAppearance"))
+                        .collapsed(true)
                         .option(percentageOption(
                                 "cirrus.config.sky.starMinimumOpacity",
                                 CirrusConfig.STAR_MIN_OPACITY,
@@ -405,6 +389,15 @@ public final class CirrusConfigScreen {
                                 value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
                         ))
                         .option(percentageOption(
+                                "cirrus.config.sky.starColorVariation",
+                                CirrusConfig.STAR_COLOR_VARIATION,
+                                CirrusConfig.STAR_COLOR_VARIATION_SETTING
+                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.starTwinkle"))
+                        .collapsed(true)
+                        .option(percentageOption(
                                 "cirrus.config.sky.starTwinkleStrength",
                                 CirrusConfig.STAR_TWINKLE_STRENGTH,
                                 CirrusConfig.STAR_TWINKLE_STRENGTH_SETTING
@@ -415,21 +408,13 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.STAR_TWINKLE_SPEED_SETTING,
                                 value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
                         ))
-                        .option(percentageOption(
-                                "cirrus.config.sky.starColorVariation",
-                                CirrusConfig.STAR_COLOR_VARIATION,
-                                CirrusConfig.STAR_COLOR_VARIATION_SETTING
-                        ))
                         .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.shootingStars"))
+                        .collapsed(true)
                         .option(booleanOption(
                                 "cirrus.config.sky.shootingStarsEnabled",
                                 CirrusConfig.SHOOTING_STARS_ENABLED
-                        ))
-                        .option(booleanOption(
-                                "cirrus.config.sky.shootingStarPixelatedTrail",
-                                CirrusConfig.SHOOTING_STAR_PIXELATED_TRAIL
                         ))
                         .option(doubleOption(
                                 "cirrus.config.sky.shootingStarFrequency",
@@ -437,6 +422,10 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.SHOOTING_STAR_FREQUENCY_SETTING,
                                 value -> Component.literal(String.format(Locale.ROOT, "%.2f/min", value))
                         ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.shootingStarAppearance"))
+                        .collapsed(true)
                         .option(percentageOption(
                                 "cirrus.config.sky.shootingStarOpacity",
                                 CirrusConfig.SHOOTING_STAR_OPACITY,
@@ -454,6 +443,30 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.SHOOTING_STAR_MAX_SIZE_SETTING,
                                 value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
                         ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.shootingStarColorVariation",
+                                CirrusConfig.SHOOTING_STAR_COLOR_VARIATION,
+                                CirrusConfig.SHOOTING_STAR_COLOR_VARIATION_SETTING
+                        ))
+                        .option(booleanOption(
+                                "cirrus.config.sky.shootingStarPixelatedTrail",
+                                CirrusConfig.SHOOTING_STAR_PIXELATED_TRAIL
+                        ))
+                        .option(doubleOption(
+                                "cirrus.config.sky.shootingStarTrailLength",
+                                CirrusConfig.SHOOTING_STAR_TRAIL_LENGTH,
+                                CirrusConfig.SHOOTING_STAR_TRAIL_LENGTH_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.shootingStarBloom",
+                                CirrusConfig.SHOOTING_STAR_BLOOM,
+                                CirrusConfig.SHOOTING_STAR_BLOOM_SETTING
+                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.shootingStarMotion"))
+                        .collapsed(true)
                         .option(doubleOption(
                                 "cirrus.config.sky.shootingStarMinimumSpeed",
                                 CirrusConfig.SHOOTING_STAR_MIN_SPEED,
@@ -471,28 +484,22 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.SHOOTING_STAR_SPEED_VARIATION,
                                 CirrusConfig.SHOOTING_STAR_SPEED_VARIATION_SETTING
                         ))
-                        .option(doubleOption(
-                                "cirrus.config.sky.shootingStarTrailLength",
-                                CirrusConfig.SHOOTING_STAR_TRAIL_LENGTH,
-                                CirrusConfig.SHOOTING_STAR_TRAIL_LENGTH_SETTING,
-                                value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
-                        ))
-                        .option(percentageOption(
-                                "cirrus.config.sky.shootingStarBloom",
-                                CirrusConfig.SHOOTING_STAR_BLOOM,
-                                CirrusConfig.SHOOTING_STAR_BLOOM_SETTING
-                        ))
-                        .option(percentageOption(
-                                "cirrus.config.sky.shootingStarColorVariation",
-                                CirrusConfig.SHOOTING_STAR_COLOR_VARIATION,
-                                CirrusConfig.SHOOTING_STAR_COLOR_VARIATION_SETTING
-                        ))
                         .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.milkyWay"))
+                        .collapsed(true)
                         .option(booleanOption(
                                 "cirrus.config.sky.milkyWayEnabled",
                                 CirrusConfig.MILKY_WAY_ENABLED
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.milkyWayOpacity",
+                                CirrusConfig.MILKY_WAY_OPACITY,
+                                CirrusConfig.MILKY_WAY_OPACITY_SETTING
+                        ))
+                        .option(booleanOption(
+                                "cirrus.config.sky.milkyWayAngledOrbit",
+                                CirrusConfig.MILKY_WAY_ANGLED_ORBIT
                         ))
                         .option(booleanOption(
                                 "cirrus.config.sky.milkyWayPixelationEnabled",
@@ -504,15 +511,46 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.MILKY_WAY_PIXELATION_RESOLUTION_SETTING,
                                 value -> Component.literal(value + " cells")
                         ))
+                        .build())
+                .build();
+    }
+
+    private static ConfigCategory auroraCategory() {
+        return ConfigCategory.createBuilder()
+                .name(text("cirrus.config.category.aurora"))
+                .tooltip(text("cirrus.config.category.aurora.description"))
+                .option(booleanOption("cirrus.config.sky.auroraEnabled", CirrusConfig.AURORA_ENABLED))
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.auroraVisibility"))
+                        .option(booleanOption(
+                                "cirrus.config.sky.auroraColdBiomesOnly",
+                                CirrusConfig.AURORA_COLD_BIOMES_ONLY
+                        ))
                         .option(percentageOption(
-                                "cirrus.config.sky.milkyWayOpacity",
-                                CirrusConfig.MILKY_WAY_OPACITY,
-                                CirrusConfig.MILKY_WAY_OPACITY_SETTING
+                                "cirrus.config.sky.auroraOpacity",
+                                CirrusConfig.AURORA_OPACITY,
+                                CirrusConfig.AURORA_OPACITY_SETTING
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.auroraNightlyVariation",
+                                CirrusConfig.AURORA_NIGHTLY_VARIATION,
+                                CirrusConfig.AURORA_NIGHTLY_VARIATION_SETTING
                         ))
                         .build())
                 .group(OptionGroup.createBuilder()
-                        .name(text("cirrus.config.group.aurora"))
-                        .option(booleanOption("cirrus.config.sky.auroraEnabled", CirrusConfig.AURORA_ENABLED))
+                        .name(text("cirrus.config.group.auroraShape"))
+                        .collapsed(true)
+                        .option(doubleOption(
+                                "cirrus.config.sky.auroraHeight",
+                                CirrusConfig.AURORA_HEIGHT_DEGREES,
+                                CirrusConfig.AURORA_HEIGHT_SETTING,
+                                value -> Component.literal(String.format(Locale.ROOT, "%+.0f degrees", value))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.auroraRibbonWidth",
+                                CirrusConfig.AURORA_RIBBON_WIDTH,
+                                CirrusConfig.AURORA_RIBBON_WIDTH_SETTING
+                        ))
                         .option(booleanOption(
                                 "cirrus.config.sky.auroraPixelationEnabled",
                                 CirrusConfig.AURORA_PIXELATION_ENABLED
@@ -523,15 +561,10 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.AURORA_PIXELATION_RESOLUTION_SETTING,
                                 value -> Component.literal(value + " cells")
                         ))
-                        .option(booleanOption(
-                                "cirrus.config.sky.auroraColdBiomesOnly",
-                                CirrusConfig.AURORA_COLD_BIOMES_ONLY
-                        ))
-                        .option(percentageOption(
-                                "cirrus.config.sky.auroraOpacity",
-                                CirrusConfig.AURORA_OPACITY,
-                                CirrusConfig.AURORA_OPACITY_SETTING
-                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.auroraColors"))
+                        .collapsed(true)
                         .option(booleanOption(
                                 "cirrus.config.sky.auroraCustomColors",
                                 CirrusConfig.AURORA_CUSTOM_COLORS
@@ -548,6 +581,10 @@ public final class CirrusConfigScreen {
                                 "cirrus.config.sky.auroraUpperColor",
                                 CirrusConfig.AURORA_UPPER_COLOR
                         ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.auroraMotion"))
+                        .collapsed(true)
                         .option(doubleOption(
                                 "cirrus.config.sky.auroraAnimationSpeed",
                                 CirrusConfig.AURORA_ANIMATION_SPEED,
@@ -559,31 +596,27 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.AURORA_MOVEMENT,
                                 CirrusConfig.AURORA_MOVEMENT_SETTING
                         ))
-                        .option(percentageOption(
-                                "cirrus.config.sky.auroraRibbonWidth",
-                                CirrusConfig.AURORA_RIBBON_WIDTH,
-                                CirrusConfig.AURORA_RIBBON_WIDTH_SETTING
-                        ))
-                        .option(doubleOption(
-                                "cirrus.config.sky.auroraHeight",
-                                CirrusConfig.AURORA_HEIGHT_DEGREES,
-                                CirrusConfig.AURORA_HEIGHT_SETTING,
-                                value -> Component.literal(String.format(Locale.ROOT, "%+.0f degrees", value))
-                        ))
-                        .option(percentageOption(
-                                "cirrus.config.sky.auroraNightlyVariation",
-                                CirrusConfig.AURORA_NIGHTLY_VARIATION,
-                                CirrusConfig.AURORA_NIGHTLY_VARIATION_SETTING
-                        ))
                         .build())
+                .build();
+    }
+
+    private static ConfigCategory endCategory() {
+        return ConfigCategory.createBuilder()
+                .name(text("cirrus.config.category.end"))
+                .tooltip(text("cirrus.config.category.end.description"))
+                .option(booleanOption("cirrus.config.sky.endSkyEnabled", CirrusConfig.END_SKY_ENABLED))
                 .group(OptionGroup.createBuilder()
-                        .name(text("cirrus.config.group.endSky"))
-                        .option(booleanOption("cirrus.config.sky.endSkyEnabled", CirrusConfig.END_SKY_ENABLED))
+                        .name(text("cirrus.config.group.endAppearance"))
                         .option(enumOption(
                                 "cirrus.config.sky.endSkyQuality",
                                 CirrusConfig.END_SKY_QUALITY,
                                 CirrusConfig.EndSkyQuality.class,
                                 quality -> text("cirrus.config.sky.endSkyQuality." + quality.name().toLowerCase(Locale.ROOT))
+                        ))
+                        .option(percentageOption(
+                                "cirrus.config.sky.endSkyIntensity",
+                                CirrusConfig.END_SKY_INTENSITY,
+                                CirrusConfig.END_SKY_INTENSITY_SETTING
                         ))
                         .option(booleanOption(
                                 "cirrus.config.sky.endSkyPixelationEnabled",
@@ -595,11 +628,10 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.END_SKY_PIXELATION_RESOLUTION_SETTING,
                                 value -> Component.literal(value + " cells")
                         ))
-                        .option(percentageOption(
-                                "cirrus.config.sky.endSkyIntensity",
-                                CirrusConfig.END_SKY_INTENSITY,
-                                CirrusConfig.END_SKY_INTENSITY_SETTING
-                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.endMotion"))
+                        .collapsed(true)
                         .option(doubleOption(
                                 "cirrus.config.sky.endSkyAnimationSpeed",
                                 CirrusConfig.END_SKY_ANIMATION_SPEED,
@@ -612,6 +644,10 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.END_SKY_MORPH_SPEED_SETTING,
                                 value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
                         ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.endVoid"))
+                        .collapsed(true)
                         .option(doubleOption(
                                 "cirrus.config.sky.endSkyVoidCoverage",
                                 CirrusConfig.END_SKY_VOID_COVERAGE,
@@ -623,6 +659,10 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.END_SKY_VOID_DARKNESS,
                                 CirrusConfig.END_SKY_VOID_DARKNESS_SETTING
                         ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.endLightning"))
+                        .collapsed(true)
                         .option(doubleOption(
                                 "cirrus.config.sky.endSkyLightningFrequency",
                                 CirrusConfig.END_SKY_LIGHTNING_FREQUENCY,
@@ -634,6 +674,10 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.END_SKY_LIGHTNING_INTENSITY,
                                 CirrusConfig.END_SKY_LIGHTNING_INTENSITY_SETTING
                         ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.endSurges"))
+                        .collapsed(true)
                         .option(doubleOption(
                                 "cirrus.config.sky.endSkySurgeFrequency",
                                 CirrusConfig.END_SKY_SURGE_FREQUENCY,
@@ -644,6 +688,70 @@ public final class CirrusConfigScreen {
                                 "cirrus.config.sky.endSkySurgeStrength",
                                 CirrusConfig.END_SKY_SURGE_STRENGTH,
                                 CirrusConfig.END_SKY_SURGE_STRENGTH_SETTING
+                        ))
+                        .build())
+                .build();
+    }
+
+    private static ConfigCategory dimensionsCategory() {
+        var category = ConfigCategory.createBuilder()
+                .name(text("cirrus.config.category.dimensions"))
+                .tooltip(text("cirrus.config.category.dimensions.description"));
+        var dimensions = new TreeSet<ResourceLocation>(Comparator.comparing(ResourceLocation::toString));
+        dimensions.addAll(CirrusCloudDimensions.dimensions());
+        CirrusConfig.CLOUD_DIMENSIONS.get().keySet().forEach(id ->
+                dimensions.add(ResourceLocation.parse(id)));
+        CirrusConfig.CLOUD_DIMENSION_TINTS.get().keySet().forEach(id ->
+                dimensions.add(ResourceLocation.parse(id)));
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null) {
+            connection.levels().forEach(dimension -> dimensions.add(dimension.location()));
+        }
+        for (var dimension : dimensions) {
+            var group = OptionGroup.createBuilder()
+                    .name(Component.literal(dimension.toString()));
+            group.option(Option.<Boolean>createBuilder()
+                    .name(text("cirrus.config.clouds.dimensionEnabled"))
+                    .description(OptionDescription.of(text("cirrus.config.clouds.dimension.description")))
+                    .binding(CirrusCloudDimensions.defaultEnabled(dimension),
+                            () -> CirrusCloudDimensions.enabled(dimension),
+                            enabled -> CirrusCloudDimensions.setEnabled(dimension, enabled))
+                    .controller(TickBoxControllerBuilder::create)
+                    .build());
+            group.option(Option.<Color>createBuilder()
+                    .name(text("cirrus.config.clouds.dimensionColor"))
+                    .description(OptionDescription.of(text("cirrus.config.clouds.dimensionTint.description")))
+                    .binding(new Color(CirrusCloudDimensions.defaultTint(dimension)),
+                            () -> new Color(CirrusCloudDimensions.tint(dimension)),
+                            color -> CirrusCloudDimensions.setTint(dimension, color.getRGB() & 0xFFFFFF))
+                    .controller(ColorControllerBuilder::create)
+                    .build());
+            category.group(group.build());
+        }
+        return category.build();
+    }
+
+    private static ConfigCategory compatibilityCategory() {
+        return ConfigCategory.createBuilder()
+                .name(text("cirrus.config.category.compatibility"))
+                .tooltip(text("cirrus.config.category.compatibility.description"))
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.shaders"))
+                        .option(booleanOption(
+                                "cirrus.config.clouds.shaderPackWarningsEnabled",
+                                CirrusConfig.SHADER_PACK_WARNINGS_ENABLED
+                        ))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.distantHorizons"))
+                        .option(booleanOption(
+                                "cirrus.config.clouds.distantHorizonsCompatibility",
+                                CirrusConfig.DISTANT_HORIZONS_COMPATIBILITY
+                        ))
+                        .option(booleanOption(
+                                "cirrus.config.clouds.syncCloudDistanceWithDistantHorizons",
+                                CirrusConfig.SYNC_CLOUD_DISTANCE_WITH_DISTANT_HORIZONS,
+                                warningDescription("cirrus.config.clouds.syncCloudDistanceWithDistantHorizons")
                         ))
                         .build())
                 .build();
