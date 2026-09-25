@@ -19,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LevelRenderer.class)
 public abstract class LevelRendererCelestialMixin {
     @Shadow private ClientLevel level;
+    @Unique private final Matrix4f cirrus$angledOrbitTransform = new Matrix4f();
     @Unique private final Matrix4f cirrus$sunModelView = new Matrix4f();
     @Unique private final Matrix4f cirrus$moonModelView = new Matrix4f();
     @Unique private final Matrix4f cirrus$sunriseModelView = new Matrix4f();
@@ -46,17 +47,10 @@ public abstract class LevelRendererCelestialMixin {
                 frustumMatrix,
                 timeOfDay
         );
-        CirrusCelestialTransform.bodyModelView(
-                cirrus$sunModelView,
+        CirrusCelestialTransform.bodyOrbitTransform(
+                cirrus$angledOrbitTransform,
                 frustumMatrix,
-                timeOfDay,
-                cirrus$sunAngledOrbit
-        );
-        CirrusCelestialTransform.bodyModelView(
-                cirrus$moonModelView,
-                frustumMatrix,
-                timeOfDay,
-                cirrus$moonAngledOrbit
+                timeOfDay
         );
     }
 
@@ -110,7 +104,8 @@ public abstract class LevelRendererCelestialMixin {
             index = 0
     )
     private Matrix4f cirrus$rotateSun(Matrix4f original) {
-        Matrix4f modelView = cirrus$sunAngledOrbit ? cirrus$sunModelView : original;
+        Matrix4f modelView = cirrus$sunAngledOrbit
+                ? cirrus$sunModelView.set(cirrus$angledOrbitTransform).mul(original) : original;
         CirrusCelestialRenderState.captureSun(modelView);
         return modelView;
     }
@@ -139,7 +134,8 @@ public abstract class LevelRendererCelestialMixin {
             index = 0
     )
     private Matrix4f cirrus$rotateMoon(Matrix4f original) {
-        Matrix4f modelView = cirrus$moonAngledOrbit ? cirrus$moonModelView : original;
+        Matrix4f modelView = cirrus$moonAngledOrbit
+                ? cirrus$moonModelView.set(cirrus$angledOrbitTransform).mul(original) : original;
         CirrusCelestialRenderState.captureMoon(modelView);
         return modelView;
     }
