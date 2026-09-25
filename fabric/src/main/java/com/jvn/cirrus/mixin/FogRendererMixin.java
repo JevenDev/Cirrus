@@ -1,6 +1,7 @@
 package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.CirrusSkyPalette;
+import com.jvn.cirrus.client.compat.fog.FogModCompat;
 import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusCelestialTransform;
@@ -40,7 +41,7 @@ public abstract class FogRendererMixin {
         Vector4f fogColor = cir.getReturnValue();
         cirrus$terrainFadeStrength = 0.0F;
         cirrus$farPlaneDistance = renderDistanceChunks * 16.0F;
-        if (renderDistanceFog || !shouldMatchSky(camera, level)) {
+        if (renderDistanceFog || FogModCompat.controlsFogColor() || !shouldMatchSky(camera, level)) {
             return;
         }
 
@@ -87,6 +88,10 @@ public abstract class FogRendererMixin {
             index = 5
     )
     private float cirrus$softenTerrainFogTransition(float vanillaStart) {
+        if (FogModCompat.controlsFogDistance()) {
+            FogModCompat.captureFogStart(vanillaStart);
+            return vanillaStart;
+        }
         if (cirrus$terrainFadeStrength < 0.002F) {
             return vanillaStart;
         }
@@ -102,6 +107,21 @@ public abstract class FogRendererMixin {
                 matchedFadeDistance
         );
         return Math.max(0.0F, cirrus$farPlaneDistance - fadeDistance);
+    }
+
+    @ModifyArg(
+            method = "setupFog",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/fog/FogRenderer;updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V"
+            ),
+            index = 6
+    )
+    private float cirrus$captureExternalFogEnd(float fogEnd) {
+        if (FogModCompat.controlsFogDistance()) {
+            FogModCompat.captureFogEnd(fogEnd);
+        }
+        return fogEnd;
     }
 
     private static void applyHorizonColorCorrection(

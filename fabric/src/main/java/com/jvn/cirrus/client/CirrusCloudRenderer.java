@@ -3,6 +3,7 @@ package com.jvn.cirrus.client;
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
+import com.jvn.cirrus.client.compat.fog.FogModCompat;
 import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
@@ -341,9 +342,12 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             float distanceBlocks = distanceChunks * 16.0F;
             float fadeLength = Math.max(32.0F, distanceBlocks * 0.15F);
             CirrusShaderUniforms.setUniform(
-                    cloudShader, "FogStart", Math.max(0.0F, distanceBlocks - fadeLength)
+                    cloudShader, "FogStart",
+                    FogModCompat.fogStart(Math.max(0.0F, distanceBlocks - fadeLength))
             );
-            CirrusShaderUniforms.setUniform(cloudShader, "FogEnd", distanceBlocks);
+            CirrusShaderUniforms.setUniform(
+                    cloudShader, "FogEnd", FogModCompat.fogEnd(distanceBlocks)
+            );
             Vector4f fogColor = CirrusRenderContext.fogColor();
             if (fogColor != null) {
                 CirrusShaderUniforms.setUniform(
