@@ -22,6 +22,7 @@ public final class CirrusShaders {
             uniform("FogEnd", 1, 1024.0F),
             uniform("FogColor", 4, 0.7F, 0.8F, 1.0F, 1.0F),
             uniform("FogShape", 1, 1.0F),
+            uniform("CirrusTimeOpacity", 1, 1.0F),
             uniform("CirrusEnabled", 1, 0.0F),
             uniform("CirrusLightDirection", 2, 0.0F, 0.0F),
             uniform("CirrusSunWeight", 1, 1.0F),

@@ -1,6 +1,5 @@
 package com.jvn.cirrus.client;
 
-import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.config.CirrusConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -17,8 +16,8 @@ public final class CirrusPrecipitationCeiling {
             return Double.POSITIVE_INFINITY;
         }
 
-        float cloudHeight = CirrusRenderContext.cloudHeight(level);
-        if (Float.isNaN(cloudHeight)) {
+        float cloudHeight = CirrusCloudDimensions.cloudHeight(level);
+        if (Float.isNaN(cloudHeight) || CirrusCloudTimeFade.opacity(level, 0.0F) <= 0.0F) {
             return Double.POSITIVE_INFINITY;
         }
 

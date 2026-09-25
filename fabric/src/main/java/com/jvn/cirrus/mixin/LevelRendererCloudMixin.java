@@ -1,7 +1,9 @@
 package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.CirrusCloudAttachment;
+import com.jvn.cirrus.client.CirrusCloudDimensions;
 import com.jvn.cirrus.client.CirrusCloudMode;
+import com.jvn.cirrus.client.CirrusCloudTimeFade;
 import com.jvn.cirrus.client.CirrusLightningLocator;
 import com.jvn.cirrus.client.CirrusRenderers;
 import com.jvn.cirrus.client.CirrusShaders;
@@ -60,6 +62,8 @@ public abstract class LevelRendererCloudMixin {
         CirrusCloudAttachment.updateRenderTicks(ticks);
         DistantHorizonsCompat.setBeforeApplyShaderCallback(
                 DistantHorizonsCompat.shouldPrioritizeCirrusClouds()
+                        && level != null
+                        && CirrusCloudDimensions.enabled(level.dimension().location())
                         ? cirrus$renderCloudsIntoDistantHorizons
                         : null
         );
@@ -109,6 +113,8 @@ public abstract class LevelRendererCloudMixin {
                 || dhProjectionMatrix.length != 16
                 || CirrusRenderContext.cloudsRenderedIntoDistantHorizons()
                 || !CirrusRenderContext.isReady()
+                || !CirrusCloudDimensions.enabled(level.dimension().location())
+                || CirrusCloudTimeFade.opacity(level, CirrusRenderContext.partialTick()) <= 0.0F
                 || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
             return;
         }
@@ -142,6 +148,7 @@ public abstract class LevelRendererCloudMixin {
 
     @Inject(method = "onResourceManagerReload", at = @At("HEAD"))
     private void cirrus$releaseOnReload(ResourceManager resourceManager, CallbackInfo ci) {
+        CirrusCloudDimensions.reload(resourceManager);
         CirrusRenderers.clouds().invalidate();
         CirrusCloudAttachment.invalidate();
     }
