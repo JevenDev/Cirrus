@@ -23,12 +23,12 @@ import java.io.InputStream;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import com.jvn.cirrus.client.render.CirrusShader;
-import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -368,7 +368,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     thunderLevel,
                     lightning,
                     cloudTexture.weatherPrecomposed(),
-                    level.effects().skyType() == DimensionSpecialEffects.SkyType.OVERWORLD
+                    level.dimensionType().skybox() == DimensionType.Skybox.OVERWORLD
             );
         }
 
