@@ -325,7 +325,12 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         float oldShaderAlpha = oldShaderColor[3];
         float distanceBlocks = distanceChunks * 16.0F;
         float fadeLength = Math.max(32.0F, distanceBlocks * 0.15F);
-        Vec3 cloudColor = CirrusCloudTint.color(level, partialTick);
+        float whiteningBrightness = FogModCompat.cloudWhiteningBrightness(level);
+        boolean whitenClouds = Float.isFinite(whiteningBrightness);
+        Vec3 baseCloudColor = whitenClouds
+                ? new Vec3(whiteningBrightness, whiteningBrightness, whiteningBrightness)
+                : level.getCloudColor(partialTick);
+        Vec3 cloudColor = CirrusCloudTint.color(level, partialTick, baseCloudColor);
         double lowerHeight = cloudHeight
                 + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                 - cameraY
@@ -344,7 +349,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         boolean preserveVanillaFog = hasVisibilityLimitingFog(level, cameraX, cameraZ);
 
         try {
-            boolean externalFogDistance = FogModCompat.controlsFogDistance();
+            boolean externalFogDistance = FogModCompat.controlsFogDistance()
+                    && (!whitenClouds || preserveVanillaFog);
             if (externalFogDistance) {
                 Minecraft minecraft = Minecraft.getInstance();
                 // cloud and distant-horizon passes can enter with sky fog or disabled fog
@@ -362,6 +368,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 RenderSystem.setShaderFogStart(Math.max(0.0F, distanceBlocks - fadeLength));
                 RenderSystem.setShaderFogEnd(distanceBlocks);
                 RenderSystem.setShaderFogShape(FogShape.CYLINDER);
+            }
+            if (whitenClouds && !preserveVanillaFog) {
+                RenderSystem.setShaderFogColor((float)cloudColor.x, (float)cloudColor.y, (float)cloudColor.z);
             }
             RenderSystem.setShaderColor((float)cloudColor.x, (float)cloudColor.y, (float)cloudColor.z, 1.0F);
 
