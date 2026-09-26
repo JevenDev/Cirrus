@@ -2,7 +2,7 @@ package com.jvn.cirrus.client;
 
 public final class CirrusEndVeil {
     private static final float FADE_TICKS = 30.0F;
-    private static final float SHATTER_TICKS = 80.0F;
+    private static final float SHATTER_TICKS = 40.0F;
     private static final float RUPTURE_DEATH_TICK = 180.0F;
 
     private boolean initialized;
@@ -60,11 +60,11 @@ public final class CirrusEndVeil {
 
     public float flash(float ticks) {
         float progress = shatter(ticks);
-        float rise = Math.clamp(progress / 0.055F, 0.0F, 1.0F);
-        float fall = Math.clamp((progress - 0.055F) / 0.20F, 0.0F, 1.0F);
+        float rise = Math.clamp(progress / 0.035F, 0.0F, 1.0F);
+        float fall = Math.clamp((progress - 0.25F) / 0.18F, 0.0F, 1.0F);
         rise = rise * rise * (3.0F - 2.0F * rise);
         fall = fall * fall * (3.0F - 2.0F * fall);
-        return rise * (1.0F - fall) * 0.68F;
+        return rise * (1.0F - fall) * 0.75F;
     }
 
     public float shatter(float ticks) {

@@ -110,6 +110,7 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
 
     private void configureSky(ShaderInstance shader, float ticks) {
         CirrusShaderUniforms.setUniform(shader, "CirrusEndFlash", 0.0F);
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndShatter", veil == null ? 0.0F : veil.shatter(ticks));
         CirrusShaderUniforms.setUniform(shader, "CirrusEndCharge", veil == null ? 0.0F : veil.charge(ticks));
         CirrusShaderUniforms.setUniform(
                 shader, "CirrusEndImpact", (float)impactDirection.x, (float)impactDirection.y, (float)impactDirection.z
@@ -160,7 +161,7 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
         try {
             glassBuffer.bind();
             glassBuffer.drawWithShader(modelViewMatrix, projectionMatrix, shader);
-            if (veil.charge(ticks) > 0.0F && veil.shatter(ticks) < 0.14F) {
+            if (veil.charge(ticks) > 0.0F && veil.shatter(ticks) < 0.43F) {
                 if (beamBuffer == null) {
                     beamBuffer = CirrusEndGlassMesh.createBeams(DOME_RADIUS);
                 }

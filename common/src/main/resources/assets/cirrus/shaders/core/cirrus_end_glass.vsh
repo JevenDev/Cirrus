@@ -48,17 +48,20 @@ void main() {
     vec3 displacement = velocity * flightTime - vec3(0.0, 12.0 * flightTime * flightTime, 0.0);
     float opening = smoothstep(0.35, 0.95, CirrusEndCharge) * step(0.94, Color.g);
     vec3 position = center + spin((Position - center) * (1.0 - opening * 0.035), axis, angle) + displacement;
-    beamStrength = 0.0;
+    float stress = smoothstep(impactDistance - 0.12, impactDistance + 0.12, CirrusEndCharge * 1.12);
+    float release = smoothstep(0.0, 0.025, departure)
+            * (1.0 - smoothstep(0.04, 0.12, departure));
+    float beamFade = 1.0 - smoothstep(0.06, 0.20, departure);
+    beamStrength = step(0.94, Color.g) * stress * opening * pow(CirrusEndCharge, 1.5)
+            * (0.24 + release * 0.42) * beamFade;
     if (CirrusEndBeamPass > 0.5) {
         float beamIndex = floor(UV0.y / 4.0);
         vec3 random = beamRandom(Color.rgb * 17.0 + beamIndex * vec3(7.0, 23.0, 37.0));
-        float stress = smoothstep(impactDistance - 0.12, impactDistance + 0.12, CirrusEndCharge * 1.12);
-        float beamStart = mix(0.32, 0.74, random.b);
+        float beamStart = mix(0.40, 0.74, random.b);
         float emergence = smoothstep(beamStart, min(1.0, beamStart + 0.24), CirrusEndCharge);
         float energy = stress * emergence * pow(CirrusEndCharge, 1.5);
-        float release = exp(-CirrusEndShatter * 14.0) * step(0.001, CirrusEndShatter);
-        beamStrength = energy * (0.24 + release * 0.28) * mix(0.65, 1.0, random.r)
-                * (1.0 - smoothstep(0.0, 0.14, CirrusEndShatter));
+        beamStrength = energy * (0.24 + release * 0.42) * mix(0.65, 1.0, random.r)
+                * beamFade;
         vec3 surfaceTangent = normalize(cross(outward, abs(outward.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0)));
         vec3 surfaceBitangent = cross(outward, surfaceTangent);
         float azimuth = random.g * 6.2831853;

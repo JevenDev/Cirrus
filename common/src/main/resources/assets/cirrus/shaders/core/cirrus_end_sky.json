@@ -20,6 +20,8 @@
     { "name": "CirrusEndSurgeStrength", "type": "float", "count": 1, "values": [ 1.0 ] },
     { "name": "CirrusEndPixelationResolution", "type": "float", "count": 1, "values": [ 480.0 ] },
     { "name": "CirrusEndPixelation", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "CirrusEndShatter", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "CirrusEndImpact", "type": "float", "count": 3, "values": [ 0.0, 1.0, 0.0 ] },
     { "name": "CirrusEndFlash", "type": "float", "count": 1, "values": [ 0.0 ] },
     { "name": "CirrusEndBeamPass", "type": "float", "count": 1, "values": [ 0.0 ] },
     { "name": "CirrusEndGlass", "type": "float", "count": 1, "values": [ 0.0 ] },
