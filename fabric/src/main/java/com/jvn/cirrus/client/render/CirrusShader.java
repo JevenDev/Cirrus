@@ -19,6 +19,9 @@ import org.joml.Matrix4f;
 
 public final class CirrusShader {
     private final String name;
+    private final String vertexShader;
+    private final String fragmentShader;
+    private final VertexFormat.Mode vertexMode;
     private final Target target;
     private final ResourceLocation texture;
     private final Map<String, CirrusUniform> uniforms = new LinkedHashMap<>();
@@ -40,7 +43,27 @@ public final class CirrusShader {
             boolean depthWrite,
             UniformSpec... specs
     ) {
+        this(name, name, name, VertexFormat.Mode.QUADS, vertexFormat, blend, target, texture,
+                colorWrite, depthWrite, specs);
+    }
+
+    public CirrusShader(
+            String name,
+            String vertexShader,
+            String fragmentShader,
+            VertexFormat.Mode vertexMode,
+            VertexFormat vertexFormat,
+            Blend blend,
+            Target target,
+            ResourceLocation texture,
+            boolean colorWrite,
+            boolean depthWrite,
+            UniformSpec... specs
+    ) {
         this.name = name;
+        this.vertexShader = vertexShader;
+        this.fragmentShader = fragmentShader;
+        this.vertexMode = vertexMode;
         this.target = target;
         this.texture = texture;
 
@@ -171,14 +194,14 @@ public final class CirrusShader {
     ) {
         RenderPipeline.Builder builder = RenderPipeline.builder()
                 .withLocation(Cirrus.id("pipeline/" + pipelineName))
-                .withVertexShader(Cirrus.id("core/" + name))
-                .withFragmentShader(Cirrus.id("core/" + name))
+                .withVertexShader(Cirrus.id("core/" + vertexShader))
+                .withFragmentShader(Cirrus.id("core/" + fragmentShader))
                 .withUniform("CirrusMatrices", UniformType.UNIFORM_BUFFER)
                 .withDepthTestFunction(depthTest)
                 .withCull(false)
                 .withColorWrite(colorWrite)
                 .withDepthWrite(depthWrite)
-                .withVertexFormat(vertexFormat, VertexFormat.Mode.QUADS);
+                .withVertexFormat(vertexFormat, vertexMode);
         if (!uniforms.isEmpty()) {
             builder.withUniform("CirrusParams", UniformType.UNIFORM_BUFFER);
         }

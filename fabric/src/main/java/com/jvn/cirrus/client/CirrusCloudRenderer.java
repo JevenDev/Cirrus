@@ -1,6 +1,10 @@
 package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.Cirrus;
+import net.minecraft.world.level.material.FogType;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.client.compat.fog.FogModCompat;
@@ -303,7 +307,13 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             return;
         }
 
-        Vec3 cloudColor = depthOnly ? Vec3.ZERO : CirrusCloudTint.color(level, partialTick);
+        float whiteningBrightness = depthOnly ? Float.NaN : FogModCompat.cloudWhiteningBrightness(level);
+        boolean whitenClouds = Float.isFinite(whiteningBrightness);
+        Vec3 cloudColor = depthOnly ? Vec3.ZERO : whitenClouds
+                ? CirrusCloudTint.color(level, partialTick,
+                        new Vec3(whiteningBrightness, whiteningBrightness, whiteningBrightness))
+                : CirrusCloudTint.color(level, partialTick);
+        boolean whitenFog = whitenClouds && !hasVisibilityLimitingFog(level, cameraX, cameraZ);
         double lowerHeight = cloudHeight
                 + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                 - cameraY
@@ -333,13 +343,18 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             float fadeLength = Math.max(32.0F, distanceBlocks * 0.15F);
             CirrusShaderUniforms.setUniform(
                     cloudShader, "FogStart",
-                    FogModCompat.fogStart(Math.max(0.0F, distanceBlocks - fadeLength))
+                    whitenFog ? Math.max(0.0F, distanceBlocks - fadeLength)
+                            : FogModCompat.fogStart(Math.max(0.0F, distanceBlocks - fadeLength))
             );
             CirrusShaderUniforms.setUniform(
-                    cloudShader, "FogEnd", FogModCompat.fogEnd(distanceBlocks)
+                    cloudShader, "FogEnd", whitenFog ? distanceBlocks : FogModCompat.fogEnd(distanceBlocks)
             );
             Vector4f fogColor = CirrusRenderContext.fogColor();
-            if (fogColor != null) {
+            if (whitenFog) {
+                CirrusShaderUniforms.setUniform(
+                        cloudShader, "FogColor", (float)cloudColor.x, (float)cloudColor.y, (float)cloudColor.z, 1.0F
+                );
+            } else if (fogColor != null) {
                 CirrusShaderUniforms.setUniform(
                         cloudShader, "FogColor", fogColor.x, fogColor.y, fogColor.z, fogColor.w
                 );
@@ -419,6 +434,21 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         }
     }
 
+
+    private static boolean hasVisibilityLimitingFog(ClientLevel level, double cameraX, double cameraZ) {
+        Minecraft minecraft = Minecraft.getInstance();
+        Entity cameraEntity = minecraft.getCameraEntity();
+        if (cameraEntity instanceof LivingEntity livingEntity
+                && (livingEntity.hasEffect(MobEffects.BLINDNESS)
+                        || livingEntity.hasEffect(MobEffects.DARKNESS))) {
+            return true;
+        }
+        if (minecraft.gameRenderer.getMainCamera().getFluidInCamera() != FogType.NONE) {
+            return true;
+        }
+        return level.effects().isFoggyAt(Mth.floor(cameraX), Mth.floor(cameraZ))
+                || minecraft.gui.getBossOverlay().shouldCreateWorldFog();
+    }
 
     private void prepareLayer(
             LayerMesh mesh,
