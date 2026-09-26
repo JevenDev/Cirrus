@@ -3,6 +3,8 @@ package com.jvn.cirrus.mixin;
 import com.jvn.cirrus.client.CirrusCloudAttachment;
 import com.jvn.cirrus.client.CirrusCloudDimensions;
 import com.jvn.cirrus.client.CirrusCloudMode;
+import com.jvn.cirrus.config.CirrusConfig;
+import net.minecraft.world.level.Level;
 import com.jvn.cirrus.client.CirrusCloudTimeFade;
 import com.jvn.cirrus.client.CirrusLightningLocator;
 import com.jvn.cirrus.client.CirrusRenderers;
@@ -65,6 +67,14 @@ public abstract class LevelRendererCloudMixin {
                 cameraState.projectionMatrix, fogColor, partialTick, ticks
         );
         CirrusCloudAttachment.updateRenderTicks(ticks);
+        if (level != null && Level.END.equals(level.dimension())
+                && CirrusConfig.END_SKY_ENABLED.get()) {
+            CirrusRenderers.endSky().updateFight(
+                    level, Minecraft.getInstance().gui.getBossOverlay().shouldCreateWorldFog(), ticks
+            );
+        } else {
+            CirrusRenderers.endSky().resetFight();
+        }
         DistantHorizonsCompat.setBeforeApplyShaderCallback(
                 DistantHorizonsCompat.shouldPrioritizeCirrusClouds()
                         && CirrusRenderContext.hasVisibleClouds()
@@ -152,6 +162,7 @@ public abstract class LevelRendererCloudMixin {
 
     @Inject(method = "setLevel", at = @At("HEAD"))
     private void cirrus$releaseOnWorldChange(ClientLevel newLevel, CallbackInfo ci) {
+        CirrusRenderers.endSky().resetFight();
         CirrusRenderers.clouds().invalidate();
         CirrusRenderers.aurora().invalidate();
         CirrusLightningLocator.invalidate();
