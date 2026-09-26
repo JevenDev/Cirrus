@@ -91,7 +91,7 @@
   "cirrus.config.sky.skyGradientsEnabled": "Custom Sky Gradients",
   "cirrus.config.sky.skyGradientsEnabled.description": "Adds configurable horizon-to-upper-sky colors that transition smoothly through morning, day, evening, and night.",
   "cirrus.config.sky.fogUsesHorizonColor": "Match Fog to Horizon",
-  "cirrus.config.sky.fogUsesHorizonColor.description": "Matches normal air fog to the sky at the center of the view and gives distant terrain a smoother fade. Simple Fog Control and Better Fog keep control of fog distances when installed. Better Fog also takes priority over horizon color matching.",
+  "cirrus.config.sky.fogUsesHorizonColor.description": "Matches normal air fog to the sky at the center of the view and gives distant terrain a smoother fade. Simple Fog Control, Better Fog, and Fog by IMB11 keep control of fog distances when installed. Better Fog and Fog by IMB11 also take priority over horizon color matching.",
   "cirrus.config.sky.fogHorizonTintStrength": "Fog/Sky Matching",
   "cirrus.config.sky.fogHorizonTintStrength.description": "Controls sky color matching and transition smoothing. At 100%, the fog endpoint matches the rendered sky and terrain fades across the final 30% of view distance.",
   "cirrus.config.sky.skyGradientOpacity": "Overall Strength",

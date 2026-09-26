@@ -1,6 +1,11 @@
 package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.Cirrus;
+import com.jvn.cirrus.client.compat.fog.FogModCompat;
+import net.minecraft.world.level.material.FogType;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
@@ -321,7 +326,13 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             return;
         }
 
-        Vec3 cloudColor = CirrusCloudTint.color(level, partialTick);
+        float whiteningBrightness = FogModCompat.cloudWhiteningBrightness(level);
+        boolean whitenClouds = Float.isFinite(whiteningBrightness);
+        Vec3 cloudColor = whitenClouds
+                ? CirrusCloudTint.color(level, partialTick,
+                        new Vec3(whiteningBrightness, whiteningBrightness, whiteningBrightness))
+                : CirrusCloudTint.color(level, partialTick);
+        boolean whitenFog = whitenClouds && !hasVisibilityLimitingFog();
         double lowerHeight = cloudHeight
                 + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                 - cameraY
@@ -339,6 +350,12 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         int enabledLayerCount = 1 + (upperEnabled ? 1 : 0) + (topEnabled ? 1 : 0);
         CirrusShader cloudShader = CirrusShaders.clouds();
         CirrusShaderUniforms.setUniform(cloudShader, "CirrusTimeOpacity", timeOpacity);
+        float distanceBlocks = distanceChunks * 16.0F;
+        float fadeLength = Math.max(32.0F, distanceBlocks * 0.15F);
+        CirrusShaderUniforms.setUniform(cloudShader, "CirrusFogOverride",
+                (float)cloudColor.x, (float)cloudColor.y, (float)cloudColor.z, whitenFog ? 1.0F : 0.0F);
+        CirrusShaderUniforms.setUniform(cloudShader, "CirrusFogDistance",
+                Math.max(0.0F, distanceBlocks - fadeLength), distanceBlocks);
         setCloudEnvironment(
                 cloudShader,
                 sunDirection,
@@ -395,6 +412,20 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         }
     }
 
+
+    private static boolean hasVisibilityLimitingFog() {
+        Minecraft minecraft = Minecraft.getInstance();
+        Entity cameraEntity = minecraft.getCameraEntity();
+        if (cameraEntity instanceof LivingEntity livingEntity
+                && (livingEntity.hasEffect(MobEffects.BLINDNESS)
+                        || livingEntity.hasEffect(MobEffects.DARKNESS))) {
+            return true;
+        }
+        if (minecraft.gameRenderer.mainCamera().getFluidInCamera() != FogType.NONE) {
+            return true;
+        }
+        return minecraft.gui.hud.getBossOverlay().shouldCreateWorldFog();
+    }
 
     private void prepareLayer(
             LayerMesh mesh,

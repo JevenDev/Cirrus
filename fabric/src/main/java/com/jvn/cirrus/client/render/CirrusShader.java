@@ -27,6 +27,9 @@ import org.joml.Matrix4f;
 
 public final class CirrusShader {
     private final String name;
+    private final String vertexShader;
+    private final String fragmentShader;
+    private final PrimitiveTopology vertexMode;
     private final Identifier texture;
     private final Map<String, CirrusUniform> uniforms = new LinkedHashMap<>();
     private final boolean usesVanillaFog;
@@ -47,7 +50,8 @@ public final class CirrusShader {
             boolean depthWrite,
             UniformSpec... specs
     ) {
-        this(name, vertexFormat, blend, target, texture, colorWrite, depthWrite, false, specs);
+        this(name, name, name, PrimitiveTopology.QUADS, vertexFormat, blend, target, texture,
+                colorWrite, depthWrite, false, specs);
     }
 
     public CirrusShader(
@@ -61,7 +65,28 @@ public final class CirrusShader {
             boolean usesVanillaFog,
             UniformSpec... specs
     ) {
+        this(name, name, name, PrimitiveTopology.QUADS, vertexFormat, blend, target, texture,
+                colorWrite, depthWrite, usesVanillaFog, specs);
+    }
+
+    public CirrusShader(
+            String name,
+            String vertexShader,
+            String fragmentShader,
+            PrimitiveTopology vertexMode,
+            VertexFormat vertexFormat,
+            Blend blend,
+            Target target,
+            Identifier texture,
+            boolean colorWrite,
+            boolean depthWrite,
+            boolean usesVanillaFog,
+            UniformSpec... specs
+    ) {
         this.name = name;
+        this.vertexShader = vertexShader;
+        this.fragmentShader = fragmentShader;
+        this.vertexMode = vertexMode;
         this.texture = texture;
         this.usesVanillaFog = usesVanillaFog;
 
@@ -198,12 +223,12 @@ public final class CirrusShader {
         }
         RenderPipeline.Builder builder = RenderPipeline.builder()
                 .withLocation(Cirrus.id("pipeline/" + pipelineName))
-                .withVertexShader(Cirrus.id("core/" + name))
-                .withFragmentShader(Cirrus.id("core/" + name))
+                .withVertexShader(Cirrus.id("core/" + vertexShader))
+                .withFragmentShader(Cirrus.id("core/" + fragmentShader))
                 .withBindGroupLayout(bindGroupLayout.build())
                 .withCull(false)
                 .withVertexBinding(0, vertexFormat)
-                .withPrimitiveTopology(PrimitiveTopology.QUADS);
+                .withPrimitiveTopology(vertexMode);
 
         BlendFunction blendFunction = null;
         if (!depthVariant) {

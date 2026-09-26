@@ -42,7 +42,9 @@ public final class CirrusShaders {
             uniform("CirrusLightningFlash", 1, 0.0F),
             uniform("CirrusLightningViewPosition", 4, 0.0F, 0.0F, 0.0F, 0.0F),
             uniform("CirrusWorldUpViewDirection", 4, 0.0F, 1.0F, 0.0F, 0.0F),
-            uniform("CirrusLightningRadius", 1, 640.0F)
+            uniform("CirrusLightningRadius", 1, 640.0F),
+            uniform("CirrusFogOverride", 4, 0.0F, 0.0F, 0.0F, 0.0F),
+            uniform("CirrusFogDistance", 2, 0.0F, 1024.0F)
     );
     private static final CirrusShader CLOUD_MASK = new CirrusShader(
             "cirrus_cloud_mask",
@@ -129,7 +131,80 @@ public final class CirrusShaders {
             uniform("CirrusEndSurgeFrequency", 1, 1.0F),
             uniform("CirrusEndSurgeStrength", 1, 1.0F),
             uniform("CirrusEndPixelationResolution", 1, 480.0F),
-            uniform("CirrusEndPixelation", 1, 1.0F)
+            uniform("CirrusEndPixelation", 1, 1.0F),
+            uniform("CirrusEndGlass", 1, 0.0F),
+            uniform("CirrusEndFlash", 1, 0.0F),
+            uniform("CirrusEndShatter", 1, 0.0F),
+            uniform("CirrusEndCharge", 1, 0.0F),
+            uniform("CirrusEndImpact", 4, 0.0F, 1.0F, 0.0F, 0.0F),
+            uniform("CirrusEndBeamPass", 1, 0.0F),
+            uniform("CirrusEndVeil", 1, 0.0F)
+    );
+    private static final CirrusShader END_GLASS = new CirrusShader(
+            "cirrus_end_glass",
+            "cirrus_end_glass",
+            "cirrus_end_sky",
+            PrimitiveTopology.TRIANGLES,
+            DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL,
+            CirrusShader.Blend.TRANSLUCENT,
+            CirrusShader.Target.MAIN,
+            Cirrus.texture("environment/end_noise.png"),
+            true,
+            false,
+            false,
+            uniform("CirrusEndNoiseOctaves", 1, 3.0F),
+            uniform("CirrusEndTime", 1, 0.0F),
+            uniform("CirrusEndIntensity", 1, 1.0F),
+            uniform("CirrusEndAnimationSpeed", 1, 1.0F),
+            uniform("CirrusEndMorphSpeed", 1, 1.0F),
+            uniform("CirrusEndVoidCoverage", 1, 1.0F),
+            uniform("CirrusEndVoidDarkness", 1, 1.0F),
+            uniform("CirrusEndLightningFrequency", 1, 1.0F),
+            uniform("CirrusEndLightningIntensity", 1, 1.0F),
+            uniform("CirrusEndSurgeFrequency", 1, 1.0F),
+            uniform("CirrusEndSurgeStrength", 1, 1.0F),
+            uniform("CirrusEndPixelationResolution", 1, 480.0F),
+            uniform("CirrusEndPixelation", 1, 1.0F),
+            uniform("CirrusEndGlass", 1, 1.0F),
+            uniform("CirrusEndFlash", 1, 0.0F),
+            uniform("CirrusEndShatter", 1, 0.0F),
+            uniform("CirrusEndCharge", 1, 0.0F),
+            uniform("CirrusEndImpact", 4, 0.0F, 1.0F, 0.0F, 0.0F),
+            uniform("CirrusEndBeamPass", 1, 0.0F),
+            uniform("CirrusEndVeil", 1, 0.0F)
+    );
+    private static final CirrusShader END_BEAMS = new CirrusShader(
+            "cirrus_end_beams",
+            "cirrus_end_glass",
+            "cirrus_end_sky",
+            PrimitiveTopology.TRIANGLES,
+            DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL,
+            CirrusShader.Blend.ADDITIVE,
+            CirrusShader.Target.MAIN,
+            Cirrus.texture("environment/end_noise.png"),
+            true,
+            false,
+            false,
+            uniform("CirrusEndNoiseOctaves", 1, 3.0F),
+            uniform("CirrusEndTime", 1, 0.0F),
+            uniform("CirrusEndIntensity", 1, 1.0F),
+            uniform("CirrusEndAnimationSpeed", 1, 1.0F),
+            uniform("CirrusEndMorphSpeed", 1, 1.0F),
+            uniform("CirrusEndVoidCoverage", 1, 1.0F),
+            uniform("CirrusEndVoidDarkness", 1, 1.0F),
+            uniform("CirrusEndLightningFrequency", 1, 1.0F),
+            uniform("CirrusEndLightningIntensity", 1, 1.0F),
+            uniform("CirrusEndSurgeFrequency", 1, 1.0F),
+            uniform("CirrusEndSurgeStrength", 1, 1.0F),
+            uniform("CirrusEndPixelationResolution", 1, 480.0F),
+            uniform("CirrusEndPixelation", 1, 1.0F),
+            uniform("CirrusEndGlass", 1, 1.0F),
+            uniform("CirrusEndFlash", 1, 0.0F),
+            uniform("CirrusEndShatter", 1, 0.0F),
+            uniform("CirrusEndCharge", 1, 0.0F),
+            uniform("CirrusEndImpact", 4, 0.0F, 1.0F, 0.0F, 0.0F),
+            uniform("CirrusEndBeamPass", 1, 1.0F),
+            uniform("CirrusEndVeil", 1, 0.0F)
     );
     private static final CirrusShader LIGHTNING_SKY = new CirrusShader(
             "cirrus_lightning_sky",
@@ -156,7 +231,7 @@ public final class CirrusShaders {
             .build());
 
     private static final CirrusShader[] ALL = {
-            CLOUDS, CLOUD_MASK, AURORA, MILKY_WAY, STARS, END_SKY, LIGHTNING_SKY
+            CLOUDS, CLOUD_MASK, AURORA, MILKY_WAY, STARS, END_SKY, END_GLASS, END_BEAMS, LIGHTNING_SKY
     };
 
     private static boolean samplerTexturesLoaded;
@@ -222,6 +297,14 @@ public final class CirrusShaders {
 
     public static CirrusShader endSky() {
         return END_SKY;
+    }
+
+    public static CirrusShader endGlass() {
+        return END_GLASS;
+    }
+
+    public static CirrusShader endBeams() {
+        return END_BEAMS;
     }
 
     public static CirrusShader lightningSky() {

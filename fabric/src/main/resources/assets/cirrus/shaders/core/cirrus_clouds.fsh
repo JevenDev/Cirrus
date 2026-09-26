@@ -25,6 +25,8 @@ layout(std140) uniform CirrusParams {
     vec4 CirrusLightningViewPosition;
     vec4 CirrusWorldUpViewDirection;
     float CirrusLightningRadius;
+    vec4 CirrusFogOverride;
+    vec2 CirrusFogDistance;
 };
 
 
@@ -35,6 +37,7 @@ layout(location = 0) in vec2 texCoord0;
 layout(location = 1) in float vertexDistance;
 layout(location = 2) in vec4 vertexColor;
 layout(location = 3) in vec3 viewDirection;
+layout(location = 4) flat in vec2 cloudNeighborOffset;
 
 #ifndef OIT_ALPHA_ONLY
 layout(location = 0) out vec4 fragColor;
@@ -77,6 +80,24 @@ void main() {
     vec4 color = cloudSample * vertexColor * ColorModulator;
     if (color.a < 0.1) {
         discard;
+    }
+
+    if (any(notEqual(cloudNeighborOffset, vec2(0.0)))) {
+        vec2 neighborCoord = texCoord0 + cloudNeighborOffset;
+        float neighborBaseAlpha = texture(Sampler0, neighborCoord).a;
+        float neighborRainAlpha = rainCoverage > 0.001
+            ? texture(Sampler0, neighborCoord + RAIN_CLOUD_PATTERN_OFFSET * texelSize).a * rainCoverage
+            : 0.0;
+        float neighborThunderAlpha = thunderCoverage > 0.001
+            ? texture(Sampler0, neighborCoord + THUNDER_CLOUD_PATTERN_OFFSET * texelSize).a * thunderCoverage
+            : 0.0;
+        float neighborSupplementalAlpha =
+            1.0 - (1.0 - neighborRainAlpha) * (1.0 - neighborThunderAlpha);
+        float neighborAlpha = 1.0 - (1.0 - neighborBaseAlpha) * (1.0 - neighborSupplementalAlpha);
+        // hidden cell walls otherwise compete with the top and bottom at shared edges
+        if (neighborAlpha >= cloudSample.a) {
+            discard;
+        }
     }
 
     if (CirrusEnabled > 0.5) {
@@ -195,7 +216,13 @@ void main() {
     );
     }
 
-    color.a *= 1.0 - linear_fog_value(vertexDistance, 0.0, FogCloudsEnd);
+    if (CirrusFogOverride.a > 0.5) {
+        float fade = linear_fog_value(vertexDistance, CirrusFogDistance.x, CirrusFogDistance.y);
+        color.rgb = mix(color.rgb, CirrusFogOverride.rgb, fade);
+        color.a *= 1.0 - fade;
+    } else {
+        color.a *= 1.0 - linear_fog_value(vertexDistance, 0.0, FogCloudsEnd);
+    }
     color.a *= CirrusTimeOpacity;
     #ifdef OIT_ALPHA_ONLY
     executeAlphaOnlyPhase(gl_FragCoord.z, color.a);
