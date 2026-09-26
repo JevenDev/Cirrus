@@ -53,14 +53,14 @@ void main() {
             * (1.0 - smoothstep(0.04, 0.12, departure));
     float beamFade = 1.0 - smoothstep(0.06, 0.20, departure);
     beamStrength = step(0.94, Color.g) * stress * opening * pow(CirrusEndCharge, 1.5)
-            * (0.24 + release * 0.42) * beamFade;
+            * (0.40 + release * 0.36) * beamFade;
     if (CirrusEndBeamPass > 0.5) {
         float beamIndex = floor(UV0.y / 4.0);
         vec3 random = beamRandom(Color.rgb * 17.0 + beamIndex * vec3(7.0, 23.0, 37.0));
         float beamStart = mix(0.40, 0.74, random.b);
         float emergence = smoothstep(beamStart, min(1.0, beamStart + 0.24), CirrusEndCharge);
         float energy = stress * emergence * pow(CirrusEndCharge, 1.5);
-        beamStrength = energy * (0.24 + release * 0.42) * mix(0.65, 1.0, random.r)
+        beamStrength = energy * (0.40 + release * 0.36) * mix(0.65, 1.0, random.r)
                 * beamFade;
         vec3 surfaceTangent = normalize(cross(outward, abs(outward.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0)));
         vec3 surfaceBitangent = cross(outward, surfaceTangent);
@@ -71,10 +71,10 @@ void main() {
         beamAxis = spin(spin(beamAxis, outward, sweep), axis, angle);
         vec3 beamTangent = normalize(cross(beamAxis, abs(beamAxis.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0)));
         vec3 beamBitangent = cross(beamAxis, beamTangent);
-        float rotation = random.r * 6.2831853 + CirrusEndCharge * mix(-0.8, 0.8, random.b);
+        float rotation = random.r * 6.2831853 + CirrusEndCharge * 1.5707963;
         float coneAngle = mod(UV0.y, 4.0) / 3.0 * 6.2831853 + rotation;
         float length = mix(50.0, 145.0, pow(random.r, 1.8)) * energy * (1.0 + release * 0.20);
-        float width = length * mix(0.045, 0.11, random.b);
+        float width = mix(4.0, 11.0, random.b) * sqrt(energy) * (1.0 + release * 0.40);
         position += UV0.x * (beamAxis * length
                 + (beamTangent * cos(coneAngle) + beamBitangent * sin(coneAngle)) * width);
     }
