@@ -18,6 +18,7 @@ public final class CirrusShaders {
     private static ShaderInstance milkyWay;
     private static ShaderInstance stars;
     private static ShaderInstance endSky;
+    private static ShaderInstance endGlass;
     private static ShaderInstance lightningSky;
 
     private CirrusShaders() {
@@ -60,6 +61,11 @@ public final class CirrusShaders {
                 shader -> endSky = shader
         );
         context.register(
+                Cirrus.id("cirrus_end_glass"),
+                DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL,
+                shader -> endGlass = shader
+        );
+        context.register(
                 Cirrus.id("cirrus_lightning_sky"),
                 DefaultVertexFormat.POSITION,
                 shader -> lightningSky = shader
@@ -92,6 +98,10 @@ public final class CirrusShaders {
 
     public static ShaderInstance endSky() {
         return Objects.requireNonNull(endSky, "Cirrus End sky shader has not finished loading");
+    }
+
+    public static ShaderInstance endGlass() {
+        return Objects.requireNonNull(endGlass, "Cirrus End glass shader has not finished loading");
     }
 
     public static ShaderInstance lightningSky() {

@@ -1,9 +1,7 @@
 {
-  "vertex": "cirrus:cirrus_end_sky",
+  "vertex": "cirrus:cirrus_end_glass",
   "fragment": "cirrus:cirrus_end_sky",
-  "samplers": [
-    { "name": "Sampler0" }
-  ],
+  "samplers": [ { "name": "Sampler0" } ],
   "uniforms": [
     { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
     { "name": "CirrusEndNoiseOctaves", "type": "float", "count": 1, "values": [ 3.0 ] },
@@ -22,7 +20,10 @@
     { "name": "CirrusEndPixelation", "type": "float", "count": 1, "values": [ 1.0 ] },
     { "name": "CirrusEndFlash", "type": "float", "count": 1, "values": [ 0.0 ] },
     { "name": "CirrusEndBeamPass", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "CirrusEndGlass", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "CirrusEndVeil", "type": "float", "count": 1, "values": [ 0.0 ] }
+    { "name": "CirrusEndGlass", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "CirrusEndVeil", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "CirrusEndCharge", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "CirrusEndShatter", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "CirrusEndImpact", "type": "float", "count": 3, "values": [ 0.0, 1.0, 0.0 ] }
   ]
 }

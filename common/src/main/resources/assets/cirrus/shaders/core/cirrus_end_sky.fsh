@@ -2,6 +2,10 @@
 
 uniform sampler2D Sampler0;
 uniform float CirrusEndTime;
+uniform float CirrusEndGlass;
+uniform float CirrusEndFlash;
+uniform float CirrusEndBeamPass;
+uniform float CirrusEndVeil;
 uniform float CirrusEndNoiseOctaves;
 uniform float CirrusEndIntensity;
 uniform float CirrusEndAnimationSpeed;
@@ -16,6 +20,11 @@ uniform float CirrusEndPixelation;
 uniform float CirrusEndPixelationResolution;
 
 in vec3 worldDirection;
+in vec3 barycentric;
+flat in vec3 shardSeed;
+flat in vec3 shardNormal;
+flat in float shardDeparture;
+flat in float beamStrength;
 out vec4 fragColor;
 
 const float PI = 3.14159265359;
@@ -242,8 +251,35 @@ void compositeCloudLayer(
 }
 
 void main() {
-    vec3 smoothDirection = normalize(worldDirection);
-    vec3 direction = mix(smoothDirection, pixelatedDirection(smoothDirection), clamp(CirrusEndPixelation, 0.0, 1.0));
+    if (CirrusEndFlash > 0.0) {
+        fragColor = vec4(0.83, 0.72, 1.0, CirrusEndFlash * clamp(CirrusEndIntensity, 0.0, 1.0));
+        return;
+    }
+    if (CirrusEndBeamPass > 0.5) {
+        float distanceAlong = clamp(barycentric.x, 0.0, 1.0);
+        vec3 beamColor = mix(vec3(1.0, 0.94, 1.0), vec3(0.65, 0.08, 1.0),
+                smoothstep(0.0, 0.42, distanceAlong));
+        float fade = pow(1.0 - distanceAlong, 1.6);
+        fragColor = vec4(beamColor, fade * beamStrength
+                * CirrusEndVeil * clamp(CirrusEndIntensity, 0.0, 2.0));
+        return;
+    }
+    vec3 direction = normalize(worldDirection);
+    if (CirrusEndGlass > 0.5) {
+        vec3 glassNormal = normalize(cross(dFdx(worldDirection), dFdy(worldDirection)));
+        if (dot(glassNormal, shardNormal) < 0.0) {
+            glassNormal = -glassNormal;
+        }
+        vec3 opticalTilt = shardSeed - 0.5;
+        opticalTilt -= glassNormal * dot(opticalTilt, glassNormal);
+        glassNormal = normalize(glassNormal + opticalTilt * 0.65);
+        if (dot(glassNormal, direction) > 0.0) {
+            glassNormal = -glassNormal;
+        }
+        // each moving shard refracts the same procedural sky at a different angle
+        direction = normalize(refract(direction, glassNormal, mix(0.54, 0.72, shardSeed.g)));
+    }
+    direction = mix(direction, pixelatedDirection(direction), clamp(CirrusEndPixelation, 0.0, 1.0));
     float intensity = clamp(CirrusEndIntensity, 0.0, 2.0);
     float time = CirrusEndTime * max(CirrusEndAnimationSpeed, 0.0);
     float morphTime = time * max(CirrusEndMorphSpeed, 0.0);
@@ -602,5 +638,8 @@ void main() {
     float finalLuminance = max(color.r, max(color.g, color.b));
     float highlightPreservation = smoothstep(0.16, 0.64, finalLuminance);
     color *= mix(0.30, 1.0, highlightPreservation);
-    fragColor = vec4(color, 1.0);
+    float opacity = CirrusEndGlass > 0.5
+            ? CirrusEndVeil * (1.0 - smoothstep(0.80, 1.0, shardDeparture))
+            : 1.0;
+    fragColor = vec4(color, opacity);
 }

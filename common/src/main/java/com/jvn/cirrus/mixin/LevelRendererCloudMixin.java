@@ -27,6 +27,7 @@ import net.minecraft.client.CloudStatus;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
+import net.minecraft.client.gui.components.BossHealthOverlay;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -116,6 +117,23 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
             CallbackInfo ci
     ) {
         DistantHorizonsCompat.setBeforeApplyShaderCallback(null);
+    }
+
+    @WrapOperation(
+            method = "renderLevel",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/components/BossHealthOverlay;shouldCreateWorldFog()Z"
+            )
+    )
+    private boolean cirrus$replaceEndBossFog(BossHealthOverlay overlay, Operation<Boolean> original) {
+        boolean bossFog = original.call(overlay);
+        if (level != null && Level.END.equals(level.dimension()) && CirrusConfig.END_SKY_ENABLED.get()) {
+            cirrus$endSkyRenderer.updateFight(level, bossFog, ticks);
+            return false;
+        }
+        cirrus$endSkyRenderer.resetFight();
+        return bossFog;
     }
 
     @Redirect(
@@ -393,6 +411,7 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
 
     @Inject(method = "setLevel", at = @At("HEAD"))
     private void cirrus$releaseCloudsOnWorldChange(ClientLevel newLevel, CallbackInfo ci) {
+        cirrus$endSkyRenderer.resetFight();
         cirrus$cloudRenderer.invalidate();
         cirrus$auroraRenderer.invalidate();
         CirrusLightningLocator.invalidate();
