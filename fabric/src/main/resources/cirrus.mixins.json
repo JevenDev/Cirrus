@@ -9,6 +9,7 @@
     "ClientLevelDataMixin",
     "ClientPacketListenerMixin",
     "FogRendererMixin",
+    "AtmosphericFogEnvironmentMixin",
     "GameRendererMixin",
     "CirrusUniformBuffersMixin",
     "LevelRendererCloudMixin",
