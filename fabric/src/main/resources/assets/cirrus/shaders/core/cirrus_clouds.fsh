@@ -23,6 +23,8 @@ layout(std140) uniform CirrusParams {
     vec4 CirrusLightningViewPosition;
     vec4 CirrusWorldUpViewDirection;
     float CirrusLightningRadius;
+    vec4 CirrusFogOverride;
+    vec2 CirrusFogDistance;
 };
 
 
@@ -33,6 +35,7 @@ in vec2 texCoord0;
 in float vertexDistance;
 in vec4 vertexColor;
 in vec3 viewDirection;
+flat in vec2 cloudNeighborOffset;
 
 out vec4 fragColor;
 
@@ -73,6 +76,24 @@ void main() {
     vec4 color = cloudSample * vertexColor * ColorModulator;
     if (color.a < 0.1) {
         discard;
+    }
+
+    if (any(notEqual(cloudNeighborOffset, vec2(0.0)))) {
+        vec2 neighborCoord = texCoord0 + cloudNeighborOffset;
+        float neighborBaseAlpha = texture(Sampler0, neighborCoord).a;
+        float neighborRainAlpha = rainCoverage > 0.001
+            ? texture(Sampler0, neighborCoord + RAIN_CLOUD_PATTERN_OFFSET * texelSize).a * rainCoverage
+            : 0.0;
+        float neighborThunderAlpha = thunderCoverage > 0.001
+            ? texture(Sampler0, neighborCoord + THUNDER_CLOUD_PATTERN_OFFSET * texelSize).a * thunderCoverage
+            : 0.0;
+        float neighborSupplementalAlpha =
+            1.0 - (1.0 - neighborRainAlpha) * (1.0 - neighborThunderAlpha);
+        float neighborAlpha = 1.0 - (1.0 - neighborBaseAlpha) * (1.0 - neighborSupplementalAlpha);
+        // hidden cell walls otherwise compete with the top and bottom at shared edges
+        if (neighborAlpha >= cloudSample.a) {
+            discard;
+        }
     }
 
     if (CirrusEnabled > 0.5) {
@@ -191,7 +212,13 @@ void main() {
     );
     }
 
-    color.a *= 1.0 - linear_fog_value(vertexDistance, 0.0, FogCloudsEnd);
+    if (CirrusFogOverride.a > 0.5) {
+        float fade = linear_fog_value(vertexDistance, CirrusFogDistance.x, CirrusFogDistance.y);
+        color.rgb = mix(color.rgb, CirrusFogOverride.rgb, fade);
+        color.a *= 1.0 - fade;
+    } else {
+        color.a *= 1.0 - linear_fog_value(vertexDistance, 0.0, FogCloudsEnd);
+    }
     fragColor = color;
     fragColor.a *= CirrusTimeOpacity;
 }

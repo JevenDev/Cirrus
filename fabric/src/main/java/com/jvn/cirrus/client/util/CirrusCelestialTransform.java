@@ -44,6 +44,16 @@ public final class CirrusCelestialTransform {
                 .rotateX(POLAR_ELEVATION);
     }
 
+    public static Matrix4f bodyOrbitTransform(
+            Matrix4f destination,
+            Matrix4f fixedSkyModelView,
+            float timeOfDay
+    ) {
+        Matrix4f inverseVanilla = vanillaModelView(new Matrix4f(), fixedSkyModelView, timeOfDay).invert();
+        // replace the vanilla orbit while preserving body-local scaling and offsets
+        return bodyModelView(destination, fixedSkyModelView, timeOfDay, true).mul(inverseVanilla);
+    }
+
     public static Matrix4f sunriseModelView(
             Matrix4f destination,
             Matrix4f fixedSkyModelView,

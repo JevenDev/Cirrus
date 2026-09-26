@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(SkyRenderer.class)
 public abstract class SkyRendererCelestialMixin {
     @Unique private final Matrix4f cirrus$fixedSky = new Matrix4f();
+    @Unique private final Matrix4f cirrus$orbit = new Matrix4f();
     @Unique private final Matrix4f cirrus$body = new Matrix4f();
     @Unique private final Matrix4f cirrus$sunrise = new Matrix4f();
     @Unique private float cirrus$sunAngle;
@@ -40,9 +41,10 @@ public abstract class SkyRendererCelestialMixin {
         try {
             if (CirrusRenderContext.isReady()) {
                 if (CirrusConfig.SUN_ANGLED_ORBIT.get()) {
-                    CirrusCelestialTransform.bodyModelView(
-                            poses.last().pose(), cirrus$fixedSky, cirrus$sunAngle / Mth.TWO_PI, true
+                    CirrusCelestialTransform.bodyOrbitTransform(
+                            cirrus$orbit, cirrus$fixedSky, cirrus$sunAngle / Mth.TWO_PI
                     );
+                    poses.last().pose().mulLocal(cirrus$orbit);
                 }
                 CirrusCelestialRenderState.captureSun(cirrus$body
                         .set(CirrusRenderContext.frustumMatrix()).mul(poses.last().pose()));
@@ -59,9 +61,10 @@ public abstract class SkyRendererCelestialMixin {
         try {
             if (CirrusRenderContext.isReady()) {
                 if (CirrusConfig.MOON_ANGLED_ORBIT.get()) {
-                    CirrusCelestialTransform.bodyModelView(
-                            poses.last().pose(), cirrus$fixedSky, cirrus$moonAngle / Mth.TWO_PI, true
+                    CirrusCelestialTransform.bodyOrbitTransform(
+                            cirrus$orbit, cirrus$fixedSky, cirrus$moonAngle / Mth.TWO_PI
                     );
+                    poses.last().pose().mulLocal(cirrus$orbit);
                 }
                 CirrusCelestialRenderState.captureMoon(cirrus$body
                         .set(CirrusRenderContext.frustumMatrix()).mul(poses.last().pose()));

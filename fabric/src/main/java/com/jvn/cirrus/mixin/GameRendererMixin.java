@@ -3,6 +3,11 @@ package com.jvn.cirrus.mixin;
 import com.jvn.cirrus.client.CirrusLightningLocator;
 import com.jvn.cirrus.client.CirrusRenderers;
 import com.jvn.cirrus.client.CirrusTimeTransition;
+import com.jvn.cirrus.config.CirrusConfig;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.client.gui.components.BossHealthOverlay;
+import net.minecraft.world.level.Level;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -18,6 +23,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
+    @WrapOperation(method = "renderLevel", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/components/BossHealthOverlay;shouldCreateWorldFog()Z"
+    ))
+    private boolean cirrus$replaceEndBossFog(BossHealthOverlay overlay, Operation<Boolean> original) {
+        boolean bossFog = original.call(overlay);
+        ClientLevel level = Minecraft.getInstance().level;
+        return bossFog && !(level != null && Level.END.equals(level.dimension())
+                && CirrusConfig.END_SKY_ENABLED.get());
+    }
+
     @Inject(method = "extract", at = @At("HEAD"))
     private void cirrus$beginTimeTransitionExtraction(
             DeltaTracker deltaTracker,
@@ -41,6 +57,7 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "setLevel", at = @At("HEAD"))
     private void cirrus$releaseOnWorldChange(ClientLevel newLevel, CallbackInfo ci) {
+        CirrusRenderers.endSky().resetFight();
         CirrusRenderers.clouds().invalidate();
         CirrusRenderers.aurora().invalidate();
         CirrusLightningLocator.invalidate();

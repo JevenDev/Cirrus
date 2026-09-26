@@ -15,8 +15,11 @@ public final class CirrusCloudTint {
     }
 
     public static Vec3 color(ClientLevel level, float partialTick) {
-        Vec3 color = CirrusRenderContext.cloudColor(partialTick)
-                .multiply(fromRgb(CirrusCloudDimensions.tint(level.dimension().identifier())));
+        return color(level, partialTick, CirrusRenderContext.cloudColor(partialTick));
+    }
+
+    public static Vec3 color(ClientLevel level, float partialTick, Vec3 baseColor) {
+        Vec3 color = baseColor.multiply(fromRgb(CirrusCloudDimensions.tint(level.dimension().identifier())));
         return CirrusConfig.CLOUD_TIME_TINT_ENABLED.get()
                 ? color.multiply(timeTint(CirrusCloudTimeFade.dayTime(level, partialTick))) : color;
     }
