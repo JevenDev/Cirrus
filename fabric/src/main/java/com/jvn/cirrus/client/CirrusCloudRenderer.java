@@ -313,7 +313,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 ? CirrusCloudTint.color(level, partialTick,
                         new Vec3(whiteningBrightness, whiteningBrightness, whiteningBrightness))
                 : CirrusCloudTint.color(level, partialTick);
-        boolean whitenFog = whitenClouds && !hasVisibilityLimitingFog();
+        boolean preserveVanillaFog = hasVisibilityLimitingFog();
+        boolean whitenFog = whitenClouds && !preserveVanillaFog;
         double lowerHeight = cloudHeight
                 + CirrusConfig.LOWER_LAYER_HEIGHT_OFFSET.get()
                 - cameraY
@@ -341,13 +342,13 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             CirrusShaderUniforms.setUniform(cloudShader, "CirrusTimeOpacity", timeOpacity);
             float distanceBlocks = distanceChunks * 16.0F;
             float fadeLength = Math.max(32.0F, distanceBlocks * 0.15F);
+            float fogStart = Math.max(0.0F, distanceBlocks - fadeLength);
             CirrusShaderUniforms.setUniform(
                     cloudShader, "FogStart",
-                    whitenFog ? Math.max(0.0F, distanceBlocks - fadeLength)
-                            : FogModCompat.fogStart(Math.max(0.0F, distanceBlocks - fadeLength))
+                    preserveVanillaFog ? FogModCompat.fogStart(fogStart) : fogStart
             );
             CirrusShaderUniforms.setUniform(
-                    cloudShader, "FogEnd", whitenFog ? distanceBlocks : FogModCompat.fogEnd(distanceBlocks)
+                    cloudShader, "FogEnd", preserveVanillaFog ? FogModCompat.fogEnd(distanceBlocks) : distanceBlocks
             );
             Vector4f fogColor = CirrusRenderContext.fogColor();
             if (whitenFog) {
