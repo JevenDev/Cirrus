@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "compat.distanthorizons.LodRendererMixin",
+    "compat.fog.PolytoneCompatMixin",
     "ClientLevelMixin",
     "ClientLevelDataMixin",
     "ClientPacketListenerMixin",
@@ -14,6 +15,7 @@
     "CloudRendererMixin",
     "SkyRendererMixin",
     "SkyRendererCelestialMixin",
+    "compat.polytone.ClientFrameTickerMixin",
     "compat.polytone.ShaderSourceMixin",
     "compat.polytone.ShaderReloadMixin",
     "compat.polytone.PostChainMixin",

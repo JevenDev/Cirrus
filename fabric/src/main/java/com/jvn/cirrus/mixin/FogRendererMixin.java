@@ -28,7 +28,7 @@ public abstract class FogRendererMixin {
     private float cirrus$terrainFadeStrength;
     private float cirrus$farPlaneDistance;
 
-    @Inject(method = "computeFogColor", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "computeFogColor", at = @At("RETURN"), cancellable = true, order = 2000)
     private void cirrus$useHorizonFogColor(
             Camera camera,
             float partialTick,
@@ -41,7 +41,7 @@ public abstract class FogRendererMixin {
         Vector4f fogColor = cir.getReturnValue();
         cirrus$terrainFadeStrength = 0.0F;
         cirrus$farPlaneDistance = renderDistanceChunks * 16.0F;
-        if (renderDistanceFog || FogModCompat.controlsFogColor() || !shouldMatchSky(camera, level)) {
+        if (renderDistanceFog || !shouldMatchSky(camera, level)) {
             return;
         }
 
