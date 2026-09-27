@@ -3,6 +3,7 @@ package com.jvn.cirrus.mixin.compat.polytone;
 import com.jvn.cirrus.client.CirrusTimeTransition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.util.Mth;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,11 +35,30 @@ public abstract class PostShaderRendererMixin {
                     target = "Lnet/minecraft/client/multiplayer/ClientLevel;getDayTime()J",
                     remap = true
             ),
-            remap = false
+            remap = false,
+            require = 0
     )
     private long cirrus$useVisualDayTime(ClientLevel level, Operation<Long> original) {
         return CirrusTimeTransition.canUseVisualTime(level)
                 ? CirrusTimeTransition.visualDayTime()
                 : original.call(level);
+    }
+
+    @WrapOperation(
+            method = "render",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/mehvahdjukaar/polytone/common/ClientFrameTicker;getDayTime()D",
+                    remap = false
+            ),
+            remap = false,
+            require = 0
+    )
+    private double cirrus$useVisualFrameDayTime(Operation<Double> original) {
+        Minecraft minecraft = Minecraft.getInstance();
+        ClientLevel level = minecraft.level;
+        return CirrusTimeTransition.canUseVisualTime(level)
+                ? CirrusTimeTransition.visualDayTime(level, minecraft.getTimer().getGameTimeDeltaPartialTick(false))
+                : original.call();
     }
 }
