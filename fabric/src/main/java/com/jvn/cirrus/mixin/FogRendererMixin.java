@@ -36,7 +36,7 @@ public abstract class FogRendererMixin {
     private float cirrus$terrainFadeStrength;
     private float cirrus$farPlaneDistance;
 
-    @Inject(method = "computeFogColor", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "computeFogColor", at = @At("RETURN"), cancellable = true, order = 2000)
     private void cirrus$useHorizonFogColor(
             Camera camera,
             float partialTick,
@@ -48,7 +48,7 @@ public abstract class FogRendererMixin {
     ) {
         cirrus$terrainFadeStrength = 0.0F;
         cirrus$farPlaneDistance = renderDistanceChunks * 16.0F;
-        if (FogModCompat.controlsFogColor() || !shouldMatchSky(camera, level)) {
+        if (!shouldMatchSky(camera, level)) {
             return;
         }
 
@@ -85,7 +85,7 @@ public abstract class FogRendererMixin {
         );
     }
 
-    @Inject(method = "setupFog", at = @At("RETURN"))
+    @Inject(method = "setupFog", at = @At("RETURN"), order = 2000)
     private void cirrus$useConfiguredCloudDistance(
             Camera camera,
             int renderDistanceChunks,
@@ -98,8 +98,7 @@ public abstract class FogRendererMixin {
         FogData fogData = cir.getReturnValue();
         fogData.renderDistanceStart =
                 cirrus$softenTerrainFogTransition(fogData.renderDistanceStart);
-        if (FogModCompat.controlsFogDistance()
-                || !CirrusCloudMode.isActive(minecraft.options.getCloudStatus())
+        if (!CirrusCloudMode.isActive(minecraft.options.getCloudStatus())
                 || camera.getFluidInCamera() != FogType.NONE
                 || hasVisibilityEffect(camera)
                 || minecraft.gui.hud.getBossOverlay().shouldCreateWorldFog()) {
