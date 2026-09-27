@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_25",
   "client": [
     "compat.distanthorizons.LodRendererMixin",
+    "compat.fog.PolytoneCompatMixin",
     "compat.polytone.PolytoneGlobalUniformsMixin",
     "CameraMixin",
     "ClientClockManagerMixin",
