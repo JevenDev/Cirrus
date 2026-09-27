@@ -18,10 +18,6 @@ public final class FogModCompat {
         return EXTERNAL_FOG_DISTANCE;
     }
 
-    public static boolean controlsFogColor() {
-        return BETTER_FOG_LOADED || IMB11_FOG_LOADED;
-    }
-
     public static float cloudWhiteningBrightness(ClientLevel level) {
         return IMB11_FOG_LOADED ? Imb11FogCompat.cloudWhiteningBrightness(level) : Float.NaN;
     }

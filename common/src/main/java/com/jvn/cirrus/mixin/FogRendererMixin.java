@@ -29,7 +29,7 @@ public abstract class FogRendererMixin {
     @Shadow private static float fogGreen;
     @Shadow private static float fogBlue;
 
-    @Inject(method = "setupColor", at = @At("TAIL"))
+    @Inject(method = "setupColor", at = @At("TAIL"), order = 2000)
     private static void cirrus$useHorizonFogColor(
             Camera camera,
             float partialTick,
@@ -38,7 +38,7 @@ public abstract class FogRendererMixin {
             float darkenWorldAmount,
             CallbackInfo ci
     ) {
-        if (FogModCompat.controlsFogColor() || !shouldMatchSky(camera, level)) {
+        if (!shouldMatchSky(camera, level)) {
             return;
         }
 
