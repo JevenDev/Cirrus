@@ -605,6 +605,7 @@ public final class CirrusConfigScreen {
                 .name(text("cirrus.config.category.end"))
                 .tooltip(text("cirrus.config.category.end.description"))
                 .option(booleanOption("cirrus.config.sky.endSkyEnabled", CirrusConfig.END_SKY_ENABLED))
+                .option(booleanOption("cirrus.config.sky.endGlassEnabled", CirrusConfig.END_GLASS_ENABLED))
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.endAppearance"))
                         .option(enumOption(

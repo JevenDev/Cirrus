@@ -70,7 +70,7 @@ public abstract class LevelRendererCloudMixin {
         );
         CirrusCloudAttachment.updateRenderTicks(cloudTicks);
         if (level != null && Level.END.equals(level.dimension())
-                && CirrusConfig.END_SKY_ENABLED.get()) {
+                && (CirrusConfig.END_SKY_ENABLED.get() || CirrusConfig.END_GLASS_ENABLED.get())) {
             CirrusRenderers.endSky().updateFight(
                     level, Minecraft.getInstance().gui.hud.getBossOverlay().shouldCreateWorldFog(), worldTicks
             );

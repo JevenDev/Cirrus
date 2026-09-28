@@ -26,6 +26,7 @@ layout(std140) uniform CirrusParams {
     vec4 CirrusEndImpact;
     float CirrusEndBeamPass;
     float CirrusEndVeil;
+    float CirrusEndSkyEnabled;
 };
 
 in vec3 Position;

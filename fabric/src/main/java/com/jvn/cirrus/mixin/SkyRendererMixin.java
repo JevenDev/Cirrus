@@ -1,6 +1,8 @@
 package com.jvn.cirrus.mixin;
 
 import com.jvn.cirrus.client.CirrusCloudMode;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.jvn.cirrus.client.CirrusRenderers;
 import com.jvn.cirrus.client.compat.shaderpacks.CirrusShaderPackCompat;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
@@ -99,21 +101,26 @@ public abstract class SkyRendererMixin {
         }
     }
 
-    @Inject(method = "renderEndSky", at = @At("HEAD"), cancellable = true)
-    private void cirrus$renderEndSky(CallbackInfo ci) {
+    @WrapMethod(method = "renderEndSky")
+    private void cirrus$renderEndSky(Operation<Void> original) {
         if (!CirrusRenderContext.isReady()
-                || !Level.END.equals(CirrusRenderContext.level().dimension())
-                || !CirrusConfig.END_SKY_ENABLED.get()) {
+                || !Level.END.equals(CirrusRenderContext.level().dimension())) {
+            original.call();
             return;
         }
 
-        CirrusRenderers.endSky().render(
-                CirrusRenderContext.frustumMatrix(),
-                CirrusRenderContext.projectionMatrix(),
-                CirrusRenderContext.partialTick(),
-                CirrusRenderContext.ticks()
-        );
-        ci.cancel();
+        boolean customSky = CirrusConfig.END_SKY_ENABLED.get();
+        if (!customSky) {
+            original.call();
+        }
+        if (customSky || CirrusConfig.END_GLASS_ENABLED.get()) {
+            CirrusRenderers.endSky().render(
+                    CirrusRenderContext.frustumMatrix(),
+                    CirrusRenderContext.projectionMatrix(),
+                    CirrusRenderContext.partialTick(),
+                    CirrusRenderContext.ticks()
+            );
+        }
     }
 
     @ModifyArg(
