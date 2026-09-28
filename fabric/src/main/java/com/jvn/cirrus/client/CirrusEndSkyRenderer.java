@@ -8,6 +8,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.jvn.cirrus.client.render.CirrusVertexBuffer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.resources.Identifier;
 import com.jvn.cirrus.client.render.CirrusShader;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -16,6 +18,8 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public final class CirrusEndSkyRenderer implements AutoCloseable {
+    private static final Identifier VANILLA_END_SKY_TEXTURE =
+            Identifier.withDefaultNamespace("textures/environment/end_sky.png");
     private static final float DOME_RADIUS = 100.0F;
     private static final Vec3 DEFAULT_IMPACT_DIRECTION = new Vec3(0.0, 1.0, 0.0);
     private static final int AZIMUTH_SEGMENTS = 64;
@@ -65,26 +69,50 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
             float partialTick,
             int ticks
     ) {
+        boolean customSky = CirrusConfig.END_SKY_ENABLED.get();
+        boolean glass = CirrusConfig.END_GLASS_ENABLED.get();
+        if (!customSky && !glass) {
+            return;
+        }
         prepareDome();
         CirrusShader shader = CirrusShaders.endSky();
+        if (!glass) {
+            clearGlass(CirrusShaders.endGlass());
+            clearGlass(CirrusShaders.endBeams());
+        }
+        AbstractTexture skyTexture = customSky ? null
+                : Minecraft.getInstance().getTextureManager().getTexture(VANILLA_END_SKY_TEXTURE);
         configureSky(shader, ticks + partialTick);
         PoseStack poseStack = new PoseStack();
         poseStack.mulPose(frustumMatrix);
-        if (veil == null || !veil.occludesSky(ticks + partialTick)) {
-            domeBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
+        if (customSky && (!glass || veil == null || !veil.occludesSky(ticks + partialTick))) {
+            domeBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader, skyTexture);
         }
-        renderGlass(poseStack.last().pose(), projectionMatrix, ticks + partialTick);
-        float flash = veil == null ? 0.0F : veil.flash(ticks + partialTick);
+        if (glass) {
+            renderGlass(poseStack.last().pose(), projectionMatrix, ticks + partialTick, skyTexture);
+        }
+        float flash = !glass || veil == null ? 0.0F : veil.flash(ticks + partialTick);
         if (flash > 0.0F) {
             CirrusShaderUniforms.setUniform(shader, "CirrusEndFlash", flash);
-            domeBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
+            domeBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader, skyTexture);
         }
     }
 
-    private void configureSky(CirrusShader shader, float ticks) {
+    private void clearGlass(CirrusShader shader) {
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndVeil", 0.0F);
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndCharge", 0.0F);
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndShatter", 0.0F);
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndBeamPass", 0.0F);
         CirrusShaderUniforms.setUniform(shader, "CirrusEndFlash", 0.0F);
-        CirrusShaderUniforms.setUniform(shader, "CirrusEndShatter", veil == null ? 0.0F : veil.shatter(ticks));
-        CirrusShaderUniforms.setUniform(shader, "CirrusEndCharge", veil == null ? 0.0F : veil.charge(ticks));
+    }
+
+    private void configureSky(CirrusShader shader, float ticks) {
+        boolean glass = CirrusConfig.END_GLASS_ENABLED.get() && veil != null;
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndSkyEnabled", CirrusConfig.END_SKY_ENABLED.get());
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndBeamPass", 0.0F);
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndFlash", 0.0F);
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndShatter", glass ? veil.shatter(ticks) : 0.0F);
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndCharge", glass ? veil.charge(ticks) : 0.0F);
         CirrusShaderUniforms.setUniform(
                 shader, "CirrusEndImpact", (float)impactDirection.x, (float)impactDirection.y, (float)impactDirection.z, 0.0F
         );
@@ -117,7 +145,9 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
         );
     }
 
-    private void renderGlass(Matrix4f modelViewMatrix, Matrix4f projectionMatrix, float ticks) {
+    private void renderGlass(
+            Matrix4f modelViewMatrix, Matrix4f projectionMatrix, float ticks, AbstractTexture skyTexture
+    ) {
         CirrusShader shader = CirrusShaders.endGlass();
         float opacity = veil == null ? 0.0F : veil.opacity(ticks);
         CirrusShaderUniforms.setUniform(shader, "CirrusEndVeil", opacity);
@@ -129,15 +159,16 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
             glassBuffer = CirrusEndGlassMesh.create(DOME_RADIUS);
         }
         configureSky(shader, ticks);
-        glassBuffer.drawWithShader(modelViewMatrix, projectionMatrix, shader);
+        glassBuffer.drawWithShader(modelViewMatrix, projectionMatrix, shader, skyTexture);
         if (veil.charge(ticks) > 0.0F && veil.shatter(ticks) < 0.43F) {
             if (beamBuffer == null) {
                 beamBuffer = CirrusEndGlassMesh.createBeams(DOME_RADIUS);
             }
             CirrusShader beams = CirrusShaders.endBeams();
             configureSky(beams, ticks);
+            CirrusShaderUniforms.setUniform(beams, "CirrusEndBeamPass", 1.0F);
             CirrusShaderUniforms.setUniform(beams, "CirrusEndVeil", opacity);
-            beamBuffer.drawWithShader(modelViewMatrix, projectionMatrix, beams);
+            beamBuffer.drawWithShader(modelViewMatrix, projectionMatrix, beams, skyTexture);
         }
     }
 
