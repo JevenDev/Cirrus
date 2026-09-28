@@ -116,7 +116,7 @@ void main() {
     }
 
     vec3 smoothCelestialDirection = normalize(rotateY(
-        rotateAroundAxis(viewDirection, CIRRUS_STAR_AXIS, -CirrusMilkyWayRotation),
+        rotateAroundAxis(viewDirection, CIRRUS_STAR_AXIS, CirrusMilkyWayRotation),
         CIRRUS_PI
     ));
     if (CirrusMilkyWayAngledOrbit < 0.5) {
