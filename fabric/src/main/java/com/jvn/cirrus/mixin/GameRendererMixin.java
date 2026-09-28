@@ -31,7 +31,7 @@ public abstract class GameRendererMixin {
         boolean bossFog = original.call(overlay);
         ClientLevel level = Minecraft.getInstance().level;
         return bossFog && !(level != null && Level.END.equals(level.dimension())
-                && CirrusConfig.END_SKY_ENABLED.get());
+                && (CirrusConfig.END_SKY_ENABLED.get() || CirrusConfig.END_GLASS_ENABLED.get()));
     }
 
     @Inject(method = "extract", at = @At("HEAD"))

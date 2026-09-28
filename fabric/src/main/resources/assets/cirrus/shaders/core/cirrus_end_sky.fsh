@@ -27,6 +27,7 @@ layout(std140) uniform CirrusParams {
     vec4 CirrusEndImpact;
     float CirrusEndBeamPass;
     float CirrusEndVeil;
+    float CirrusEndSkyEnabled;
 };
 
 uniform sampler2D Sampler0;
@@ -262,6 +263,58 @@ void compositeCloudLayer(
     color += edgeColor * edge * opacity * 0.72 * intensity;
 }
 
+vec3 vanillaEndSky(vec3 direction) {
+    vec3 dominant = abs(direction);
+    vec2 uv;
+    if (dominant.y >= dominant.x && dominant.y >= dominant.z) {
+        uv = vec2(direction.x, direction.y < 0.0 ? direction.z : -direction.z) / dominant.y;
+    } else if (dominant.x >= dominant.z) {
+        uv = vec2(direction.x > 0.0 ? direction.y : -direction.y, direction.z) / dominant.x;
+    } else {
+        uv = vec2(direction.x, direction.z > 0.0 ? direction.y : -direction.y) / dominant.z;
+    }
+    // vanilla repeats this texture sixteen times across each cube face with a 40/255 tint
+    return texture(Sampler0, (uv * 0.5 + 0.5) * 16.0).rgb * (40.0 / 255.0);
+}
+
+vec4 endColor(vec3 color, float intensity) {
+    if (CirrusEndGlass > 0.5 && beamStrength > 0.0) {
+        vec2 baryDx = dFdx(barycentric.xy);
+        vec2 baryDy = dFdy(barycentric.xy);
+        vec3 positionDx = dFdx(worldDirection);
+        vec3 positionDy = dFdy(worldDirection);
+        float determinant = baryDx.x * baryDy.y - baryDy.x * baryDx.y;
+        float baryWidth = fwidth(barycentric.x);
+        if (abs(determinant) > 0.0000000001) {
+            // reconstruct the source on the moving edge so its glow keeps a world-space falloff
+            vec3 acrossEdge = (positionDx * baryDy.y - positionDy * baryDx.y) / determinant;
+            vec3 alongEdge = (positionDy * baryDx.x - positionDx * baryDy.x) / determinant;
+            float sourceAlong = mix(0.25, 0.75, shardSeed.r);
+            vec3 sourceOffset = -barycentric.x * acrossEdge + (sourceAlong - barycentric.y) * alongEdge;
+            float sourceDistanceSquared = dot(sourceOffset, sourceOffset);
+            float edgeAltitude = length(cross(acrossEdge, alongEdge)) / max(length(alongEdge), 0.0001);
+            float edgeDistance = abs(barycentric.x) * edgeAltitude;
+            float distanceAlongEdge = dot(sourceOffset, normalize(alongEdge));
+            float edgeFalloff = exp(-distanceAlongEdge * distanceAlongEdge / 12.0);
+            float edgeWidth = max(baryWidth * edgeAltitude * 0.85, 0.12 + edgeFalloff * 0.10);
+            float edgeHighlight = exp(-pow(edgeDistance / edgeWidth, 2.0)) * edgeFalloff;
+            float edgeGlow = exp(-edgeDistance / 0.65) * edgeFalloff;
+            float sourceCore = exp(-sourceDistanceSquared / 0.45);
+            float lightSpill = exp(-sourceDistanceSquared / 28.0 - edgeDistance * 0.35);
+            vec3 edgeColor = mix(vec3(0.52, 0.12, 0.76), vec3(1.0, 0.91, 1.0),
+                    exp(-distanceAlongEdge * distanceAlongEdge / 3.0));
+            color += (edgeColor * edgeHighlight * 0.90
+                    + vec3(0.64, 0.19, 0.90) * edgeGlow * 0.45
+                    + vec3(1.0, 0.94, 1.0) * sourceCore * 0.80
+                    + vec3(0.30, 0.07, 0.48) * lightSpill * 0.45) * beamStrength * intensity;
+        }
+    }
+    float opacity = CirrusEndGlass > 0.5
+            ? CirrusEndVeil * (1.0 - smoothstep(0.80, 1.0, shardDeparture))
+            : 1.0;
+    return vec4(color, opacity);
+}
+
 void main() {
     if (CirrusEndFlash > 0.0) {
         float impactDistance = acos(clamp(dot(normalize(worldDirection), CirrusEndImpact.xyz), -1.0, 1.0)) / PI;
@@ -293,8 +346,13 @@ void main() {
         if (dot(glassNormal, direction) > 0.0) {
             glassNormal = -glassNormal;
         }
-        // each moving shard refracts the same procedural sky at a different angle
+        // each moving shard refracts the selected sky at a different angle
         direction = normalize(refract(direction, glassNormal, mix(0.54, 0.72, shardSeed.g)));
+    }
+    if (CirrusEndSkyEnabled < 0.5) {
+        float intensity = clamp(CirrusEndIntensity, 0.0, 2.0);
+        fragColor = endColor(vanillaEndSky(direction) * intensity, intensity);
+        return;
     }
     direction = mix(direction, pixelatedDirection(direction), clamp(CirrusEndPixelation, 0.0, 1.0));
     float intensity = clamp(CirrusEndIntensity, 0.0, 2.0);
@@ -655,39 +713,5 @@ void main() {
     float finalLuminance = max(color.r, max(color.g, color.b));
     float highlightPreservation = smoothstep(0.16, 0.64, finalLuminance);
     color *= mix(0.30, 1.0, highlightPreservation);
-    if (CirrusEndGlass > 0.5 && beamStrength > 0.0) {
-        vec2 baryDx = dFdx(barycentric.xy);
-        vec2 baryDy = dFdy(barycentric.xy);
-        vec3 positionDx = dFdx(worldDirection);
-        vec3 positionDy = dFdy(worldDirection);
-        float determinant = baryDx.x * baryDy.y - baryDy.x * baryDx.y;
-        float baryWidth = fwidth(barycentric.x);
-        if (abs(determinant) > 0.0000000001) {
-            // reconstruct the source on the moving edge so its glow keeps a world-space falloff
-            vec3 acrossEdge = (positionDx * baryDy.y - positionDy * baryDx.y) / determinant;
-            vec3 alongEdge = (positionDy * baryDx.x - positionDx * baryDy.x) / determinant;
-            float sourceAlong = mix(0.25, 0.75, shardSeed.r);
-            vec3 sourceOffset = -barycentric.x * acrossEdge + (sourceAlong - barycentric.y) * alongEdge;
-            float sourceDistanceSquared = dot(sourceOffset, sourceOffset);
-            float edgeAltitude = length(cross(acrossEdge, alongEdge)) / max(length(alongEdge), 0.0001);
-            float edgeDistance = abs(barycentric.x) * edgeAltitude;
-            float distanceAlongEdge = dot(sourceOffset, normalize(alongEdge));
-            float edgeFalloff = exp(-distanceAlongEdge * distanceAlongEdge / 12.0);
-            float edgeWidth = max(baryWidth * edgeAltitude * 0.85, 0.12 + edgeFalloff * 0.10);
-            float edgeHighlight = exp(-pow(edgeDistance / edgeWidth, 2.0)) * edgeFalloff;
-            float edgeGlow = exp(-edgeDistance / 0.65) * edgeFalloff;
-            float sourceCore = exp(-sourceDistanceSquared / 0.45);
-            float lightSpill = exp(-sourceDistanceSquared / 28.0 - edgeDistance * 0.35);
-            vec3 edgeColor = mix(vec3(0.52, 0.12, 0.76), vec3(1.0, 0.91, 1.0),
-                    exp(-distanceAlongEdge * distanceAlongEdge / 3.0));
-            color += (edgeColor * edgeHighlight * 0.90
-                    + vec3(0.64, 0.19, 0.90) * edgeGlow * 0.45
-                    + vec3(1.0, 0.94, 1.0) * sourceCore * 0.80
-                    + vec3(0.30, 0.07, 0.48) * lightSpill * 0.45) * beamStrength * intensity;
-        }
-    }
-    float opacity = CirrusEndGlass > 0.5
-            ? CirrusEndVeil * (1.0 - smoothstep(0.80, 1.0, shardDeparture))
-            : 1.0;
-    fragColor = vec4(color, opacity);
+    fragColor = endColor(color, intensity);
 }

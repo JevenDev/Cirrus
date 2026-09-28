@@ -39,7 +39,9 @@ public abstract class SkyRendererMixin {
 
     @WrapMethod(method = "renderEndSky")
     private void cirrus$useEndPass(RenderPass renderPass, Operation<Void> original) {
-        CirrusRenderContext.renderInPass(renderPass, null, () -> original.call(renderPass));
+        CirrusRenderContext.renderInPass(
+                renderPass, null, () -> cirrus$renderEndSky(renderPass, original)
+        );
     }
 
     @Inject(method = "renderSunMoonAndStars", at = @At("HEAD"))
@@ -120,21 +122,26 @@ public abstract class SkyRendererMixin {
         }
     }
 
-    @Inject(method = "renderEndSky", at = @At("HEAD"), cancellable = true)
-    private void cirrus$renderEndSky(RenderPass renderPass, CallbackInfo ci) {
+    @Unique
+    private void cirrus$renderEndSky(RenderPass renderPass, Operation<Void> original) {
         if (!CirrusRenderContext.isReady()
-                || !Level.END.equals(CirrusRenderContext.level().dimension())
-                || !CirrusConfig.END_SKY_ENABLED.get()) {
+                || !Level.END.equals(CirrusRenderContext.level().dimension())) {
+            original.call(renderPass);
             return;
         }
 
-        CirrusRenderers.endSky().render(
-                CirrusRenderContext.frustumMatrix(),
-                CirrusRenderContext.projectionMatrix(),
-                CirrusRenderContext.partialTick(),
-                CirrusRenderContext.ticks()
-        );
-        ci.cancel();
+        boolean customSky = CirrusConfig.END_SKY_ENABLED.get();
+        if (!customSky) {
+            original.call(renderPass);
+        }
+        if (customSky || CirrusConfig.END_GLASS_ENABLED.get()) {
+            CirrusRenderers.endSky().render(
+                    CirrusRenderContext.frustumMatrix(),
+                    CirrusRenderContext.projectionMatrix(),
+                    CirrusRenderContext.partialTick(),
+                    CirrusRenderContext.ticks()
+            );
+        }
     }
 
     @ModifyArg(
