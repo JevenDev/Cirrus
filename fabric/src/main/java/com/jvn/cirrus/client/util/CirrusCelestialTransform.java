@@ -23,7 +23,7 @@ public final class CirrusCelestialTransform {
             return vanillaModelView(destination, fixedSkyModelView, timeOfDay);
         }
         return destination.set(fixedSkyModelView).rotate(
-                timeOfDay * Mth.TWO_PI,
+                -timeOfDay * Mth.TWO_PI,
                 0.0F,
                 POLAR_AXIS_Y,
                 POLAR_AXIS_Z
@@ -40,7 +40,7 @@ public final class CirrusCelestialTransform {
             return vanillaModelView(destination, fixedSkyModelView, timeOfDay);
         }
         return destination.set(fixedSkyModelView)
-                .rotate(timeOfDay * Mth.TWO_PI, 0.0F, POLAR_AXIS_Y, POLAR_AXIS_Z)
+                .rotate(-timeOfDay * Mth.TWO_PI, 0.0F, POLAR_AXIS_Y, POLAR_AXIS_Z)
                 .rotateX(POLAR_ELEVATION);
     }
 
@@ -60,7 +60,7 @@ public final class CirrusCelestialTransform {
             float timeOfDay
     ) {
         float angle = timeOfDay * Mth.TWO_PI;
-        float directionX = Mth.sin(angle);
+        float directionX = -Mth.sin(angle);
         float directionZ = POLAR_AXIS_Y * Mth.cos(angle);
         float yaw = (float)Mth.atan2(directionZ, -directionX);
         return destination.set(fixedSkyModelView)
@@ -81,7 +81,7 @@ public final class CirrusCelestialTransform {
             return destination.set(-sine, cosine, 0.0F);
         }
         return destination.set(
-                sine,
+                -sine,
                 POLAR_AXIS_Y * cosine,
                 -POLAR_AXIS_Z * cosine
         );
@@ -102,7 +102,7 @@ public final class CirrusCelestialTransform {
             float viewZ
     ) {
         float angle = timeOfDay * Mth.TWO_PI;
-        float directionX = angledOrbit ? Mth.sin(angle) : -Mth.sin(angle);
+        float directionX = -Mth.sin(angle);
         float directionZ = angledOrbit ? POLAR_AXIS_Y * Mth.cos(angle) : 0.0F;
         float horizontalLength = Mth.sqrt(directionX * directionX + directionZ * directionZ);
         if (horizontalLength < 1.0E-4F) {
