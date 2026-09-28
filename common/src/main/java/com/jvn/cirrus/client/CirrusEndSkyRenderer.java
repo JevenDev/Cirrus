@@ -22,6 +22,8 @@ import org.joml.Matrix4f;
 public final class CirrusEndSkyRenderer implements AutoCloseable {
     private static final ResourceLocation END_NOISE_TEXTURE =
             Cirrus.texture("environment/end_noise.png");
+    private static final ResourceLocation VANILLA_END_SKY_TEXTURE =
+            ResourceLocation.withDefaultNamespace("textures/environment/end_sky.png");
     private static final float DOME_RADIUS = 100.0F;
     private static final Vec3 DEFAULT_IMPACT_DIRECTION = new Vec3(0.0, 1.0, 0.0);
     private static final int AZIMUTH_SEGMENTS = 64;
@@ -71,10 +73,25 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
             float partialTick,
             int ticks
     ) {
+        boolean customSky = CirrusConfig.END_SKY_ENABLED.get();
+        boolean glass = CirrusConfig.END_GLASS_ENABLED.get();
+        if (!customSky && !glass) {
+            return;
+        }
         prepareDome();
         ShaderInstance shader = CirrusShaders.endSky();
+        if (!glass) {
+            ShaderInstance glassShader = CirrusShaders.endGlass();
+            CirrusShaderUniforms.setUniform(glassShader, "CirrusEndVeil", 0.0F);
+            CirrusShaderUniforms.setUniform(glassShader, "CirrusEndCharge", 0.0F);
+            CirrusShaderUniforms.setUniform(glassShader, "CirrusEndShatter", 0.0F);
+            CirrusShaderUniforms.setUniform(glassShader, "CirrusEndBeamPass", 0.0F);
+            CirrusShaderUniforms.setUniform(glassShader, "CirrusEndFlash", 0.0F);
+        }
         int previousTexture = RenderSystem.getShaderTexture(0);
+        int previousSkyTexture = RenderSystem.getShaderTexture(1);
         RenderSystem.setShaderTexture(0, END_NOISE_TEXTURE);
+        RenderSystem.setShaderTexture(1, VANILLA_END_SKY_TEXTURE);
         configureSky(shader, ticks + partialTick);
 
         PoseStack poseStack = new PoseStack();
@@ -85,12 +102,14 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
         RenderSystem.depthMask(false);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         try {
-            if (veil == null || !veil.occludesSky(ticks + partialTick)) {
+            if (customSky && (!glass || veil == null || !veil.occludesSky(ticks + partialTick))) {
                 domeBuffer.bind();
                 domeBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
             }
-            renderGlass(poseStack.last().pose(), projectionMatrix, ticks + partialTick);
-            float flash = veil == null ? 0.0F : veil.flash(ticks + partialTick);
+            if (glass) {
+                renderGlass(poseStack.last().pose(), projectionMatrix, ticks + partialTick);
+            }
+            float flash = !glass || veil == null ? 0.0F : veil.flash(ticks + partialTick);
             if (flash > 0.0F) {
                 CirrusShaderUniforms.setUniform(shader, "CirrusEndFlash", flash);
                 domeBuffer.bind();
@@ -99,6 +118,7 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
         } finally {
             VertexBuffer.unbind();
             RenderSystem.setShaderTexture(0, previousTexture);
+            RenderSystem.setShaderTexture(1, previousSkyTexture);
             RenderSystem.setShaderColor(
                     previousColor[0],
                     previousColor[1],
@@ -111,9 +131,12 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
     }
 
     private void configureSky(ShaderInstance shader, float ticks) {
+        boolean glass = CirrusConfig.END_GLASS_ENABLED.get() && veil != null;
         CirrusShaderUniforms.setUniform(shader, "CirrusEndFlash", 0.0F);
-        CirrusShaderUniforms.setUniform(shader, "CirrusEndShatter", veil == null ? 0.0F : veil.shatter(ticks));
-        CirrusShaderUniforms.setUniform(shader, "CirrusEndCharge", veil == null ? 0.0F : veil.charge(ticks));
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndBeamPass", 0.0F);
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndSkyEnabled", CirrusConfig.END_SKY_ENABLED.get());
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndShatter", glass ? veil.shatter(ticks) : 0.0F);
+        CirrusShaderUniforms.setUniform(shader, "CirrusEndCharge", glass ? veil.charge(ticks) : 0.0F);
         CirrusShaderUniforms.setUniform(
                 shader, "CirrusEndImpact", (float)impactDirection.x, (float)impactDirection.y, (float)impactDirection.z
         );

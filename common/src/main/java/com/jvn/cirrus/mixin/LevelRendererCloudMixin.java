@@ -128,7 +128,8 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
     )
     private boolean cirrus$replaceEndBossFog(BossHealthOverlay overlay, Operation<Boolean> original) {
         boolean bossFog = original.call(overlay);
-        if (level != null && Level.END.equals(level.dimension()) && CirrusConfig.END_SKY_ENABLED.get()) {
+        if (level != null && Level.END.equals(level.dimension())
+                && (CirrusConfig.END_SKY_ENABLED.get() || CirrusConfig.END_GLASS_ENABLED.get())) {
             cirrus$endSkyRenderer.updateFight(level, bossFog, ticks);
             return false;
         }
@@ -231,32 +232,36 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
         return Math.min(y, cirrus$precipitationCeiling);
     }
 
-    @Inject(
+    @WrapOperation(
             method = "renderSky",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/renderer/LevelRenderer;renderEndSky(" +
                             "Lcom/mojang/blaze3d/vertex/PoseStack;)V"
-            ),
-            cancellable = true
+            )
     )
     private void cirrus$renderEndSky(
+            LevelRenderer renderer,
+            PoseStack poseStack,
+            Operation<Void> original,
             Matrix4f frustumMatrix,
             Matrix4f projectionMatrix,
             float partialTick,
             Camera camera,
             boolean isFoggy,
-            Runnable skyFogSetup,
-            CallbackInfo ci
+            Runnable skyFogSetup
     ) {
-        if (level == null
-                || !Level.END.equals(level.dimension())
-                || !CirrusConfig.END_SKY_ENABLED.get()) {
+        if (level == null || !Level.END.equals(level.dimension())) {
+            original.call(renderer, poseStack);
             return;
         }
-
-        cirrus$endSkyRenderer.render(frustumMatrix, projectionMatrix, partialTick, ticks);
-        ci.cancel();
+        boolean customSky = CirrusConfig.END_SKY_ENABLED.get();
+        if (!customSky) {
+            original.call(renderer, poseStack);
+        }
+        if (customSky || CirrusConfig.END_GLASS_ENABLED.get()) {
+            cirrus$endSkyRenderer.render(frustumMatrix, projectionMatrix, partialTick, ticks);
+        }
     }
 
     @Inject(

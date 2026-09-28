@@ -93,6 +93,9 @@ public final class CirrusConfigSpec {
             }
             JsonObject root = parsed.getAsJsonObject();
             values.forEach((key, value) -> value.load(find(root, key)));
+            if (find(root, "sky.endGlassEnabled") == null) {
+                inheritEndGlassSetting();
+            }
         } catch (Exception exception) {
             LOGGER.error("Unable to load Cirrus configuration from {}; using defaults", configPath, exception);
         }
@@ -100,6 +103,7 @@ public final class CirrusConfigSpec {
 
     private void loadLegacyToml(Path legacyPath) {
         String section = "";
+        boolean hasEndGlassSetting = false;
         try {
             for (String sourceLine : Files.readAllLines(legacyPath, StandardCharsets.UTF_8)) {
                 String line = sourceLine.strip();
@@ -121,10 +125,22 @@ public final class CirrusConfigSpec {
                 ConfigValue<?> value = values.get(key);
                 if (value != null) {
                     value.loadLegacy(rawValue);
+                    hasEndGlassSetting |= key.equals("sky.endGlassEnabled");
                 }
+            }
+            if (!hasEndGlassSetting) {
+                inheritEndGlassSetting();
             }
         } catch (IOException exception) {
             LOGGER.error("Unable to migrate legacy Cirrus configuration from {}", legacyPath, exception);
+        }
+    }
+
+    private void inheritEndGlassSetting() {
+        ConfigValue<?> sky = values.get("sky.endSkyEnabled");
+        ConfigValue<?> glass = values.get("sky.endGlassEnabled");
+        if (sky != null && glass != null) {
+            glass.load(sky.toJson());
         }
     }
 
