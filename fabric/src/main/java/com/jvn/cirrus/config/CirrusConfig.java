@@ -175,6 +175,7 @@ public final class CirrusConfig {
     public static final CirrusConfigSpec.DoubleValue AURORA_HEIGHT_DEGREES;
     public static final CirrusConfigSpec.DoubleValue AURORA_NIGHTLY_VARIATION;
     public static final CirrusConfigSpec.BooleanValue END_SKY_ENABLED;
+    public static final CirrusConfigSpec.BooleanValue END_GLASS_ENABLED;
     public static final CirrusConfigSpec.EnumValue<EndSkyQuality> END_SKY_QUALITY;
     public static final CirrusConfigSpec.BooleanValue END_SKY_PIXELATION_ENABLED;
     public static final CirrusConfigSpec.IntValue END_SKY_PIXELATION_RESOLUTION;
@@ -582,6 +583,9 @@ public final class CirrusConfig {
         END_SKY_ENABLED = builder
                 .comment("Replace the vanilla End sky with moving clouds, lightning, and spreading darkness.")
                 .define("endSkyEnabled", true);
+        END_GLASS_ENABLED = builder
+                .comment("Render refracted End glass during the dragon fight, independently of the custom End sky.")
+                .define("endGlassEnabled", true);
         END_SKY_QUALITY = builder
                 .comment("End sky texture detail. Lower quality selects fewer precomputed noise octaves.")
                 .defineEnum("endSkyQuality", EndSkyQuality.BALANCED);

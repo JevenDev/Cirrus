@@ -142,7 +142,8 @@ public final class CirrusShaders {
             uniform("CirrusEndCharge", 1, 0.0F),
             uniform("CirrusEndImpact", 4, 0.0F, 1.0F, 0.0F, 0.0F),
             uniform("CirrusEndBeamPass", 1, 0.0F),
-            uniform("CirrusEndVeil", 1, 0.0F)
+            uniform("CirrusEndVeil", 1, 0.0F),
+            uniform("CirrusEndSkyEnabled", 1, 1.0F)
     );
     private static final CirrusShader END_GLASS = new CirrusShader(
             "cirrus_end_glass",
@@ -174,7 +175,8 @@ public final class CirrusShaders {
             uniform("CirrusEndCharge", 1, 0.0F),
             uniform("CirrusEndImpact", 4, 0.0F, 1.0F, 0.0F, 0.0F),
             uniform("CirrusEndBeamPass", 1, 0.0F),
-            uniform("CirrusEndVeil", 1, 0.0F)
+            uniform("CirrusEndVeil", 1, 0.0F),
+            uniform("CirrusEndSkyEnabled", 1, 1.0F)
     );
     private static final CirrusShader END_BEAMS = new CirrusShader(
             "cirrus_end_beams",
@@ -206,7 +208,8 @@ public final class CirrusShaders {
             uniform("CirrusEndCharge", 1, 0.0F),
             uniform("CirrusEndImpact", 4, 0.0F, 1.0F, 0.0F, 0.0F),
             uniform("CirrusEndBeamPass", 1, 1.0F),
-            uniform("CirrusEndVeil", 1, 0.0F)
+            uniform("CirrusEndVeil", 1, 0.0F),
+            uniform("CirrusEndSkyEnabled", 1, 1.0F)
     );
     private static final CirrusShader LIGHTNING_SKY = new CirrusShader(
             "cirrus_lightning_sky",
@@ -257,6 +260,9 @@ public final class CirrusShaders {
         minecraft.getTextureManager().getTexture(Cirrus.texture("environment/milky_way_lookup.png"));
         minecraft.getTextureManager().getTexture(Cirrus.texture("environment/north_star.png"));
         minecraft.getTextureManager().getTexture(Cirrus.texture("environment/end_noise.png"));
+        minecraft.getTextureManager().getTexture(
+                ResourceLocation.withDefaultNamespace("textures/environment/end_sky.png")
+        );
         samplerTexturesLoaded = true;
     }
 
