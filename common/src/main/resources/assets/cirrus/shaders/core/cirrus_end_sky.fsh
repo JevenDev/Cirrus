@@ -645,7 +645,7 @@ void main() {
     float finalLuminance = max(color.r, max(color.g, color.b));
     float highlightPreservation = smoothstep(0.16, 0.64, finalLuminance);
     color *= mix(0.30, 1.0, highlightPreservation);
-    if (CirrusEndGlass > 0.5) {
+    if (CirrusEndGlass > 0.5 && beamStrength > 0.0) {
         vec2 baryDx = dFdx(barycentric.xy);
         vec2 baryDy = dFdy(barycentric.xy);
         vec3 positionDx = dFdx(worldDirection);

@@ -85,8 +85,10 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
         RenderSystem.depthMask(false);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         try {
-            domeBuffer.bind();
-            domeBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
+            if (veil == null || !veil.occludesSky(ticks + partialTick)) {
+                domeBuffer.bind();
+                domeBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader);
+            }
             renderGlass(poseStack.last().pose(), projectionMatrix, ticks + partialTick);
             float flash = veil == null ? 0.0F : veil.flash(ticks + partialTick);
             if (flash > 0.0F) {
