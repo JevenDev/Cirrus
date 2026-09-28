@@ -52,6 +52,11 @@ public final class CirrusEndVeil {
         return fadeFrom + (fadeTo - fadeFrom) * progress;
     }
 
+    public boolean occludesSky(float ticks) {
+        // the glass vertex shader starts opening cracks above this charge
+        return opacity(ticks) >= 1.0F && charge(ticks) <= 0.35F && shatter(ticks) == 0.0F;
+    }
+
     public float charge(float ticks) {
         return Float.isNaN(deathStart)
                 ? 0.0F
