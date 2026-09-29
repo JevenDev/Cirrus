@@ -62,3 +62,10 @@ type="required"
 versionRange="[3.8.1,)"
 ordering="AFTER"
 side="CLIENT"
+
+[[dependencies."${mod_id}"]]
+modId="shine"
+type="incompatible"
+versionRange=""
+ordering="NONE"
+side="CLIENT"

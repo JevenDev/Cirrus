@@ -34,6 +34,9 @@
     "architectury": ">=${architectury_version}",
     "yet_another_config_lib_v3": ">=3.8.1"
   },
+  "breaks": {
+    "shine": "*"
+  },
   "suggests": {
     "modmenu": ">=${modmenu_version}",
     "distanthorizons": "*",
