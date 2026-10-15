@@ -93,10 +93,19 @@ public final class CirrusCloudDimensions {
         Rule rule = rules.get(level.dimension().location());
         float height = rule != null && rule.cloudHeight() != null
                 ? rule.cloudHeight() : level.effects().getCloudHeight();
-        return Float.isFinite(height) ? height : FALLBACK_HEIGHT;
+        height = Float.isFinite(height) ? height : FALLBACK_HEIGHT;
+        if (rule != null && rule.cloudHeightIsCeiling()) {
+            if (CirrusConfig.TOP_LAYER_ENABLED.get()) {
+                height -= CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get()
+                        + CirrusConfig.TOP_LAYER_HEIGHT_OFFSET.get();
+            } else if (CirrusConfig.UPPER_LAYER_ENABLED.get()) {
+                height -= CirrusConfig.UPPER_LAYER_HEIGHT_OFFSET.get();
+            }
+        }
+        return height;
     }
 
-    public record Rule(boolean enabled, Float cloudHeight, int tint) {
+    public record Rule(boolean enabled, Float cloudHeight, boolean cloudHeightIsCeiling, int tint) {
         public static Rule parse(JsonElement element) {
             if (!element.isJsonObject()) {
                 throw new IllegalArgumentException("Cloud dimension rule must be an object");
@@ -117,8 +126,16 @@ public final class CirrusCloudDimensions {
                     throw new IllegalArgumentException("Cloud height must be a finite number");
                 }
             }
+            boolean heightIsCeiling = false;
+            if (object.has("cloud_height_is_ceiling")) {
+                JsonElement value = object.get("cloud_height_is_ceiling");
+                if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isBoolean()) {
+                    throw new IllegalArgumentException("Cloud height ceiling flag must be a boolean");
+                }
+                heightIsCeiling = value.getAsBoolean();
+            }
             int tint = object.has("tint") ? CirrusConfigSpec.parseRgb(object.get("tint")) : 0xFFFFFF;
-            return new Rule(enabled.getAsBoolean(), height, tint);
+            return new Rule(enabled.getAsBoolean(), height, heightIsCeiling, tint);
         }
     }
 }
