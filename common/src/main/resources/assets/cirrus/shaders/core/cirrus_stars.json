@@ -14,6 +14,10 @@
     { "name": "CirrusShootingStarAnimation", "type": "float", "count": 4, "values": [ 0.0, 1.0, 0.65, 1.35 ] },
     { "name": "CirrusShootingStarDynamics", "type": "float", "count": 2, "values": [ 0.65, 0.0 ] },
     { "name": "CirrusShootingStarVisual", "type": "float", "count": 4, "values": [ 3.0, 2.0, 1.0, 0.0 ] },
-    { "name": "CirrusStarRenderMode", "type": "float", "count": 1, "values": [ 0.0 ] }
+    { "name": "CirrusStarRenderMode", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "CirrusStarCustomColors", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "CirrusStarBaseColor", "type": "float", "count": 3, "values": [ 0.92941177, 0.96470588, 1.0 ] },
+    { "name": "CirrusStarWarmColor", "type": "float", "count": 3, "values": [ 1.0, 0.81960784, 0.67058824 ] },
+    { "name": "CirrusStarCoolColor", "type": "float", "count": 3, "values": [ 0.65882353, 0.8, 1.0 ] }
   ]
 }

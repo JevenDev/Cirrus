@@ -8,6 +8,10 @@ uniform vec2 CirrusStarAtmosphere;
 uniform vec4 CirrusShootingStarAppearance;
 uniform float CirrusStarRenderMode;
 uniform vec4 CirrusShootingStarVisual;
+uniform float CirrusStarCustomColors;
+uniform vec3 CirrusStarBaseColor;
+uniform vec3 CirrusStarWarmColor;
+uniform vec3 CirrusStarCoolColor;
 
 in vec2 starCoordinate;
 flat in vec4 starData;
@@ -20,6 +24,7 @@ out vec4 fragColor;
 const float TWO_PI = 6.28318530718;
 
 void main() {
+    bool customColors = CirrusStarCustomColors > 0.5;
     float northAmount = step(0.5, CirrusStarRenderMode) * (1.0 - step(1.5, CirrusStarRenderMode));
     float shootingAmount = step(1.5, CirrusStarRenderMode);
     if (shootingAmount > 0.5) {
@@ -102,9 +107,9 @@ void main() {
             discard;
         }
 
-        vec3 neutralGlow = vec3(0.79, 0.88, 1.0);
-        vec3 warmGlow = vec3(1.0, 0.58, 0.22);
-        vec3 coolGlow = vec3(0.34, 0.64, 1.0);
+        vec3 neutralGlow = customColors ? CirrusStarBaseColor : vec3(0.79, 0.88, 1.0);
+        vec3 warmGlow = customColors ? CirrusStarWarmColor : vec3(1.0, 0.58, 0.22);
+        vec3 coolGlow = customColors ? CirrusStarCoolColor : vec3(0.34, 0.64, 1.0);
         float temperature = (starData.b * 2.0 - 1.0)
                 * CirrusShootingStarVisual.z;
         vec3 glowColor = temperature < 0.0
@@ -113,9 +118,11 @@ void main() {
         float hotCenter = clamp(core / (core + halo * 0.82 + 0.001), 0.0, 1.0);
         float headHeat = (1.0 - smoothstep(0.0, 0.85, headDistance)) * trailReveal;
         float whiteHeat = max(hotCenter * 0.82, headHeat);
-        vec3 color = mix(glowColor, vec3(1.0, 0.99, 0.95), whiteHeat);
+        vec3 highlightColor = customColors ? CirrusStarBaseColor : vec3(1.0, 0.99, 0.95);
+        vec3 color = mix(glowColor, highlightColor, whiteHeat);
         float emberAmount = burnout * (1.0 - hotCenter * 0.72);
-        color = mix(color, vec3(1.0, 0.29, 0.045), emberAmount * 0.78);
+        vec3 emberColor = customColors ? CirrusStarWarmColor : vec3(1.0, 0.29, 0.045);
+        color = mix(color, emberColor, emberAmount * 0.78);
         color *= 0.94 + min(bloom, 2.0) * 0.09 + burnFlare * 0.12;
         fragColor = vec4(color, min(alpha, 1.0));
         return;
@@ -160,15 +167,20 @@ void main() {
         CirrusStarAppearance.w
     );
 
-    vec3 neutral = vec3(0.93, 0.965, 1.0);
-    vec3 warm = vec3(1.0, 0.82, 0.67);
-    vec3 cool = vec3(0.66, 0.80, 1.0);
+    vec3 neutral = customColors ? CirrusStarBaseColor : vec3(0.93, 0.965, 1.0);
+    vec3 warm = customColors ? CirrusStarWarmColor : vec3(1.0, 0.82, 0.67);
+    vec3 cool = customColors ? CirrusStarCoolColor : vec3(0.66, 0.80, 1.0);
     float temperature = starData.b * 2.0 - 1.0;
     vec3 tinted = temperature < 0.0
             ? mix(neutral, warm, -temperature)
             : mix(neutral, cool, temperature);
     vec3 color = mix(neutral, tinted, CirrusStarAtmosphere.y);
-    color = mix(color, northTexture.rgb, northAmount);
+    vec3 northColor = northTexture.rgb;
+    if (customColors) {
+        float textureBrightness = max(max(northColor.r, northColor.g), northColor.b);
+        northColor = CirrusStarBaseColor * textureBrightness;
+    }
+    color = mix(color, northColor, northAmount);
 
     float pulseWave = 0.5 + 0.5 * sin(
         CirrusStarAnimation.z * CirrusStarAnimation.w * 1.30
