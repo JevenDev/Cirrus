@@ -1,5 +1,6 @@
 package com.jvn.cirrus.mixin;
 
+import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.CirrusAuroraRenderer;
 import com.jvn.cirrus.client.CirrusSunMask;
 import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
@@ -128,7 +129,7 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
     )
     private boolean cirrus$replaceEndBossFog(BossHealthOverlay overlay, Operation<Boolean> original) {
         boolean bossFog = original.call(overlay);
-        if (level != null && Level.END.equals(level.dimension())
+        if (CirrusSky.enabled(level) && Level.END.equals(level.dimension())
                 && (CirrusConfig.END_SKY_ENABLED.get() || CirrusConfig.END_GLASS_ENABLED.get())) {
             cirrus$endSkyRenderer.updateFight(level, bossFog, ticks);
             return false;
@@ -251,7 +252,7 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
             boolean isFoggy,
             Runnable skyFogSetup
     ) {
-        if (level == null || !Level.END.equals(level.dimension())) {
+        if (!CirrusSky.enabled(level) || !Level.END.equals(level.dimension())) {
             original.call(renderer, poseStack);
             return;
         }

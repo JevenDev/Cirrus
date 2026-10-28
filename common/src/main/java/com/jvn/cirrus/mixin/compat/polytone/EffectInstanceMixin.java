@@ -1,5 +1,6 @@
 package com.jvn.cirrus.mixin.compat.polytone;
 
+import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.compat.polytone.SunbathingShaderCompat;
 import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
 import com.jvn.cirrus.config.CirrusConfig;
@@ -38,8 +39,10 @@ public abstract class EffectInstanceMixin {
         }
         float partialTick = minecraft.getTimer().getGameTimeDeltaPartialTick(false);
         float timeOfDay = minecraft.level.getTimeOfDay(partialTick);
-        CirrusCelestialRenderState.sunDirection(cirrus$sunDirection, timeOfDay, CirrusConfig.SUN_ANGLED_ORBIT.get());
-        CirrusCelestialRenderState.moonDirection(cirrus$moonDirection, timeOfDay, CirrusConfig.MOON_ANGLED_ORBIT.get());
+        CirrusCelestialRenderState.sunDirection(cirrus$sunDirection, timeOfDay,
+                CirrusSky.enabled(minecraft.level) && CirrusConfig.SUN_ANGLED_ORBIT.get());
+        CirrusCelestialRenderState.moonDirection(cirrus$moonDirection, timeOfDay,
+                CirrusSky.enabled(minecraft.level) && CirrusConfig.MOON_ANGLED_ORBIT.get());
     }
 
     @Inject(method = "apply", at = @At("RETURN"))

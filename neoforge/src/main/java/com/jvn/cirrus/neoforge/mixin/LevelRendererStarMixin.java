@@ -1,5 +1,6 @@
 package com.jvn.cirrus.neoforge.mixin;
 
+import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.CirrusStarRenderer;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.vertex.VertexBuffer;
@@ -49,7 +50,7 @@ public abstract class LevelRendererStarMixin {
     ) {
         boolean renderStarField = CirrusConfig.CUSTOM_STARS_ENABLED.get();
         boolean renderShootingStars = CirrusConfig.SHOOTING_STARS_ENABLED.get();
-        if (level != null && (renderStarField || renderShootingStars)) {
+        if (CirrusSky.enabled(level) && (renderStarField || renderShootingStars)) {
             if (!renderStarField) {
                 vanillaStars.drawWithShader(modelViewMatrix, projectionMatrix, vanillaShader);
             }

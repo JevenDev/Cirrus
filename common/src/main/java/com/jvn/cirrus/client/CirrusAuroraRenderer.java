@@ -69,7 +69,7 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
             int ticks,
             Camera camera
     ) {
-        if (!CirrusConfig.AURORA_ENABLED.get()) {
+        if (!CirrusSky.enabled(level) || !CirrusConfig.AURORA_ENABLED.get()) {
             return;
         }
 

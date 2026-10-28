@@ -1,5 +1,6 @@
 package com.jvn.cirrus.mixin;
 
+import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.CirrusSkyPalette;
 import com.jvn.cirrus.client.compat.fog.FogModCompat;
 import com.jvn.cirrus.client.util.CirrusCelestialTransform;
@@ -187,7 +188,8 @@ public abstract class FogRendererMixin {
     }
 
     private static boolean shouldMatchSky(Camera camera, ClientLevel level) {
-        return CirrusConfig.FOG_USES_HORIZON_COLOR.get()
+        return CirrusSky.enabled(level)
+                && CirrusConfig.FOG_USES_HORIZON_COLOR.get()
                 && CirrusConfig.SKY_GRADIENTS_ENABLED.get()
                 && camera.getFluidInCamera() == FogType.NONE
                 && level.effects().skyType() == DimensionSpecialEffects.SkyType.NORMAL

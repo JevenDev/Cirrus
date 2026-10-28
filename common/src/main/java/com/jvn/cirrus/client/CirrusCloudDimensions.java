@@ -67,6 +67,25 @@ public final class CirrusCloudDimensions {
         CirrusCloudAttachment.invalidate();
     }
 
+    public static boolean defaultSkyEnabled(ResourceLocation dimension) {
+        Rule rule = rules.get(dimension);
+        return rule == null || rule.skyEnabled();
+    }
+
+    public static boolean skyEnabled(ResourceLocation dimension) {
+        return CirrusConfig.SKY_DIMENSIONS.get().getOrDefault(dimension.toString(), defaultSkyEnabled(dimension));
+    }
+
+    public static void setSkyEnabled(ResourceLocation dimension, boolean enabled) {
+        Map<String, Boolean> overrides = new HashMap<>(CirrusConfig.SKY_DIMENSIONS.get());
+        if (enabled == defaultSkyEnabled(dimension)) {
+            overrides.remove(dimension.toString());
+        } else {
+            overrides.put(dimension.toString(), enabled);
+        }
+        CirrusConfig.SKY_DIMENSIONS.set(overrides);
+    }
+
     public static int defaultTint(ResourceLocation dimension) {
         Rule rule = rules.get(dimension);
         return rule == null ? 0xFFFFFF : rule.tint();
@@ -105,7 +124,11 @@ public final class CirrusCloudDimensions {
         return height;
     }
 
-    public record Rule(boolean enabled, Float cloudHeight, boolean cloudHeightIsCeiling, int tint) {
+    public record Rule(boolean enabled, boolean skyEnabled, Float cloudHeight, boolean cloudHeightIsCeiling, int tint) {
+        public Rule(boolean enabled, Float cloudHeight, boolean cloudHeightIsCeiling, int tint) {
+            this(enabled, true, cloudHeight, cloudHeightIsCeiling, tint);
+        }
+
         public static Rule parse(JsonElement element) {
             if (!element.isJsonObject()) {
                 throw new IllegalArgumentException("Cloud dimension rule must be an object");
@@ -114,6 +137,14 @@ public final class CirrusCloudDimensions {
             JsonElement enabled = object.get("enabled");
             if (enabled == null || !enabled.isJsonPrimitive() || !enabled.getAsJsonPrimitive().isBoolean()) {
                 throw new IllegalArgumentException("Cloud dimension rule requires a boolean enabled value");
+            }
+            boolean skyEnabled = true;
+            if (object.has("sky_enabled")) {
+                JsonElement value = object.get("sky_enabled");
+                if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isBoolean()) {
+                    throw new IllegalArgumentException("Sky enabled flag must be a boolean");
+                }
+                skyEnabled = value.getAsBoolean();
             }
             Float height = null;
             if (object.has("cloud_height")) {
@@ -135,7 +166,7 @@ public final class CirrusCloudDimensions {
                 heightIsCeiling = value.getAsBoolean();
             }
             int tint = object.has("tint") ? CirrusConfigSpec.parseRgb(object.get("tint")) : 0xFFFFFF;
-            return new Rule(enabled.getAsBoolean(), height, heightIsCeiling, tint);
+            return new Rule(enabled.getAsBoolean(), skyEnabled, height, heightIsCeiling, tint);
         }
     }
 }

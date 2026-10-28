@@ -78,6 +78,7 @@ public final class CirrusConfig {
     public static final CirrusConfigSpec.DoubleValue NIGHT_CLOUD_FADE;
     public static final CirrusConfigSpec.BooleanValue NIGHT_CLOUD_FADE_TRANSITION_ONLY;
     public static final CirrusConfigSpec.DimensionMapValue CLOUD_DIMENSIONS;
+    public static final CirrusConfigSpec.DimensionMapValue SKY_DIMENSIONS;
     public static final CirrusConfigSpec.DimensionTintMapValue CLOUD_DIMENSION_TINTS;
     public static final CirrusConfigSpec.BooleanValue CLOUD_TIME_TINT_ENABLED;
     public static final CirrusConfigSpec.IntValue DAY_CLOUD_TINT;
@@ -325,6 +326,7 @@ public final class CirrusConfig {
         builder.pop();
 
         builder.comment("Sky rendering").push("sky");
+        SKY_DIMENSIONS = builder.defineDimensions("dimensions");
         SMOOTH_TIME_TRANSITIONS = builder
                 .comment("Smooth abrupt visual changes in the sky when the world's day time changes.")
                 .define("smoothTimeTransitions", true);

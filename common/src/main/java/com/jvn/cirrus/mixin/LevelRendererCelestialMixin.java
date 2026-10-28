@@ -1,5 +1,6 @@
 package com.jvn.cirrus.mixin;
 
+import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.util.CirrusCelestialTransform;
 import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
 import com.jvn.cirrus.config.CirrusConfig;
@@ -40,8 +41,8 @@ public abstract class LevelRendererCelestialMixin {
             return;
         }
         float timeOfDay = level.getTimeOfDay(partialTick);
-        cirrus$sunAngledOrbit = CirrusConfig.SUN_ANGLED_ORBIT.get();
-        cirrus$moonAngledOrbit = CirrusConfig.MOON_ANGLED_ORBIT.get();
+        cirrus$sunAngledOrbit = CirrusSky.enabled(level) && CirrusConfig.SUN_ANGLED_ORBIT.get();
+        cirrus$moonAngledOrbit = CirrusSky.enabled(level) && CirrusConfig.MOON_ANGLED_ORBIT.get();
         CirrusCelestialTransform.sunriseModelView(
                 cirrus$sunriseModelView,
                 frustumMatrix,
