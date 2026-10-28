@@ -169,6 +169,8 @@ public final class CirrusConfig {
     public static final CirrusConfigSpec.BooleanValue AURORA_PIXELATION_ENABLED;
     public static final CirrusConfigSpec.IntValue AURORA_PIXELATION_RESOLUTION;
     public static final CirrusConfigSpec.BooleanValue AURORA_COLD_BIOMES_ONLY;
+    public static final CirrusConfigSpec.BooleanValue AURORA_UNLISTED_BIOMES;
+    public static final CirrusConfigSpec.BiomeMapValue AURORA_BIOMES;
     public static final CirrusConfigSpec.DoubleValue AURORA_OPACITY;
     public static final CirrusConfigSpec.BooleanValue AURORA_CUSTOM_COLORS;
     public static final CirrusConfigSpec.IntValue AURORA_LOWER_COLOR;
@@ -553,8 +555,12 @@ public final class CirrusConfig {
                 "auroraPixelationResolution",
                 "Number of pixel-grid cells across each face. Lower values produce larger pixels."
         );
+        AURORA_UNLISTED_BIOMES = builder
+                .comment("Allow auroras in biomes without an explicit config or resource-pack rule.")
+                .define("auroraUnlistedBiomes", true);
+        AURORA_BIOMES = builder.defineBiomes("auroraBiomes");
         AURORA_COLD_BIOMES_ONLY = builder
-                .comment("Only render northern lights while the camera is in or near a freezing biome.")
+                .comment("Restrict unlisted biomes to freezing temperatures. Explicit biome rules take priority.")
                 .define("auroraColdBiomesOnly", true);
         AURORA_OPACITY = AURORA_OPACITY_SETTING.define(
                 builder,

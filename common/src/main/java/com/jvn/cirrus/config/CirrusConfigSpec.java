@@ -230,6 +230,10 @@ public final class CirrusConfigSpec {
             return register(name, new EnumValue<>(key(name), defaultValue));
         }
 
+        public BiomeMapValue defineBiomes(String name) {
+            return register(name, new BiomeMapValue(key(name)));
+        }
+
         public DimensionMapValue defineDimensions(String name) {
             return register(name, new DimensionMapValue(key(name)));
         }
@@ -352,6 +356,48 @@ public final class CirrusConfigSpec {
             JsonObject dimensions = new JsonObject();
             get().forEach(dimensions::addProperty);
             return dimensions;
+        }
+    }
+
+    public static final class BiomeMapValue extends ConfigValue<Map<String, Boolean>> {
+        private BiomeMapValue(String key) {
+            super(key, Map.of());
+        }
+
+        @Override
+        protected Map<String, Boolean> sanitize(Map<String, Boolean> value) {
+            if (value == null) {
+                return getDefault();
+            }
+            Map<String, Boolean> biomes = new LinkedHashMap<>();
+            value.forEach((id, enabled) -> {
+                if (id == null || id.indexOf(':') <= 0 || id.endsWith(":")
+                        || ResourceLocation.tryParse(id) == null || enabled == null) {
+                    throw new IllegalArgumentException("Invalid aurora biome rule: " + id);
+                }
+                biomes.put(id, enabled);
+            });
+            return Collections.unmodifiableMap(biomes);
+        }
+
+        @Override
+        protected Map<String, Boolean> read(JsonElement element) {
+            Map<String, Boolean> biomes = new LinkedHashMap<>();
+            element.getAsJsonObject().entrySet().forEach(entry -> {
+                JsonElement enabled = entry.getValue();
+                if (!enabled.isJsonPrimitive() || !enabled.getAsJsonPrimitive().isBoolean()) {
+                    throw new IllegalArgumentException("Aurora biome rules must be booleans");
+                }
+                biomes.put(entry.getKey(), enabled.getAsBoolean());
+            });
+            return biomes;
+        }
+
+        @Override
+        protected JsonElement toJson() {
+            JsonObject biomes = new JsonObject();
+            get().forEach(biomes::addProperty);
+            return biomes;
         }
     }
 
