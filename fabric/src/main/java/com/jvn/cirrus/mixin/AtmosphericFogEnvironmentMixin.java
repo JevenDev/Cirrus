@@ -1,5 +1,6 @@
 package com.jvn.cirrus.mixin;
 
+import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -20,7 +21,7 @@ public abstract class AtmosphericFogEnvironmentMixin {
     private boolean cirrus$replaceEndBossFog(BossHealthOverlay overlay, Operation<Boolean> original) {
         boolean bossFog = original.call(overlay);
         ClientLevel level = Minecraft.getInstance().level;
-        return bossFog && !(level != null && Level.END.equals(level.dimension())
+        return bossFog && !(CirrusSky.enabled(level) && Level.END.equals(level.dimension())
                 && (CirrusConfig.END_SKY_ENABLED.get() || CirrusConfig.END_GLASS_ENABLED.get()));
     }
 }

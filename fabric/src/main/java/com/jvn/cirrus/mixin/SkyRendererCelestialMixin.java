@@ -1,5 +1,6 @@
 package com.jvn.cirrus.mixin;
 
+import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
 import com.jvn.cirrus.client.util.CirrusCelestialTransform;
@@ -40,7 +41,7 @@ public abstract class SkyRendererCelestialMixin {
         poses.pushPose();
         try {
             if (CirrusRenderContext.isReady()) {
-                if (CirrusConfig.SUN_ANGLED_ORBIT.get()) {
+                if (CirrusSky.enabled(CirrusRenderContext.level()) && CirrusConfig.SUN_ANGLED_ORBIT.get()) {
                     CirrusCelestialTransform.bodyOrbitTransform(
                             cirrus$orbit, cirrus$fixedSky, cirrus$sunAngle / Mth.TWO_PI
                     );
@@ -60,7 +61,7 @@ public abstract class SkyRendererCelestialMixin {
         poses.pushPose();
         try {
             if (CirrusRenderContext.isReady()) {
-                if (CirrusConfig.MOON_ANGLED_ORBIT.get()) {
+                if (CirrusSky.enabled(CirrusRenderContext.level()) && CirrusConfig.MOON_ANGLED_ORBIT.get()) {
                     CirrusCelestialTransform.bodyOrbitTransform(
                             cirrus$orbit, cirrus$fixedSky, cirrus$moonAngle / Mth.TWO_PI
                     );
@@ -84,6 +85,7 @@ public abstract class SkyRendererCelestialMixin {
             value = "INVOKE", target = "Lorg/joml/Matrix4fStack;mul(Lorg/joml/Matrix4fc;)Lorg/joml/Matrix4f;"
     ), index = 0)
     private Matrix4fc cirrus$rotateSunrise(Matrix4fc original) {
-        return CirrusConfig.SUN_ANGLED_ORBIT.get() ? cirrus$sunrise : original;
+        return CirrusSky.enabled(CirrusRenderContext.level()) && CirrusConfig.SUN_ANGLED_ORBIT.get()
+                ? cirrus$sunrise : original;
     }
 }

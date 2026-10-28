@@ -1,5 +1,6 @@
 package com.jvn.cirrus.mixin;
 
+import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.CirrusLightningLocator;
 import com.jvn.cirrus.client.CirrusRenderers;
 import com.jvn.cirrus.client.CirrusTimeTransition;
@@ -30,7 +31,7 @@ public abstract class GameRendererMixin {
     private boolean cirrus$replaceEndBossFog(BossHealthOverlay overlay, Operation<Boolean> original) {
         boolean bossFog = original.call(overlay);
         ClientLevel level = Minecraft.getInstance().level;
-        return bossFog && !(level != null && Level.END.equals(level.dimension())
+        return bossFog && !(CirrusSky.enabled(level) && Level.END.equals(level.dimension())
                 && (CirrusConfig.END_SKY_ENABLED.get() || CirrusConfig.END_GLASS_ENABLED.get()));
     }
 
