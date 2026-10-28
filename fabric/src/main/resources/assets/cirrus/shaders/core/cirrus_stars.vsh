@@ -15,6 +15,10 @@ layout(std140) uniform CirrusParams {
     vec2 CirrusShootingStarDynamics;
     vec4 CirrusShootingStarVisual;
     float CirrusStarRenderMode;
+    float CirrusStarCustomColors;
+    vec3 CirrusStarBaseColor;
+    vec3 CirrusStarWarmColor;
+    vec3 CirrusStarCoolColor;
 };
 
 

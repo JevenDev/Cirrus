@@ -126,6 +126,10 @@ public final class CirrusConfig {
     public static final CirrusConfigSpec.DoubleValue STAR_MAX_SIZE;
     public static final CirrusConfigSpec.DoubleValue STAR_TWINKLE_STRENGTH;
     public static final CirrusConfigSpec.DoubleValue STAR_TWINKLE_SPEED;
+    public static final CirrusConfigSpec.BooleanValue STAR_CUSTOM_COLORS;
+    public static final CirrusConfigSpec.IntValue STAR_BASE_COLOR;
+    public static final CirrusConfigSpec.IntValue STAR_WARM_COLOR;
+    public static final CirrusConfigSpec.IntValue STAR_COOL_COLOR;
     public static final CirrusConfigSpec.DoubleValue STAR_COLOR_VARIATION;
     public static final CirrusConfigSpec.BooleanValue SHOOTING_STARS_ENABLED;
     public static final CirrusConfigSpec.BooleanValue SHOOTING_STAR_PIXELATED_TRAIL;
@@ -384,6 +388,18 @@ public final class CirrusConfig {
                 builder,
                 "starTwinkleSpeed",
                 "Speed of the star twinkle animation. Zero freezes the animation."
+        );
+        STAR_CUSTOM_COLORS = builder
+                .comment("Use a custom palette for stars, the North Star, and shooting stars.")
+                .define("starCustomColors", false);
+        STAR_BASE_COLOR = defineColor(
+                builder, "starBaseColor", 0xEDF6FF, "Base RGB color for the custom star palette."
+        );
+        STAR_WARM_COLOR = defineColor(
+                builder, "starWarmColor", 0xFFD1AB, "First RGB variation color for the custom star palette."
+        );
+        STAR_COOL_COLOR = defineColor(
+                builder, "starCoolColor", 0xA8CCFF, "Second RGB variation color for the custom star palette."
         );
         STAR_COLOR_VARIATION = STAR_COLOR_VARIATION_SETTING.define(
                 builder,
