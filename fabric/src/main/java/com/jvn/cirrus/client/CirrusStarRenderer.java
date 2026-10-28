@@ -6,6 +6,8 @@ import static com.jvn.cirrus.client.util.CirrusRandom.signedFloat;
 import com.jvn.cirrus.Cirrus;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusCelestialTransform;
+import com.jvn.cirrus.client.util.CirrusColors;
+import com.jvn.cirrus.client.util.CirrusShaderUniforms;
 import com.jvn.cirrus.client.render.CirrusUniform;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -104,6 +106,11 @@ public final class CirrusStarRenderer implements AutoCloseable {
             );
         }
 
+        CirrusShaderUniforms.setUniform(shader, "CirrusStarCustomColors", CirrusConfig.STAR_CUSTOM_COLORS.get());
+        setColorUniform(shader, "CirrusStarBaseColor", CirrusConfig.STAR_BASE_COLOR.get());
+        setColorUniform(shader, "CirrusStarWarmColor", CirrusConfig.STAR_WARM_COLOR.get());
+        setColorUniform(shader, "CirrusStarCoolColor", CirrusConfig.STAR_COOL_COLOR.get());
+
         float shootingMinimumSize = CirrusConfig.SHOOTING_STAR_MIN_SIZE.get().floatValue();
         float shootingMaximumSize = CirrusConfig.SHOOTING_STAR_MAX_SIZE.get().floatValue();
         CirrusUniform shootingAppearance = shader.getUniform("CirrusShootingStarAppearance");
@@ -187,6 +194,16 @@ public final class CirrusStarRenderer implements AutoCloseable {
                     projectionMatrix, shader
             );
         }
+    }
+
+    private static void setColorUniform(CirrusShader shader, String name, int color) {
+        CirrusShaderUniforms.setUniform(
+                shader,
+                name,
+                CirrusColors.red(color) / 255.0F,
+                CirrusColors.green(color) / 255.0F,
+                CirrusColors.blue(color) / 255.0F
+        );
     }
 
     private void prepareStars() {
