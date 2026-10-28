@@ -700,6 +700,8 @@ public final class CirrusConfigScreen {
                 .tooltip(text("cirrus.config.category.dimensions.description"));
         var dimensions = new TreeSet<Identifier>(Comparator.comparing(Identifier::toString));
         dimensions.addAll(CirrusCloudDimensions.dimensions());
+        CirrusConfig.SKY_DIMENSIONS.get().keySet().forEach(id ->
+                dimensions.add(Identifier.parse(id)));
         CirrusConfig.CLOUD_DIMENSIONS.get().keySet().forEach(id ->
                 dimensions.add(Identifier.parse(id)));
         CirrusConfig.CLOUD_DIMENSION_TINTS.get().keySet().forEach(id ->
@@ -717,6 +719,14 @@ public final class CirrusConfigScreen {
                     .binding(CirrusCloudDimensions.defaultEnabled(dimension),
                             () -> CirrusCloudDimensions.enabled(dimension),
                             enabled -> CirrusCloudDimensions.setEnabled(dimension, enabled))
+                    .controller(TickBoxControllerBuilder::create)
+                    .build());
+            group.option(Option.<Boolean>createBuilder()
+                    .name(text("cirrus.config.sky.dimensionEnabled"))
+                    .description(OptionDescription.of(text("cirrus.config.sky.dimension.description")))
+                    .binding(CirrusCloudDimensions.defaultSkyEnabled(dimension),
+                            () -> CirrusCloudDimensions.skyEnabled(dimension),
+                            enabled -> CirrusCloudDimensions.setSkyEnabled(dimension, enabled))
                     .controller(TickBoxControllerBuilder::create)
                     .build());
             group.option(Option.<Color>createBuilder()

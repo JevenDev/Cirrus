@@ -28,7 +28,7 @@ public final class CirrusMilkyWayRenderer implements AutoCloseable {
     ) {
         boolean milkyWayEnabled = CirrusConfig.MILKY_WAY_ENABLED.get();
         boolean skyGradientsEnabled = CirrusConfig.SKY_GRADIENTS_ENABLED.get();
-        if (!milkyWayEnabled && !skyGradientsEnabled) {
+        if (!CirrusSky.enabled(level) || (!milkyWayEnabled && !skyGradientsEnabled)) {
             return;
         }
 
