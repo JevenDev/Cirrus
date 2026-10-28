@@ -112,7 +112,11 @@ public final class CirrusShaders {
             uniform("CirrusShootingStarAnimation", 4, 0.0F, 1.0F, 0.65F, 1.35F),
             uniform("CirrusShootingStarDynamics", 2, 0.65F, 0.0F),
             uniform("CirrusShootingStarVisual", 4, 3.0F, 2.0F, 1.0F, 0.0F),
-            uniform("CirrusStarRenderMode", 1, 0.0F)
+            uniform("CirrusStarRenderMode", 1, 0.0F),
+            uniform("CirrusStarCustomColors", 1, 0.0F),
+            uniform("CirrusStarBaseColor", 3, 237.0F / 255.0F, 246.0F / 255.0F, 1.0F),
+            uniform("CirrusStarWarmColor", 3, 1.0F, 209.0F / 255.0F, 171.0F / 255.0F),
+            uniform("CirrusStarCoolColor", 3, 168.0F / 255.0F, 0.8F, 1.0F)
     );
     private static final CirrusShader END_SKY = new CirrusShader(
             "cirrus_end_sky",
