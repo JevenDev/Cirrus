@@ -1,5 +1,6 @@
 package com.jvn.cirrus.mixin;
 
+import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.CirrusCloudAttachment;
 import com.jvn.cirrus.client.CirrusCloudDimensions;
 import com.jvn.cirrus.client.CirrusCloudMode;
@@ -66,7 +67,7 @@ public abstract class LevelRendererCloudMixin {
                 cameraState.projectionMatrix, fogColor, partialTick, worldTicks, cloudTicks
         );
         CirrusCloudAttachment.updateRenderTicks(cloudTicks);
-        if (level != null && Level.END.equals(level.dimension())
+        if (CirrusSky.enabled(level) && Level.END.equals(level.dimension())
                 && (CirrusConfig.END_SKY_ENABLED.get() || CirrusConfig.END_GLASS_ENABLED.get())) {
             CirrusRenderers.endSky().updateFight(
                     level, Minecraft.getInstance().gui.hud.getBossOverlay().shouldCreateWorldFog(), worldTicks

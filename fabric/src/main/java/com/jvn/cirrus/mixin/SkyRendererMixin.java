@@ -1,5 +1,6 @@
 package com.jvn.cirrus.mixin;
 
+import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusRenderers;
 import com.jvn.cirrus.client.CirrusShaders;
@@ -105,7 +106,7 @@ public abstract class SkyRendererMixin {
         }
         boolean renderStarField = CirrusConfig.CUSTOM_STARS_ENABLED.get();
         boolean renderShootingStars = CirrusConfig.SHOOTING_STARS_ENABLED.get();
-        if (!renderStarField && !renderShootingStars) {
+        if (!CirrusSky.enabled(CirrusRenderContext.level()) || (!renderStarField && !renderShootingStars)) {
             return;
         }
 
@@ -125,6 +126,7 @@ public abstract class SkyRendererMixin {
     @Unique
     private void cirrus$renderEndSky(RenderPass renderPass, Operation<Void> original) {
         if (!CirrusRenderContext.isReady()
+                || !CirrusSky.enabled(CirrusRenderContext.level())
                 || !Level.END.equals(CirrusRenderContext.level().dimension())) {
             original.call(renderPass);
             return;
