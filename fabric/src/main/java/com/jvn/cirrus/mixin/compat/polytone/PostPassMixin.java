@@ -1,5 +1,7 @@
 package com.jvn.cirrus.mixin.compat.polytone;
 
+import com.jvn.cirrus.client.CirrusSky;
+import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.client.compat.polytone.SunbathingShaderCompat;
 import com.jvn.cirrus.client.compat.polytone.SunbathingLegacyPostCompat;
 import com.jvn.cirrus.client.util.CirrusCelestialRenderState;
@@ -64,8 +66,10 @@ public abstract class PostPassMixin {
 
     @Unique
     private void cirrus$updateCelestialUniforms() {
-        CirrusCelestialRenderState.sunDirection(cirrus$sun, 0.0F, CirrusConfig.SUN_ANGLED_ORBIT.get());
-        CirrusCelestialRenderState.moonDirection(cirrus$moon, 0.0F, CirrusConfig.MOON_ANGLED_ORBIT.get());
+        CirrusCelestialRenderState.sunDirection(cirrus$sun, 0.0F,
+                CirrusSky.enabled(CirrusRenderContext.level()) && CirrusConfig.SUN_ANGLED_ORBIT.get());
+        CirrusCelestialRenderState.moonDirection(cirrus$moon, 0.0F,
+                CirrusSky.enabled(CirrusRenderContext.level()) && CirrusConfig.MOON_ANGLED_ORBIT.get());
         try (MemoryStack stack = MemoryStack.stackPush()) {
             if (cirrus$legacyGlobals != null) {
                 Std140Builder globals = Std140Builder.onStack(stack, 144);

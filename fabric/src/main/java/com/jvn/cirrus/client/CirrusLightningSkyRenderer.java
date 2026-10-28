@@ -29,7 +29,7 @@ public final class CirrusLightningSkyRenderer implements AutoCloseable {
             float partialTick,
             Camera camera
     ) {
-        if (Minecraft.getInstance().options.hideLightningFlash().get()) {
+        if (!CirrusSky.enabled(level) || Minecraft.getInstance().options.hideLightningFlash().get()) {
             return;
         }
 

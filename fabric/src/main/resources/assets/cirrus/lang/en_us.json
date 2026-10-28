@@ -286,7 +286,7 @@
   "cirrus.config.category.end": "The End",
   "cirrus.config.category.end.description": "End sky appearance, animation, voids, lightning, and surges.",
   "cirrus.config.category.dimensions": "Dimensions",
-  "cirrus.config.category.dimensions.description": "Enable clouds and choose a cloud tint for each dimension. Resource packs can supply defaults.",
+  "cirrus.config.category.dimensions.description": "Enable the Cirrus sky and clouds and choose a cloud tint for each dimension. Resource packs can supply defaults.",
   "cirrus.config.category.compatibility": "Compatibility",
   "cirrus.config.category.compatibility.description": "Shader pack warnings and Distant Horizons integration.",
   "cirrus.config.group.dayClouds": "Day Clouds",
@@ -310,6 +310,8 @@
   "cirrus.config.group.endSurges": "Surges",
   "cirrus.config.group.shaders": "Shader Packs",
   "cirrus.config.group.distantHorizons": "Distant Horizons",
+  "cirrus.config.sky.dimensionEnabled": "Enable Sky",
+  "cirrus.config.sky.dimension.description": "Render Cirrus sky effects in this dimension, including stars, the Milky Way, auroras, gradients, and the End sky. Clouds are controlled separately. Resource packs can supply defaults. Your changes override pack defaults. Reset restores the pack default.",
   "cirrus.config.clouds.dimensionEnabled": "Enable Clouds",
   "cirrus.config.clouds.dimensionColor": "Cloud Tint"
 }
