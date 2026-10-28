@@ -1,5 +1,6 @@
 package com.jvn.cirrus.mixin;
 
+import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.client.CirrusSkyPalette;
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
@@ -206,7 +207,8 @@ public abstract class FogRendererMixin {
     }
 
     private static boolean shouldMatchSky(Camera camera, ClientLevel level) {
-        return CirrusConfig.FOG_USES_HORIZON_COLOR.get()
+        return CirrusSky.enabled(level)
+                && CirrusConfig.FOG_USES_HORIZON_COLOR.get()
                 && CirrusConfig.SKY_GRADIENTS_ENABLED.get()
                 && camera.getFluidInCamera() == FogType.NONE
                 && Level.OVERWORLD.equals(level.dimension())

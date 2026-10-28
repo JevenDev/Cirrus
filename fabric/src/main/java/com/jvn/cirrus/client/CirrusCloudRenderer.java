@@ -347,12 +347,12 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     Math.max(0.0F, distanceBlocks - fadeLength), distanceBlocks);
             float celestialAngle = CirrusRenderContext.sunAngle(partialTick);
             Vector3f sunDirection = CirrusCelestialRenderState.sunDirection(
-                    new Vector3f(), celestialAngle / Mth.TWO_PI, CirrusConfig.SUN_ANGLED_ORBIT.get()
+                    new Vector3f(), celestialAngle / Mth.TWO_PI, CirrusSky.enabled(level) && CirrusConfig.SUN_ANGLED_ORBIT.get()
             );
             float sunWeight = celestialSunWeight(sunDirection.y);
             Vector3f celestialViewDirection = frustumMatrix.transformDirection(new Vector3f(sunDirection)).normalize();
             Vector3f moonViewDirection = CirrusCelestialRenderState.moonDirection(
-                    new Vector3f(), celestialAngle / Mth.TWO_PI, CirrusConfig.MOON_ANGLED_ORBIT.get()
+                    new Vector3f(), celestialAngle / Mth.TWO_PI, CirrusSky.enabled(level) && CirrusConfig.MOON_ANGLED_ORBIT.get()
             );
             frustumMatrix.transformDirection(moonViewDirection).normalize();
             LightningState lightning = lightningState(

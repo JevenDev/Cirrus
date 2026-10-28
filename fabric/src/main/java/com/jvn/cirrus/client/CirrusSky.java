@@ -2,11 +2,16 @@ package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.client.compat.distanthorizons.DistantHorizonsCompat;
 import com.jvn.cirrus.config.CirrusConfig;
+import net.minecraft.client.multiplayer.ClientLevel;
 
 public final class CirrusSky {
     private static final float CLOUD_CLIP_MARGIN = 96.0F;
 
     private CirrusSky() {
+    }
+
+    public static boolean enabled(ClientLevel level) {
+        return level != null && CirrusCloudDimensions.skyEnabled(level.dimension().identifier());
     }
 
     public static float minimumFarPlane(boolean cirrusCloudsActive) {
