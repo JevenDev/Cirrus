@@ -388,6 +388,10 @@ public final class CirrusConfigScreen {
                                 CirrusConfig.STAR_MAX_SIZE_SETTING,
                                 value -> Component.literal(String.format(Locale.ROOT, "%.2fx", value))
                         ))
+                        .option(booleanOption("cirrus.config.sky.starCustomColors", CirrusConfig.STAR_CUSTOM_COLORS))
+                        .option(colorOption("cirrus.config.sky.starBaseColor", CirrusConfig.STAR_BASE_COLOR))
+                        .option(colorOption("cirrus.config.sky.starWarmColor", CirrusConfig.STAR_WARM_COLOR))
+                        .option(colorOption("cirrus.config.sky.starCoolColor", CirrusConfig.STAR_COOL_COLOR))
                         .option(percentageOption(
                                 "cirrus.config.sky.starColorVariation",
                                 CirrusConfig.STAR_COLOR_VARIATION,
