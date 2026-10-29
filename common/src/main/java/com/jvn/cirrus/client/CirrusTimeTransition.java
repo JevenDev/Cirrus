@@ -115,8 +115,12 @@ public final class CirrusTimeTransition {
 
     public static double visualDayTime(ClientLevel level, float partialTick) {
         float configuredRate = CirrusTimeAccess.dayTimePerTick(level);
+        return interpolateTime(displayedDayTime, CirrusTimeAccess.dayTimeFraction(level), partialTick, configuredRate);
+    }
+
+    static double interpolateTime(double time, float fraction, float partialTick, float configuredRate) {
         double ticksPerGameTick = configuredRate < 0.0F ? 1.0 : configuredRate;
-        return displayedDayTime + CirrusTimeAccess.dayTimeFraction(level) + partialTick * ticksPerGameTick;
+        return time + fraction + partialTick * ticksPerGameTick;
     }
 
     private static void reset(ClientLevel level, long actualDayTime, long gameTime) {
