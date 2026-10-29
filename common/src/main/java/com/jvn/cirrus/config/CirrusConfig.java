@@ -608,7 +608,7 @@ public final class CirrusConfig {
                 .comment("Replace the vanilla End sky with moving clouds, lightning, and spreading darkness.")
                 .define("endSkyEnabled", true);
         END_GLASS_ENABLED = builder
-                .comment("Render refracted End glass during the dragon fight, independently of the custom End sky.")
+                .comment("Render End glass during the dragon fight, including cracks, light beams, flash, and shattering on defeat. Independent of the custom End sky.")
                 .define("endGlassEnabled", true);
         END_SKY_QUALITY = builder
                 .comment("End sky texture detail. Lower quality selects fewer precomputed noise octaves.")
@@ -624,7 +624,7 @@ public final class CirrusConfig {
         END_SKY_INTENSITY = END_SKY_INTENSITY_SETTING.define(
                 builder,
                 "endSkyIntensity",
-                "Brightness and color strength of the End sky's nebulas and storms."
+                "Brightness and color strength of the custom End sky's nebulas and storms. Does not dim vanilla-sky glass, light beams, or the shatter flash."
         );
         END_SKY_ANIMATION_SPEED = END_SKY_ANIMATION_SPEED_SETTING.define(
                 builder,

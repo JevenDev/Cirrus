@@ -639,10 +639,13 @@ public final class CirrusConfigScreen {
         return ConfigCategory.createBuilder()
                 .name(text("cirrus.config.category.end"))
                 .tooltip(text("cirrus.config.category.end.description"))
-                .option(booleanOption("cirrus.config.sky.endSkyEnabled", CirrusConfig.END_SKY_ENABLED))
-                .option(booleanOption("cirrus.config.sky.endGlassEnabled", CirrusConfig.END_GLASS_ENABLED))
+                .group(OptionGroup.createBuilder()
+                        .name(text("cirrus.config.group.endGlass"))
+                        .option(booleanOption("cirrus.config.sky.endGlassEnabled", CirrusConfig.END_GLASS_ENABLED))
+                        .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.endAppearance"))
+                        .option(booleanOption("cirrus.config.sky.endSkyEnabled", CirrusConfig.END_SKY_ENABLED))
                         .option(enumOption(
                                 "cirrus.config.sky.endSkyQuality",
                                 CirrusConfig.END_SKY_QUALITY,
