@@ -25,6 +25,7 @@ import com.jvn.cirrus.client.render.CirrusVertexBuffer;
 import com.mojang.renderpearl.api.vertex.VertexFormat;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import com.jvn.cirrus.client.render.CirrusShader;
@@ -82,6 +83,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     private int cachedRainCoverage = -1;
     private int cachedThunderCoverage = -1;
     private boolean weatherTextureLoadAttempted;
+    private Boolean textureOffsetSupported;
 
     public boolean renderSunMask(
             Matrix4fc sunModelView,
@@ -112,6 +114,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         float rainLevel = smoothWeatherLevel(level.getRainLevel(partialTick));
         float thunderLevel = smoothWeatherLevel(level.getThunderLevel(partialTick));
         CirrusShader maskShader = CirrusShaders.cloudMask();
+        boolean useTextureOffset = supportsTextureOffset();
         CirrusShaderUniforms.setUniform(
                 maskShader,
                 "CirrusRainCloudCoverage",
@@ -122,14 +125,14 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 "CirrusThunderCloudCoverage",
                 thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue()
         );
-        prepareLayer(lowerMesh, LOWER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, false);
+        prepareLayer(lowerMesh, LOWER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, false, useTextureOffset);
         boolean upperEnabled = CirrusConfig.UPPER_LAYER_ENABLED.get();
         boolean topEnabled = CirrusConfig.TOP_LAYER_ENABLED.get();
         if (upperEnabled) {
-            prepareLayer(upperMesh, UPPER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, false);
+            prepareLayer(upperMesh, UPPER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, false, useTextureOffset);
         }
         if (topEnabled) {
-            prepareLayer(topMesh, TOP_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, false);
+            prepareLayer(topMesh, TOP_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, false, useTextureOffset);
         }
 
         drawMaskLayer(lowerMesh, LOWER_LAYER, frustumMatrix, projectionMatrix, maskShader, scissor,
@@ -260,6 +263,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 shader, "CirrusLayerOpacity",
                 definition.opacity(rainLevel, thunderLevel) * timeOpacity
         );
+        mesh.setTextureOffset(shader);
         mesh.buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, shader, scissor);
     }
 
@@ -286,6 +290,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         double cloudTime = ticks + partialTick;
         double windSample = cloudTime * 0.03 / WORLD_SCALE;
         boolean shaderPackInUse = CirrusShaderPackCompat.isShaderPackInUse();
+        boolean useTextureOffset = !shaderPackInUse && supportsTextureOffset();
         float celestialAngle = CirrusRenderContext.sunAngle(partialTick);
         Vector3f sunDirection = CirrusCelestialRenderState.sunDirection(
                 new Vector3f(), celestialAngle / Mth.TWO_PI, CirrusSky.enabled(level) && CirrusConfig.SUN_ANGLED_ORBIT.get()
@@ -309,16 +314,16 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 distanceChunks * 16.0F
         );
 
-        prepareLayer(lowerMesh, LOWER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, shaderPackInUse);
+        prepareLayer(lowerMesh, LOWER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, shaderPackInUse, useTextureOffset);
         boolean upperEnabled = CirrusConfig.UPPER_LAYER_ENABLED.get();
         if (upperEnabled) {
-            prepareLayer(upperMesh, UPPER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, shaderPackInUse);
+            prepareLayer(upperMesh, UPPER_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, shaderPackInUse, useTextureOffset);
         } else {
             upperMesh.invalidate();
         }
         boolean topEnabled = CirrusConfig.TOP_LAYER_ENABLED.get();
         if (topEnabled) {
-            prepareLayer(topMesh, TOP_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, shaderPackInUse);
+            prepareLayer(topMesh, TOP_LAYER, level, distanceChunks, cameraSampleX, cameraSampleZ, windSample, shaderPackInUse, useTextureOffset);
         } else {
             topMesh.invalidate();
         }
@@ -427,6 +432,29 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         return minecraft.gui.hud.getBossOverlay().shouldCreateWorldFog();
     }
 
+    private boolean supportsTextureOffset() {
+        if (textureOffsetSupported == null) {
+            textureOffsetSupported = shaderSupportsTextureOffset("cirrus_clouds")
+                    && shaderSupportsTextureOffset("cirrus_cloud_mask");
+        }
+        return textureOffsetSupported;
+    }
+
+    private static boolean shaderSupportsTextureOffset(String shaderName) {
+        Resource resource = Minecraft.getInstance().getResourceManager()
+                .getResource(Cirrus.id("shaders/core/" + shaderName + ".vsh")).orElse(null);
+        if (resource == null) {
+            return false;
+        }
+        try (InputStream input = resource.open()) {
+            return new String(input.readAllBytes(), StandardCharsets.UTF_8)
+                    .contains("uniform CirrusCloudOffset");
+        } catch (IOException exception) {
+            Cirrus.LOGGER.warn("Could not check cloud texture offset support for {}", shaderName, exception);
+            return false;
+        }
+    }
+
     private void prepareLayer(
             LayerMesh mesh,
             LayerDefinition definition,
@@ -435,7 +463,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             double cameraSampleX,
             double cameraSampleZ,
             double windSample,
-            boolean shaderPackDistanceFade
+            boolean shaderPackDistanceFade,
+            boolean useTextureOffset
     ) {
         CirrusConfig.CloudStyle style = definition.style();
         int detailedRadiusChunks = CirrusConfig.DETAILED_CLOUD_RADIUS.get();
@@ -449,8 +478,10 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 && mesh.cachedDetailedRadiusChunks == detailedRadiusChunks
                 && mesh.cachedStyle == style
                 && mesh.cachedShaderPackDistanceFade == shaderPackDistanceFade
-                && mesh.cachedAnchorX == anchorX
-                && mesh.cachedAnchorZ == anchorZ) {
+                && mesh.cachedUseTextureOffset == useTextureOffset
+                && (useTextureOffset || mesh.cachedAnchorX == anchorX && mesh.cachedAnchorZ == anchorZ)) {
+            mesh.cachedAnchorX = anchorX;
+            mesh.cachedAnchorZ = anchorZ;
             return;
         }
 
@@ -460,8 +491,8 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 sourceBuffer,
                 distanceChunks,
                 detailedRadiusChunks,
-                anchorX,
-                anchorZ,
+                useTextureOffset ? 0 : anchorX,
+                useTextureOffset ? 0 : anchorZ,
                 style,
                 shaderPackDistanceFade
         );
@@ -472,6 +503,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         mesh.cachedDetailedRadiusChunks = detailedRadiusChunks;
         mesh.cachedStyle = style;
         mesh.cachedShaderPackDistanceFade = shaderPackDistanceFade;
+        mesh.cachedUseTextureOffset = useTextureOffset;
         mesh.cachedAnchorX = anchorX;
         mesh.cachedAnchorZ = anchorZ;
     }
@@ -511,6 +543,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                     -(sampleZ - mesh.cachedAnchorZ)
             );
 
+            mesh.setTextureOffset(shader);
             CirrusShaderUniforms.setUniform(
                     shader,
                     "ColorModulator",
@@ -1002,6 +1035,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
     }
 
     public void invalidate() {
+        textureOffsetSupported = null;
         lowerMesh.invalidate();
         upperMesh.invalidate();
         topMesh.invalidate();
@@ -1100,8 +1134,17 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         private int cachedDetailedRadiusChunks = -1;
         private CirrusConfig.CloudStyle cachedStyle;
         private boolean cachedShaderPackDistanceFade;
+        private boolean cachedUseTextureOffset;
         private int cachedAnchorX = Integer.MIN_VALUE;
         private int cachedAnchorZ = Integer.MIN_VALUE;
+
+        private void setTextureOffset(CirrusShader shader) {
+            CirrusShaderUniforms.setUniform(
+                    shader, "CirrusTextureOffset",
+                    cachedUseTextureOffset ? cachedAnchorX * UV_SCALE : 0.0F,
+                    cachedUseTextureOffset ? cachedAnchorZ * UV_SCALE : 0.0F
+            );
+        }
 
         private void invalidate() {
             closeBuffer();
@@ -1110,6 +1153,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             cachedDetailedRadiusChunks = -1;
             cachedStyle = null;
             cachedShaderPackDistanceFade = false;
+            cachedUseTextureOffset = false;
             cachedAnchorX = Integer.MIN_VALUE;
             cachedAnchorZ = Integer.MIN_VALUE;
         }

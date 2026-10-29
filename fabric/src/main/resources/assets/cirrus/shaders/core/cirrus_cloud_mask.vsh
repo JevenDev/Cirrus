@@ -1,6 +1,10 @@
 #version 330
 #extension GL_ARB_separate_shader_objects : require
 
+layout(std140) uniform CirrusCloudOffset {
+    vec2 CirrusTextureOffset;
+};
+
 layout(std140) uniform CirrusMatrices {
     mat4 ModelViewMat;
     mat4 ProjMat;
@@ -24,5 +28,5 @@ void main() {
     vec4 clipPosition = ProjMat * viewPosition;
     clipPosition.z = clipPosition.w;
     gl_Position = clipPosition;
-    texCoord0 = UV0;
+    texCoord0 = UV0 + CirrusTextureOffset;
 }
