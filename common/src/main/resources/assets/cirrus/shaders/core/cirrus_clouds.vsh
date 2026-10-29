@@ -9,6 +9,7 @@ in vec3 Normal;
 
 uniform mat4 ModelViewMat;
 uniform mat4 ProjMat;
+uniform vec2 CirrusTextureOffset;
 uniform int FogShape;
 
 out vec2 texCoord0;
@@ -21,7 +22,7 @@ void main() {
     vec4 pos = ModelViewMat * vec4(Position, 1.0);
     gl_Position = ProjMat * pos;
 
-    texCoord0 = UV0;
+    texCoord0 = UV0 + CirrusTextureOffset;
     vertexDistance = fog_distance(pos.xyz, FogShape);
     vertexColor = Color;
     viewDirection = pos.xyz;

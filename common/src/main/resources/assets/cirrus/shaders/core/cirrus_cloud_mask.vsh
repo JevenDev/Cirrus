@@ -5,6 +5,7 @@ in vec2 UV0;
 
 uniform mat4 ModelViewMat;
 uniform mat4 ProjMat;
+uniform vec2 CirrusTextureOffset;
 
 out vec2 texCoord0;
 
@@ -13,5 +14,5 @@ void main() {
     vec4 clipPosition = ProjMat * viewPosition;
     clipPosition.z = -clipPosition.w;
     gl_Position = clipPosition;
-    texCoord0 = UV0;
+    texCoord0 = UV0 + CirrusTextureOffset;
 }
