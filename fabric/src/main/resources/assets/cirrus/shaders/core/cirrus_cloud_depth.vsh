@@ -1,5 +1,9 @@
 #version 330
 
+layout(std140) uniform CirrusCloudOffset {
+    vec2 CirrusTextureOffset;
+};
+
 layout(std140) uniform CirrusMatrices {
     mat4 ModelViewMat;
     mat4 ProjMat;
@@ -15,6 +19,6 @@ out float vertexAlpha;
 void main() {
     vec4 pos = ModelViewMat * vec4(Position, 1.0);
     gl_Position = ProjMat * pos;
-    texCoord0 = UV0;
+    texCoord0 = UV0 + CirrusTextureOffset;
     vertexAlpha = Color.a;
 }

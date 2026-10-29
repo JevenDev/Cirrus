@@ -121,6 +121,7 @@ public final class CirrusVertexBuffer implements AutoCloseable {
 
         GpuBufferSlice matrices = shader.writeMatrices(modelView, projection);
         GpuBufferSlice parameters = shader.writeParameters();
+        GpuBufferSlice cloudOffset = shader.writeCloudOffset();
         try (RenderPass pass = RenderSystem.getDevice()
                      .createCommandEncoder()
                      .createRenderPass(
@@ -137,6 +138,9 @@ public final class CirrusVertexBuffer implements AutoCloseable {
             pass.setUniform("CirrusMatrices", matrices);
             if (parameters != null) {
                 pass.setUniform("CirrusParams", parameters);
+            }
+            if (cloudOffset != null) {
+                pass.setUniform("CirrusCloudOffset", cloudOffset);
             }
             if (textureOverride != null || shader.texture() != null) {
                 AbstractTexture texture = textureOverride != null
