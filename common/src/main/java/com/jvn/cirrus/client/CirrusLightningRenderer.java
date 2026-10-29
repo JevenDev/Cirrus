@@ -225,18 +225,30 @@ public final class CirrusLightningRenderer {
             float[] brightness,
             List<Segment> segments
     ) {
+        Vec3 tangent = tangentAt(points, 0);
+        Vec3 fromSideA = initialSide(tangent);
+        Vec3 fromSideB = tangent.cross(fromSideA).normalize();
         for (int index = 0; index < points.length - 1; index++) {
+            Vec3 toTangent = tangentAt(points, index + 1);
+            Vec3 toSideA = transportSide(fromSideA, toTangent);
+            Vec3 toSideB = toTangent.cross(toSideA).normalize();
+            if (toSideB.dot(fromSideB) < 0.0) {
+                toSideB = toSideB.scale(-1.0);
+            }
             segments.add(new Segment(
                     points[index],
                     points[index + 1],
-                    tangentAt(points, index),
-                    tangentAt(points, index + 1),
+                    fromSideA,
+                    fromSideB,
+                    toSideA,
+                    toSideB,
                     widths[index],
                     widths[index + 1],
                     brightness[index],
-                    brightness[index + 1],
-                    index == 0
+                    brightness[index + 1]
             ));
+            fromSideA = toSideA;
+            fromSideB = toSideB;
         }
     }
 
@@ -262,26 +274,7 @@ public final class CirrusLightningRenderer {
             boolean hotCore
     ) {
         float clampedAlpha = Mth.clamp(alpha, 0.0F, 1.0F);
-        Vec3 previousSideA = null;
-        Vec3 previousSideB = null;
-
         for (Segment segment : segments) {
-            Vec3 fromSideA;
-            Vec3 fromSideB;
-            if (segment.pathStart() || previousSideA == null || previousSideB == null) {
-                fromSideA = initialSide(segment.fromTangent());
-                fromSideB = segment.fromTangent().cross(fromSideA).normalize();
-            } else {
-                fromSideA = previousSideA;
-                fromSideB = previousSideB;
-            }
-
-            Vec3 toSideA = transportSide(fromSideA, segment.toTangent());
-            Vec3 toSideB = segment.toTangent().cross(toSideA).normalize();
-            if (toSideB.dot(fromSideB) < 0.0) {
-                toSideB = toSideB.scale(-1.0);
-            }
-
             float branchAlpha = clampedAlpha * segment.fromBrightness();
             float branchTint = hotCore
                     ? Mth.lerp(segment.fromBrightness(), 0.76F, 1.0F)
@@ -290,18 +283,16 @@ public final class CirrusLightningRenderer {
                     pose,
                     consumer,
                     segment,
-                    fromSideA,
-                    fromSideB,
-                    toSideA,
-                    toSideB,
+                    segment.fromSideA(),
+                    segment.fromSideB(),
+                    segment.toSideA(),
+                    segment.toSideB(),
                     widthScale,
                     red * branchTint,
                     green * branchTint,
                     blue,
                     Mth.clamp(branchAlpha, 0.0F, 1.0F)
             );
-            previousSideA = toSideA;
-            previousSideB = toSideB;
         }
     }
 
@@ -375,13 +366,14 @@ public final class CirrusLightningRenderer {
     private record Segment(
             Vec3 from,
             Vec3 to,
-            Vec3 fromTangent,
-            Vec3 toTangent,
+            Vec3 fromSideA,
+            Vec3 fromSideB,
+            Vec3 toSideA,
+            Vec3 toSideB,
             float fromWidth,
             float toWidth,
             float fromBrightness,
-            float toBrightness,
-            boolean pathStart
+            float toBrightness
     ) {
     }
 
