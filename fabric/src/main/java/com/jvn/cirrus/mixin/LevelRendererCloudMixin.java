@@ -3,6 +3,7 @@ package com.jvn.cirrus.mixin;
 import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.CirrusCloudAttachment;
 import com.jvn.cirrus.client.CirrusCloudDimensions;
+import com.jvn.cirrus.client.CirrusAuroraBiomes;
 import com.jvn.cirrus.client.CirrusCloudMode;
 import com.jvn.cirrus.config.CirrusConfig;
 import net.minecraft.world.level.Level;
@@ -161,6 +162,8 @@ public abstract class LevelRendererCloudMixin {
     @Inject(method = "onResourceManagerReload", at = @At("HEAD"))
     private void cirrus$releaseOnReload(ResourceManager resourceManager, CallbackInfo ci) {
         CirrusCloudDimensions.reload(resourceManager);
+        CirrusAuroraBiomes.reload(resourceManager);
+        CirrusRenderers.aurora().invalidate();
         CirrusRenderers.clouds().invalidate();
         CirrusCloudAttachment.invalidate();
     }
