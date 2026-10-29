@@ -30,8 +30,10 @@ public final class CirrusShader {
     private final RenderPipeline reversedColorPipeline;
     private final RenderPipeline reversedDepthPipeline;
     private final int uniformBufferSize;
+    private final CirrusUniform textureOffset;
     private DynamicUniformStorage<Matrices> matrices;
     private DynamicUniformStorage<Parameters> parameters;
+    private DynamicUniformStorage<CloudOffset> cloudOffsets;
 
     public CirrusShader(
             String name,
@@ -62,6 +64,11 @@ public final class CirrusShader {
     ) {
         this.name = name;
         this.vertexShader = vertexShader;
+        this.textureOffset = switch (vertexShader) {
+            case "cirrus_clouds", "cirrus_cloud_depth", "cirrus_cloud_mask" ->
+                    new CirrusUniform("CirrusTextureOffset", 2, new float[]{0.0F, 0.0F});
+            default -> null;
+        };
         this.fragmentShader = fragmentShader;
         this.vertexMode = vertexMode;
         this.target = target;
@@ -93,7 +100,8 @@ public final class CirrusShader {
     }
 
     public CirrusUniform getUniform(String uniformName) {
-        return uniforms.get(uniformName);
+        return textureOffset != null && "CirrusTextureOffset".equals(uniformName)
+                ? textureOffset : uniforms.get(uniformName);
     }
 
     public ResourceLocation texture() {
@@ -128,7 +136,21 @@ public final class CirrusShader {
         return parameters.writeUniform(new Parameters());
     }
 
+    GpuBufferSlice writeCloudOffset() {
+        if (textureOffset == null) {
+            return null;
+        }
+        if (cloudOffsets == null) {
+            cloudOffsets = new DynamicUniformStorage<>("Cirrus " + name + " cloud offsets", 16, 16);
+        }
+        float[] values = textureOffset.values();
+        return cloudOffsets.writeUniform(new CloudOffset(values[0], values[1]));
+    }
+
     public void endFrame() {
+        if (cloudOffsets != null) {
+            cloudOffsets.endFrame();
+        }
         if (matrices != null) {
             matrices.endFrame();
         }
@@ -138,6 +160,10 @@ public final class CirrusShader {
     }
 
     public void closeBuffers() {
+        if (cloudOffsets != null) {
+            cloudOffsets.close();
+            cloudOffsets = null;
+        }
         if (matrices != null) {
             matrices.close();
             matrices = null;
@@ -161,6 +187,13 @@ public final class CirrusShader {
         @Override
         public void write(ByteBuffer buffer) {
             Std140Builder.intoBuffer(buffer).putMat4f(modelView).putMat4f(projection);
+        }
+    }
+
+    private record CloudOffset(float x, float y) implements DynamicUniformStorage.DynamicUniform {
+        @Override
+        public void write(ByteBuffer buffer) {
+            Std140Builder.intoBuffer(buffer).putVec2(x, y).align(16).get();
         }
     }
 
@@ -204,6 +237,9 @@ public final class CirrusShader {
                 .withVertexFormat(vertexFormat, vertexMode);
         if (!uniforms.isEmpty()) {
             builder.withUniform("CirrusParams", UniformType.UNIFORM_BUFFER);
+        }
+        if (textureOffset != null) {
+            builder.withUniform("CirrusCloudOffset", UniformType.UNIFORM_BUFFER);
         }
         if (textured) {
             builder.withSampler("Sampler0");
