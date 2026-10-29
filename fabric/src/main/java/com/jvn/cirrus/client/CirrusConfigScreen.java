@@ -20,6 +20,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.Registries;
 import com.jvn.cirrus.config.CirrusConfigSpec;
 
 public final class CirrusConfigScreen {
@@ -519,11 +520,41 @@ public final class CirrusConfigScreen {
                 .build();
     }
 
+    private static OptionGroup auroraBiomesGroup() {
+        var group = OptionGroup.createBuilder()
+                .name(text("cirrus.config.group.auroraBiomes"))
+                .description(OptionDescription.of(text("cirrus.config.group.auroraBiomes.description")))
+                .collapsed(true)
+                .option(booleanOption("cirrus.config.sky.auroraUnlistedBiomes", CirrusConfig.AURORA_UNLISTED_BIOMES));
+        var biomes = new TreeSet<ResourceLocation>(Comparator.comparing(ResourceLocation::toString));
+        biomes.addAll(CirrusAuroraBiomes.biomes());
+        CirrusConfig.AURORA_BIOMES.get().keySet().forEach(id -> biomes.add(ResourceLocation.parse(id)));
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null) {
+            biomes.addAll(connection.registryAccess().lookupOrThrow(Registries.BIOME).keySet());
+        }
+        for (var biome : biomes) {
+            group.option(Option.<CirrusAuroraBiomes.Selection>createBuilder()
+                    .name(Component.literal(biome.toString()))
+                    .description(OptionDescription.of(text("cirrus.config.sky.auroraBiome.description")))
+                    .binding(CirrusAuroraBiomes.Selection.DEFAULT,
+                            () -> CirrusAuroraBiomes.selection(biome),
+                            selection -> CirrusAuroraBiomes.setSelection(biome, selection))
+                    .controller(option -> EnumControllerBuilder.create(option)
+                            .enumClass(CirrusAuroraBiomes.Selection.class)
+                            .formatValue(selection -> text("cirrus.config.sky.auroraBiome."
+                                    + selection.name().toLowerCase(Locale.ROOT))))
+                    .build());
+        }
+        return group.build();
+    }
+
     private static ConfigCategory auroraCategory() {
         return ConfigCategory.createBuilder()
                 .name(text("cirrus.config.category.aurora"))
                 .tooltip(text("cirrus.config.category.aurora.description"))
                 .option(booleanOption("cirrus.config.sky.auroraEnabled", CirrusConfig.AURORA_ENABLED))
+                .group(auroraBiomesGroup())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.auroraVisibility"))
                         .option(booleanOption(
