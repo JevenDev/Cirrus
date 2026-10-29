@@ -13,13 +13,12 @@ import net.minecraft.world.clock.WorldClock;
  */
 public final class CirrusTimeTransition {
     private static final long ABRUPT_TIME_CHANGE_TICKS = 40L;
-    private static final double FULL_DAY_TICKS = 24000.0;
-    private static final double FULL_NIGHT_TICKS = 12000.0;
     private static final double MIN_DURATION_TICKS = 40.0;
     private static final double MAX_DURATION_TICKS = 180.0;
     private static final double NANOS_PER_TICK = 50_000_000.0;
 
     private static ClientLevel trackedLevel;
+    private static double dayCycleTicks = 24000.0;
     private static long lastActualDayTime;
     private static long lastGameTime;
     private static long visualDayTime;
@@ -42,7 +41,8 @@ public final class CirrusTimeTransition {
         long actualDayTime = level.getDefaultClockTime();
         long gameTime = level.getGameTime();
         long now = System.nanoTime();
-        if (!CirrusConfig.SMOOTH_TIME_TRANSITIONS.get() || trackedLevel != level) {
+        if (!CirrusConfig.SMOOTH_TIME_TRANSITIONS.get() || trackedLevel != level
+                || dayCycleTicks != CirrusDayCycle.periodTicks(level)) {
             reset(level, actualDayTime, gameTime);
         } else if (!level.dimensionType().hasFixedTime()) {
             long actualDelta = actualDayTime - lastActualDayTime;
@@ -82,6 +82,7 @@ public final class CirrusTimeTransition {
         long gameTime = level.getGameTime();
         if (awaitingInitialTime
                 || trackedLevel != level
+                || dayCycleTicks != CirrusDayCycle.periodTicks(level)
                 || !CirrusConfig.SMOOTH_TIME_TRANSITIONS.get()
                 || level.dimensionType().hasFixedTime()) {
             awaitingInitialTime = false;
@@ -123,12 +124,18 @@ public final class CirrusTimeTransition {
 
     public static double visualDayTime(ClientLevel level, float partialTick) {
         float configuredRate = CirrusTimeAccess.dayTimePerTick(level);
+        double time = trackedLevel == level ? displayedDayTime : level.getDefaultClockTime();
+        return interpolateTime(time, CirrusTimeAccess.dayTimeFraction(level), partialTick, configuredRate);
+    }
+
+    static double interpolateTime(double time, float fraction, float partialTick, float configuredRate) {
         double ticksPerGameTick = configuredRate < 0.0F ? 1.0 : configuredRate;
-        return displayedDayTime + CirrusTimeAccess.dayTimeFraction(level) + partialTick * ticksPerGameTick;
+        return time + fraction + partialTick * ticksPerGameTick;
     }
 
     private static void reset(ClientLevel level, long actualDayTime, long gameTime) {
         trackedLevel = level;
+        dayCycleTicks = CirrusDayCycle.periodTicks(level);
         lastActualDayTime = actualDayTime;
         lastGameTime = gameTime;
         visualDayTime = actualDayTime;
@@ -156,11 +163,12 @@ public final class CirrusTimeTransition {
     }
 
     private static double shortestDayDelta(double startDayTime, long targetDayTime) {
-        double delta = (targetDayTime - startDayTime) % FULL_DAY_TICKS;
-        if (delta > FULL_NIGHT_TICKS) {
-            delta -= FULL_DAY_TICKS;
-        } else if (delta < -FULL_NIGHT_TICKS) {
-            delta += FULL_DAY_TICKS;
+        double delta = (targetDayTime - startDayTime) % dayCycleTicks;
+        double halfCycle = dayCycleTicks * 0.5;
+        if (delta > halfCycle) {
+            delta -= dayCycleTicks;
+        } else if (delta < -halfCycle) {
+            delta += dayCycleTicks;
         }
         return delta;
     }
@@ -187,7 +195,7 @@ public final class CirrusTimeTransition {
     }
 
     private static double durationTicks(double delta) {
-        double nightFraction = Math.min(1.0, delta / FULL_NIGHT_TICKS);
+        double nightFraction = Math.min(1.0, delta / (dayCycleTicks * 0.5));
         double baseDuration = MIN_DURATION_TICKS
                 + (MAX_DURATION_TICKS - MIN_DURATION_TICKS) * nightFraction;
         return baseDuration / CirrusConfig.TIME_TRANSITION_SPEED.get();
