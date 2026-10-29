@@ -22,7 +22,7 @@ public final class CirrusCloudTimeFade {
     static double dayTime(ClientLevel level, float partialTick) {
         return level.dimensionType().hasFixedTime()
                 ? CirrusRenderContext.sunAngle(partialTick) / Mth.TWO_PI * DAY_TICKS
-                : CirrusTimeTransition.visualDayTime(level, partialTick);
+                : CirrusDayCycle.dayTime(level, partialTick);
     }
 
     public static float opacity(double dayTime) {

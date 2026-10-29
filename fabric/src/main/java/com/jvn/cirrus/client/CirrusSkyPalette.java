@@ -22,7 +22,10 @@ public final class CirrusSkyPalette {
     }
 
     public static Sample sample(ClientLevel level, float partialTick) {
-        double visualTime = CirrusTimeTransition.visualDayTime(level, partialTick);
+        return sample(CirrusDayCycle.dayTime(level, partialTick));
+    }
+
+    static Sample sample(double visualTime) {
         float dayTick = (float)(visualTime % DAY_TICKS);
         if (dayTick < 0.0F) {
             dayTick += DAY_TICKS;
