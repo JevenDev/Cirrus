@@ -3,7 +3,6 @@ package com.jvn.cirrus.client;
 import com.jvn.cirrus.client.render.CirrusRenderContext;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.jvn.cirrus.client.util.CirrusColors;
-import com.jvn.cirrus.client.util.CirrusEasing;
 import com.jvn.cirrus.client.util.CirrusSkyDome;
 import com.jvn.cirrus.client.util.CirrusShaderUniforms;
 import com.jvn.cirrus.client.render.CirrusUniform;
@@ -14,7 +13,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import com.jvn.cirrus.client.render.CirrusShader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.biome.Biome;
 import org.joml.Matrix4f;
 
 public final class CirrusAuroraRenderer implements AutoCloseable {
@@ -41,14 +39,14 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
 
     private CirrusVertexBuffer domeBuffer;
     private ClientLevel blendLevel;
-    private float coldBiomeBlend;
+    private float biomeBlend;
     private double previousFrameTime;
     private ClientLevel sampledBiomeLevel;
     private int lastBiomeSampleTick;
     private int sampledBiomeX;
     private int sampledBiomeY;
     private int sampledBiomeZ;
-    private float sampledColdStrength;
+    private float sampledBiomeStrength;
     private ClientLevel animationLevel;
     private float animationTime;
     private double previousAnimationRenderTime;
@@ -80,10 +78,8 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
             updateNightlyVariation(level, false);
             return;
         }
-        float coldStrength = CirrusConfig.AURORA_COLD_BIOMES_ONLY.get()
-                ? updateColdBiomeBlend(level, partialTick, ticks, camera)
-                : 1.0F;
-        float intensity = coldStrength * visibleIntensity;
+        float biomeStrength = updateBiomeBlend(level, partialTick, ticks, camera);
+        float intensity = biomeStrength * visibleIntensity;
         if (intensity < 0.002F) {
             updateNightlyVariation(level, false);
             return;
@@ -132,7 +128,7 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
         );
     }
 
-    private float updateColdBiomeBlend(ClientLevel level, float partialTick, int ticks, Camera camera) {
+    private float updateBiomeBlend(ClientLevel level, float partialTick, int ticks, Camera camera) {
         int centerX = Mth.floor(camera.position().x);
         int centerY = Mth.floor(camera.position().y);
         int centerZ = Mth.floor(camera.position().z);
@@ -147,41 +143,39 @@ public final class CirrusAuroraRenderer implements AutoCloseable {
             sampledBiomeX = centerX;
             sampledBiomeY = centerY;
             sampledBiomeZ = centerZ;
-            sampledColdStrength = sampledColdStrength(level, centerX, centerY, centerZ);
+            sampledBiomeStrength = sampledBiomeStrength(level, centerX, centerY, centerZ);
         }
 
         double frameTime = ticks + (double)partialTick;
         if (blendLevel != level) {
             blendLevel = level;
-            coldBiomeBlend = sampledColdStrength;
+            biomeBlend = sampledBiomeStrength;
             previousFrameTime = frameTime;
-            return coldBiomeBlend;
+            return biomeBlend;
         }
 
         double elapsedTicks = Math.max(frameTime - previousFrameTime, 0.0);
         previousFrameTime = frameTime;
         if (elapsedTicks > BIOME_SAMPLE_INTERVAL_TICKS) {
-            coldBiomeBlend = sampledColdStrength;
-            return coldBiomeBlend;
+            biomeBlend = sampledBiomeStrength;
+            return biomeBlend;
         }
         elapsedTicks = Math.min(elapsedTicks, 5.0);
         float response = 1.0F - (float)Math.exp(-elapsedTicks / 20.0);
-        coldBiomeBlend = Mth.lerp(response, coldBiomeBlend, sampledColdStrength);
-        return coldBiomeBlend;
+        biomeBlend = Mth.lerp(response, biomeBlend, sampledBiomeStrength);
+        return biomeBlend;
     }
 
-    private static float sampledColdStrength(ClientLevel level, int centerX, int centerY, int centerZ) {
+    private static float sampledBiomeStrength(ClientLevel level, int centerX, int centerY, int centerZ) {
         float total = 0.0F;
         int totalWeight = 0;
         BlockPos.MutableBlockPos samplePos = new BlockPos.MutableBlockPos();
         for (int index = 0; index < BIOME_SAMPLE_OFFSETS.length; index++) {
             int[] offset = BIOME_SAMPLE_OFFSETS[index];
             samplePos.set(centerX + offset[0], centerY, centerZ + offset[1]);
-            Biome biome = level.getBiome(samplePos).value();
-            float cold = Mth.clamp((0.15F - biome.getBaseTemperature()) / 0.15F, 0.0F, 1.0F);
-            cold = CirrusEasing.smoothstep(cold);
+            float strength = CirrusAuroraBiomes.strength(level.getBiome(samplePos));
             int weight = BIOME_SAMPLE_WEIGHTS[index];
-            total += cold * weight;
+            total += strength * weight;
             totalWeight += weight;
         }
         return total / totalWeight;
