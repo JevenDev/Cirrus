@@ -124,7 +124,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         float thunderLevel = smoothWeatherLevel(level.getThunderLevel(partialTick));
         ShaderInstance maskShader = CirrusShaders.cloudMask();
         CloudMaskUniforms maskUniforms = cloudMaskUniforms(maskShader);
-        boolean useTextureOffset = maskUniforms.textureOffset != null;
+        boolean useTextureOffset = supportsTextureOffset();
         maskUniforms.setWeather(
                 rainLevel * CirrusConfig.RAIN_CLOUD_COVERAGE.get().floatValue(),
                 thunderLevel * CirrusConfig.THUNDER_CLOUD_COVERAGE.get().floatValue()
@@ -285,8 +285,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 distanceChunks * 16.0F
         );
         long uniformFrame = ++cloudUniformFrame;
-        boolean useTextureOffset = !shaderPackInUse
-                && cloudUniforms(CirrusShaders.clouds()).textureOffset != null;
+        boolean useTextureOffset = !shaderPackInUse && supportsTextureOffset();
 
         prepareLayer(
                 lowerMesh, LOWER_LAYER, level, distanceChunks,
@@ -879,6 +878,11 @@ public final class CirrusCloudRenderer implements AutoCloseable {
                 timeOpacity,
                 celestialLighting
         );
+    }
+
+    private boolean supportsTextureOffset() {
+        return cloudUniforms(CirrusShaders.clouds()).textureOffset != null
+                && cloudMaskUniforms(CirrusShaders.cloudMask()).textureOffset != null;
     }
 
     private CloudUniforms cloudUniforms(ShaderInstance shader) {
