@@ -277,7 +277,7 @@ vec3 vanillaEndSky(vec3 direction) {
     return texture(Sampler0, (uv * 0.5 + 0.5) * 16.0).rgb * (40.0 / 255.0);
 }
 
-vec4 endColor(vec3 color, float intensity) {
+vec4 endColor(vec3 color) {
     if (CirrusEndGlass > 0.5 && beamStrength > 0.0) {
         vec2 baryDx = dFdx(barycentric.xy);
         vec2 baryDy = dFdy(barycentric.xy);
@@ -306,7 +306,7 @@ vec4 endColor(vec3 color, float intensity) {
             color += (edgeColor * edgeHighlight * 0.90
                     + vec3(0.64, 0.19, 0.90) * edgeGlow * 0.45
                     + vec3(1.0, 0.94, 1.0) * sourceCore * 0.80
-                    + vec3(0.30, 0.07, 0.48) * lightSpill * 0.45) * beamStrength * intensity;
+                    + vec3(0.30, 0.07, 0.48) * lightSpill * 0.45) * beamStrength;
         }
     }
     float opacity = CirrusEndGlass > 0.5
@@ -323,7 +323,7 @@ void main() {
         float rupture = smoothstep(0.0, 0.025, departure)
                 * (1.0 - smoothstep(0.04, 0.20, departure));
         vec3 flashColor = mix(vec3(0.58, 0.32, 0.92), vec3(0.94, 0.86, 1.0), rupture);
-        fragColor = vec4(flashColor, rupture * CirrusEndFlash * clamp(CirrusEndIntensity, 0.0, 1.0));
+        fragColor = vec4(flashColor, rupture * CirrusEndFlash);
         return;
     }
     if (CirrusEndBeamPass > 0.5) {
@@ -331,10 +331,11 @@ void main() {
         vec3 beamColor = mix(vec3(1.0), vec3(1.0, 0.0, 1.0), distanceAlong);
         float fade = 1.0 - distanceAlong;
         fragColor = vec4(beamColor, fade * beamStrength
-                * CirrusEndVeil * clamp(CirrusEndIntensity, 0.0, 2.0));
+                * CirrusEndVeil);
         return;
     }
     vec3 direction = normalize(worldDirection);
+    float glassSheen = 0.0;
     if (CirrusEndGlass > 0.5) {
         vec3 glassNormal = normalize(cross(dFdx(worldDirection), dFdy(worldDirection)));
         if (dot(glassNormal, shardNormal) < 0.0) {
@@ -346,12 +347,21 @@ void main() {
         if (dot(glassNormal, direction) > 0.0) {
             glassNormal = -glassNormal;
         }
+        float facing = clamp(-dot(glassNormal, direction), 0.0, 1.0);
+        glassSheen = pow(1.0 - facing, 3.0);
         // each moving shard refracts the selected sky at a different angle
         direction = normalize(refract(direction, glassNormal, mix(0.54, 0.72, shardSeed.g)));
     }
     if (CirrusEndSkyEnabled < 0.5) {
-        float intensity = clamp(CirrusEndIntensity, 0.0, 2.0);
-        fragColor = endColor(vanillaEndSky(direction) * intensity, intensity);
+        vec3 color = vanillaEndSky(direction);
+        if (CirrusEndGlass > 0.5) {
+            vec3 edgeDistance = barycentric / max(fwidth(barycentric), vec3(0.00001));
+            float edge = 1.0 - smoothstep(0.0, 1.25, min(edgeDistance.x, min(edgeDistance.y, edgeDistance.z)));
+            vec3 tint = mix(vec3(0.48, 0.36, 0.68), vec3(0.78, 0.70, 0.94), shardSeed.b);
+            color *= mix(0.85, 2.25, shardSeed.r);
+            color += tint * (mix(0.015, 0.055, shardSeed.g) + glassSheen * 0.20 + edge * 0.025);
+        }
+        fragColor = endColor(color);
         return;
     }
     direction = mix(direction, pixelatedDirection(direction), clamp(CirrusEndPixelation, 0.0, 1.0));
@@ -713,5 +723,5 @@ void main() {
     float finalLuminance = max(color.r, max(color.g, color.b));
     float highlightPreservation = smoothstep(0.16, 0.64, finalLuminance);
     color *= mix(0.30, 1.0, highlightPreservation);
-    fragColor = endColor(color, intensity);
+    fragColor = endColor(color);
 }
