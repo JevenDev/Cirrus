@@ -54,7 +54,7 @@ public final class CirrusEndSkyRenderer implements AutoCloseable {
                 }
             }
         }
-        veil.update(bossFog, dragonDeathTicks, ticks);
+        veil.update(bossFog, dragonDeathTicks, ticks, CirrusConfig.END_GLASS_PERSISTENT.get());
     }
 
     public void resetFight() {
