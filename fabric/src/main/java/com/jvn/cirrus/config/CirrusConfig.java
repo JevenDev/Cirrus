@@ -183,6 +183,7 @@ public final class CirrusConfig {
     public static final CirrusConfigSpec.DoubleValue AURORA_NIGHTLY_VARIATION;
     public static final CirrusConfigSpec.BooleanValue END_SKY_ENABLED;
     public static final CirrusConfigSpec.BooleanValue END_GLASS_ENABLED;
+    public static final CirrusConfigSpec.BooleanValue END_GLASS_PERSISTENT;
     public static final CirrusConfigSpec.EnumValue<EndSkyQuality> END_SKY_QUALITY;
     public static final CirrusConfigSpec.BooleanValue END_SKY_PIXELATION_ENABLED;
     public static final CirrusConfigSpec.IntValue END_SKY_PIXELATION_RESOLUTION;
@@ -608,8 +609,11 @@ public final class CirrusConfig {
                 .comment("Replace the vanilla End sky with moving clouds, lightning, and spreading darkness.")
                 .define("endSkyEnabled", true);
         END_GLASS_ENABLED = builder
-                .comment("Render End glass during the dragon fight, including cracks, light beams, flash, and shattering on defeat. Independent of the custom End sky.")
+                .comment("Render End glass and dragon defeat effects. Independent of the custom End sky.")
                 .define("endGlassEnabled", true);
+        END_GLASS_PERSISTENT = builder
+                .comment("Keep End glass visible after the dragon fight and on later visits. Defeat beams still play, but the glass never shatters or flashes.")
+                .define("endGlassPersistent", false);
         END_SKY_QUALITY = builder
                 .comment("End sky texture detail. Lower quality selects fewer precomputed noise octaves.")
                 .defineEnum("endSkyQuality", EndSkyQuality.BALANCED);
