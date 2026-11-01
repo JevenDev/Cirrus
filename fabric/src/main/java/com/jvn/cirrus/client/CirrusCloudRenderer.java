@@ -159,8 +159,9 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             Matrix4f projectionMatrix
     ) {
         Minecraft minecraft = Minecraft.getInstance();
-        int framebufferWidth = minecraft.getWindow().getWidth();
-        int framebufferHeight = minecraft.getWindow().getHeight();
+        var framebuffer = minecraft.gameRenderer.mainRenderTarget().getColorTextureView();
+        int framebufferWidth = framebuffer.getWidth(0);
+        int framebufferHeight = framebuffer.getHeight(0);
         if (framebufferWidth <= 0 || framebufferHeight <= 0) {
             return null;
         }
