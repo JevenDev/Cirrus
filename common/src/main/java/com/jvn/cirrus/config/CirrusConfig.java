@@ -469,8 +469,8 @@ public final class CirrusConfig {
                 .comment("Overlay configurable horizon-to-zenith gradients that transition through the full day.")
                 .define("skyGradientsEnabled", true);
         FOG_USES_HORIZON_COLOR = builder
-                .comment("Match normal air fog to Cirrus' view-direction sky gradient and soften the terrain"
-                        + " transition. Water, lava, powder snow, visibility effects, and non-normal skies keep"
+                .comment("Match normal air fog to Cirrus' horizon sky color at every viewing angle and soften the"
+                        + " terrain transition. Water, lava, powder snow, visibility effects, and non-normal skies keep"
                         + " their original fog.")
                 .define("fogUsesHorizonColor", true);
         FOG_HORIZON_TINT_STRENGTH = FOG_HORIZON_TINT_STRENGTH_SETTING.define(

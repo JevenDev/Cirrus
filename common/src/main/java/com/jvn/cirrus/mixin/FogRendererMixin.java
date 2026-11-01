@@ -4,18 +4,17 @@ import com.jvn.cirrus.client.CirrusSky;
 import com.jvn.cirrus.client.CirrusSkyPalette;
 import com.jvn.cirrus.client.compat.fog.FogModCompat;
 import com.jvn.cirrus.client.util.CirrusCelestialTransform;
-import com.jvn.cirrus.client.util.CirrusEasing;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.jvn.cirrus.config.CirrusConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.util.Mth;
-import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -39,7 +38,7 @@ public abstract class FogRendererMixin {
             float darkenWorldAmount,
             CallbackInfo ci
     ) {
-        if (!shouldMatchSky(camera, level)) {
+        if (!CirrusSky.matchesFog(camera, level)) {
             return;
         }
 
@@ -88,7 +87,7 @@ public abstract class FogRendererMixin {
                 || fogMode != FogRenderer.FogMode.FOG_TERRAIN
                 || foggy
                 || !(camera.getEntity().level() instanceof ClientLevel level)
-                || !shouldMatchSky(camera, level)) {
+                || !CirrusSky.matchesFog(camera, level)) {
             return;
         }
 
@@ -114,6 +113,15 @@ public abstract class FogRendererMixin {
         RenderSystem.setShaderFogStart(Math.max(0.0F, farPlaneDistance - fadeDistance));
     }
 
+    @WrapOperation(method = "setupColor", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/Camera;getLookVector()Lorg/joml/Vector3f;"
+    ))
+    private static Vector3f cirrus$useHorizonViewDirection(Camera camera, Operation<Vector3f> original) {
+        return CirrusSky.matchesFogColor(camera, Minecraft.getInstance().level)
+                ? CirrusSky.horizonDirection(camera) : original.call(camera);
+    }
+
     private static void applyHorizonColorCorrection(
             Camera camera,
             float partialTick,
@@ -124,49 +132,26 @@ public abstract class FogRendererMixin {
             float strength
     ) {
         Vec3 vanillaSkyColor = level.getSkyColor(camera.getPosition(), partialTick);
-        float viewElevation = camera.getLookVector().y();
-        float elevation = Mth.clamp(viewElevation, 0.0F, 1.0F);
-        float gradientAmount = smoothstep(
-                0.015F,
-                Math.max(CirrusConfig.SKY_GRADIENT_HEIGHT.get().floatValue(), 0.02F),
-                elevation
-        );
-        float horizonColorBoost = 1.0F - smoothstep(0.02F, 0.32F, elevation);
-        float skyDomeFade = smoothstep(-0.18F, 0.02F, viewElevation);
-        float gradientAlpha = Mth.clamp(
-                gradientVisibility
-                        * Mth.lerp(horizonColorBoost, 0.22F, 0.38F)
-                        * skyDomeFade,
-                0.0F,
-                1.0F
-        );
-        float gradientRed = Mth.lerp(
-                gradientAmount, palette.horizonRed(), palette.zenithRed()
-        );
-        float gradientGreen = Mth.lerp(
-                gradientAmount, palette.horizonGreen(), palette.zenithGreen()
-        );
-        float gradientBlue = Mth.lerp(
-                gradientAmount, palette.horizonBlue(), palette.zenithBlue()
-        );
+        float gradientAlpha = Mth.clamp(gradientVisibility * 0.38F, 0.0F, 1.0F);
         float vanillaRed = (float)vanillaSkyColor.x;
         float vanillaGreen = (float)vanillaSkyColor.y;
         float vanillaBlue = (float)vanillaSkyColor.z;
-        float red = Mth.lerp(gradientAlpha, vanillaRed, gradientRed);
-        float green = Mth.lerp(gradientAlpha, vanillaGreen, gradientGreen);
-        float blue = Mth.lerp(gradientAlpha, vanillaBlue, gradientBlue);
+        float red = Mth.lerp(gradientAlpha, vanillaRed, palette.horizonRed());
+        float green = Mth.lerp(gradientAlpha, vanillaGreen, palette.horizonGreen());
+        float blue = Mth.lerp(gradientAlpha, vanillaBlue, palette.horizonBlue());
 
         if (renderDistanceChunks >= 4) {
             float[] sunriseColor = level.effects().getSunriseColor(
                     level.getTimeOfDay(partialTick), partialTick
             );
             if (sunriseColor != null) {
+                float viewYaw = camera.getYRot() * Mth.DEG_TO_RAD;
                 float sunriseAlpha = Mth.clamp(
                         CirrusCelestialTransform.sunViewAlignment(
                                 level.getTimeOfDay(partialTick),
                                 CirrusConfig.SUN_ANGLED_ORBIT.get(),
-                                camera.getLookVector().x(),
-                                camera.getLookVector().z()
+                                -Mth.sin(viewYaw),
+                                Mth.cos(viewYaw)
                         ),
                         0.0F,
                         1.0F
@@ -180,25 +165,5 @@ public abstract class FogRendererMixin {
         fogRed = Mth.clamp(Mth.lerp(strength, fogRed, red), 0.0F, 1.0F);
         fogGreen = Mth.clamp(Mth.lerp(strength, fogGreen, green), 0.0F, 1.0F);
         fogBlue = Mth.clamp(Mth.lerp(strength, fogBlue, blue), 0.0F, 1.0F);
-    }
-
-    private static float smoothstep(float lowerEdge, float upperEdge, float value) {
-        float amount = Mth.clamp((value - lowerEdge) / (upperEdge - lowerEdge), 0.0F, 1.0F);
-        return CirrusEasing.smoothstep(amount);
-    }
-
-    private static boolean shouldMatchSky(Camera camera, ClientLevel level) {
-        return CirrusSky.enabled(level)
-                && CirrusConfig.FOG_USES_HORIZON_COLOR.get()
-                && CirrusConfig.SKY_GRADIENTS_ENABLED.get()
-                && camera.getFluidInCamera() == FogType.NONE
-                && level.effects().skyType() == DimensionSpecialEffects.SkyType.NORMAL
-                && !hasVisibilityEffect(camera);
-    }
-
-    private static boolean hasVisibilityEffect(Camera camera) {
-        return camera.getEntity() instanceof LivingEntity living
-                && (living.hasEffect(MobEffects.BLINDNESS)
-                        || living.hasEffect(MobEffects.DARKNESS));
     }
 }
