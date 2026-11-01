@@ -36,7 +36,7 @@ public final class CirrusTimeTransition {
     }
 
     public static void beginFrame(ClientLevel level) {
-        rendering = false;
+        endFrame();
 
         long actualDayTime = level.getDefaultClockTime();
         long gameTime = level.getGameTime();
@@ -61,9 +61,14 @@ public final class CirrusTimeTransition {
 
         visualDayTime = Math.round(displayedDayTime);
         rendering = true;
+        // cached timeline values must not cross between visual and authoritative time
+        level.environmentAttributes().invalidateTickCache();
     }
 
     public static void endFrame() {
+        if (rendering) {
+            trackedLevel.environmentAttributes().invalidateTickCache();
+        }
         rendering = false;
     }
 
@@ -71,9 +76,9 @@ public final class CirrusTimeTransition {
      * Marks the time sync following a login or respawn as a new visual baseline.
      */
     public static void beginLevelLoad() {
+        endFrame();
         trackedLevel = null;
         transitionActive = false;
-        rendering = false;
         awaitingInitialTime = true;
     }
 
