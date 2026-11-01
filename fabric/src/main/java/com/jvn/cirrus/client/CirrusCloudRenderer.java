@@ -1,6 +1,7 @@
 package com.jvn.cirrus.client;
 
 import com.jvn.cirrus.Cirrus;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.jvn.cirrus.client.compat.fog.FogModCompat;
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.effect.MobEffects;
@@ -158,8 +159,11 @@ public final class CirrusCloudRenderer implements AutoCloseable {
             Matrix4f projectionMatrix
     ) {
         Minecraft minecraft = Minecraft.getInstance();
-        int framebufferWidth = minecraft.getWindow().getWidth();
-        int framebufferHeight = minecraft.getWindow().getHeight();
+        var framebuffer = RenderSystem.outputColorTextureOverride != null
+                ? RenderSystem.outputColorTextureOverride
+                : minecraft.getMainRenderTarget().getColorTextureView();
+        int framebufferWidth = framebuffer.getWidth(0);
+        int framebufferHeight = framebuffer.getHeight(0);
         if (framebufferWidth <= 0 || framebufferHeight <= 0) {
             return null;
         }
