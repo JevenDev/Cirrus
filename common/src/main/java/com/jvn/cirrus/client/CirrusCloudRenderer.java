@@ -110,7 +110,7 @@ public final class CirrusCloudRenderer implements AutoCloseable {
         Minecraft minecraft = Minecraft.getInstance();
         CirrusSunScissor scissor = CirrusSunScissor.forMesh(
                 sunMesh, RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(),
-                minecraft.getWindow().getWidth(), minecraft.getWindow().getHeight()
+                minecraft.getMainRenderTarget().viewWidth, minecraft.getMainRenderTarget().viewHeight
         );
         if (scissor == null) {
             return false;
