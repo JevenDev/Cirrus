@@ -98,7 +98,7 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
                         ? cirrus$renderCloudsIntoDistantHorizons
                         : null
         );
-        CloudStatus mode = Minecraft.getInstance().options.getCloudsType();
+        CloudStatus mode = Minecraft.getInstance().options.cloudStatus().get();
         if (mode != cirrus$lastCloudMode) {
             if (!CirrusCloudMode.isActive(mode)) {
                 cirrus$cloudRenderer.invalidate();
@@ -148,7 +148,7 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
     )
     private CloudStatus cirrus$keepCloudPassEnabled(Options options) {
         CloudStatus cloudStatus = options.getCloudsType();
-        return CirrusCloudMode.isActive(cloudStatus) ? CloudStatus.FAST : cloudStatus;
+        return CirrusCloudMode.isActive(options) ? CloudStatus.FAST : cloudStatus;
     }
 
     @Inject(method = "renderClouds", at = @At("HEAD"), cancellable = true)
@@ -162,7 +162,7 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
             double cameraZ,
             CallbackInfo ci
     ) {
-        if (!CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
+        if (!CirrusCloudMode.isActive(Minecraft.getInstance().options)) {
             return;
         }
         ci.cancel();
@@ -190,7 +190,7 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
                 || !CirrusCloudDimensions.enabled(level.dimension().location())
                 || CirrusCloudTimeFade.opacity(level, cirrus$framePartialTick) <= 0.0F
                 || cirrus$frameFrustumMatrix == null
-                || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
+                || !CirrusCloudMode.isActive(Minecraft.getInstance().options)) {
             return;
         }
 
@@ -337,7 +337,7 @@ public abstract class LevelRendererCloudMixin implements CirrusSunMask {
     public boolean cirrus$beginSunMask(MeshData sunMesh) {
         if (level == null
                 || CirrusShaderPackCompat.isShaderPackInUse()
-                || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
+                || !CirrusCloudMode.isActive(Minecraft.getInstance().options)) {
             return false;
         }
         boolean maskRendered = cirrus$cloudRenderer.renderSunMask(

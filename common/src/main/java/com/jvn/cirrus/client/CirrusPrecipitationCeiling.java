@@ -12,7 +12,7 @@ public final class CirrusPrecipitationCeiling {
 
     public static double absolute(ClientLevel level) {
         if (level == null
-                || !CirrusCloudMode.isActive(Minecraft.getInstance().options.getCloudsType())) {
+                || !CirrusCloudMode.isActive(Minecraft.getInstance().options)) {
             return Double.POSITIVE_INFINITY;
         }
 

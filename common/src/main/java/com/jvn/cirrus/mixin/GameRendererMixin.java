@@ -33,7 +33,7 @@ public abstract class GameRendererMixin {
     @Inject(method = "getDepthFar", at = @At("RETURN"), cancellable = true)
     private void cirrus$keepCloudsInsideProjection(CallbackInfoReturnable<Float> cir) {
         boolean cirrusCloudsActive = CirrusCloudMode.isActive(
-                Minecraft.getInstance().options.getCloudsType()
+                Minecraft.getInstance().options
         );
         cir.setReturnValue(Math.max(
                 cir.getReturnValueF(),

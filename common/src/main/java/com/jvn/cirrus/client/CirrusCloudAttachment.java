@@ -47,7 +47,7 @@ public final class CirrusCloudAttachment {
     private static Vec3 findVisualOriginUncached(LightningBolt lightning, float partialTick) {
         Minecraft minecraft = Minecraft.getInstance();
         if (!(lightning.level() instanceof ClientLevel level)
-                || !CirrusCloudMode.isActive(minecraft.options.getCloudsType())) {
+                || !CirrusCloudMode.isActive(minecraft.options)) {
             return new Vec3(0.0, 128.0, 0.0);
         }
 
