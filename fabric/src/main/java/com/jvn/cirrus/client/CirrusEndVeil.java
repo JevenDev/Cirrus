@@ -7,6 +7,7 @@ public final class CirrusEndVeil {
 
     private boolean initialized;
     private boolean bossFog;
+    private boolean keepGlass;
     private float deathStart = Float.NaN;
     private float fadeStart;
     private float fadeFrom;
@@ -14,6 +15,11 @@ public final class CirrusEndVeil {
     private float shatterStart = Float.NaN;
 
     public void update(boolean fog, int dragonDeathTicks, int ticks) {
+        update(fog, dragonDeathTicks, ticks, false);
+    }
+
+    public void update(boolean fog, int dragonDeathTicks, int ticks, boolean keepGlass) {
+        this.keepGlass = keepGlass;
         if (!initialized) {
             initialized = true;
             bossFog = fog;
@@ -44,6 +50,9 @@ public final class CirrusEndVeil {
     }
 
     public float opacity(float ticks) {
+        if (keepGlass) {
+            return 1.0F;
+        }
         if (shatter(ticks) >= 1.0F) {
             return 0.0F;
         }
@@ -58,9 +67,15 @@ public final class CirrusEndVeil {
     }
 
     public float charge(float ticks) {
-        return Float.isNaN(deathStart)
+        float charge = Float.isNaN(deathStart)
                 ? 0.0F
                 : Math.clamp((ticks - deathStart) / RUPTURE_DEATH_TICK, 0.0F, 1.0F);
+        if (keepGlass) {
+            float fade = shatterProgress(ticks);
+            fade = fade * fade * (3.0F - 2.0F * fade);
+            charge *= 1.0F - fade;
+        }
+        return charge;
     }
 
     public float flash(float ticks) {
@@ -73,6 +88,10 @@ public final class CirrusEndVeil {
     }
 
     public float shatter(float ticks) {
+        return keepGlass ? 0.0F : shatterProgress(ticks);
+    }
+
+    private float shatterProgress(float ticks) {
         return Float.isNaN(shatterStart)
                 ? 0.0F
                 : Math.clamp((ticks - shatterStart) / SHATTER_TICKS, 0.0F, 1.0F);

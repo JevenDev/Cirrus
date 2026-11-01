@@ -642,6 +642,7 @@ public final class CirrusConfigScreen {
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.endGlass"))
                         .option(booleanOption("cirrus.config.sky.endGlassEnabled", CirrusConfig.END_GLASS_ENABLED))
+                        .option(booleanOption("cirrus.config.sky.endGlassPersistent", CirrusConfig.END_GLASS_PERSISTENT))
                         .build())
                 .group(OptionGroup.createBuilder()
                         .name(text("cirrus.config.group.endAppearance"))
